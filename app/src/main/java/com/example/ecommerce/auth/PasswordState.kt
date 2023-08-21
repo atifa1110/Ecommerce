@@ -1,7 +1,5 @@
 package com.example.ecommerce.auth
 
-import com.example.ecommerce.TextFieldState
-
 class PasswordState :
     TextFieldState(validator = ::isPasswordValid, errorFor = ::passwordValidationError)
 

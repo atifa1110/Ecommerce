@@ -1,4 +1,4 @@
-package com.example.ecommerce
+package com.example.ecommerce.graph
 
 import androidx.compose.animation.ExperimentalAnimationApi
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -7,25 +7,21 @@ import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
-import com.example.ecommerce.onBoarding.onBoardingRoute
-import com.example.ecommerce.onBoarding.onBoardingScreen
+import com.example.ecommerce.main.MainScreen
+import com.example.ecommerce.boarding.onBoardingRoute
 import com.google.accompanist.pager.ExperimentalPagerApi
 
-@OptIn(ExperimentalAnimationApi::class, ExperimentalPagerApi::class)
 @ExperimentalMaterial3Api
 @Composable
-fun RootNavigationGraph(navController: NavHostController = rememberNavController()) {
+fun RootNavigationGraph(navController: NavHostController, startDestination: String) {
     NavHost(navController = navController,
-        route = Graph.Root.route,
         startDestination = Graph.onBoarding.route) {
         composable(route = Graph.onBoarding.route){
             onBoardingRoute(
-                onJoinClick = {
-                    navController.popBackStack()
+                onNavigateToRegister= {
                     navController.navigate(Authentication.Register.route)
                 },
-                onSkipClick = {
-                    navController.popBackStack()
+                onNavigateToLogin = {
                     navController.navigate(Authentication.Login.route)
                 }
             )

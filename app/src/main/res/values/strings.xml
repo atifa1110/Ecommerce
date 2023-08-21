@@ -10,4 +10,17 @@
     <string name="show_password">Show Password</string>
     <string name="password">Password</string>
     <string name="gabung">Gabung Sekarang</string>
+    <string name="skip">Lewati</string>
+    <string name="next">Selanjutnya</string>
+    <string name="profile">Profil</string>
+    <string name="name">Nama</string>
+    <string name="done">Selesai</string>
+    <string name="icon_profile">icon_profile</string>
+    <string name="logout">Logout</string>
+    <string name="example_name">John Doe</string>
+    <string name="kamera">Kamera</string>
+    <string name="galeri">Galeri</string>
+    <string name="email_invalid">Email tidak valid</string>
+    <string name="password_invalid">Password tidak valid</string>
+    <string name="password_min">Minimal 8 karakter</string>
 </resources>

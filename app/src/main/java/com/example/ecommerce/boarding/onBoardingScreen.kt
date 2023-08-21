@@ -1,7 +1,9 @@
-package com.example.ecommerce.onBoarding
+package com.example.ecommerce.boarding
 
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.ExperimentalAnimationApi
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -14,35 +16,40 @@ import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.navigation.NavHostController
+import androidx.hilt.navigation.compose.hiltViewModel
 import com.example.ecommerce.R
-import com.example.ecommerce.ui.theme.EnableButton
+import com.example.ecommerce.ui.theme.Purple
 import com.google.accompanist.pager.ExperimentalPagerApi
 import com.google.accompanist.pager.*
 import com.google.accompanist.pager.rememberPagerState
+import kotlinx.coroutines.launch
 
 @ExperimentalAnimationApi
 @ExperimentalPagerApi
 @Composable
 fun onBoardingScreen(
     onJoinClick: () -> Unit,
-    onSkipClick: () -> Unit) {
-    val pages = listOf(
-        OnBoardingPage.First,
-        OnBoardingPage.Second, OnBoardingPage.Third)
+    onSkipClick: () -> Unit
+) {
+
+    val pages = listOf(OnBoardingPage.First, OnBoardingPage.Second, OnBoardingPage.Third)
 
     val pagerState = rememberPagerState()
 
-    Column(modifier = Modifier.fillMaxSize(),
+    Column(modifier = Modifier
+        .fillMaxSize()
+        .background(Color.White),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
     ){
@@ -52,18 +59,27 @@ fun onBoardingScreen(
         ) { position ->
             PagerScreen(onBoardingPage = pages[position])
         }
+
         ButtonJoin(onJoinClick)
 
-        Row(modifier = Modifier.fillMaxWidth()
+        Row(modifier = Modifier
+            .fillMaxWidth()
             .padding(16.dp),
             verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.SpaceEvenly
+            horizontalArrangement = Arrangement.Start
         ) {
-            TextSkipButton("Lewati", onSkipClick)
-            HorizontalPagerIndicator(modifier = Modifier
-                .padding(5.dp),
-                pagerState = pagerState)
-            TextNextButton("Selanjutnya", pagerState.currentPage==3)
+            Column(Modifier.weight(1f), horizontalAlignment = Alignment.Start
+            ){
+                TextSkipButton(R.string.skip, onSkipClick)
+            }
+            Column(Modifier.weight(1f), horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                HorizontalPagerIndicator(modifier = Modifier.padding(5.dp), pagerState = pagerState)
+            }
+            Column(Modifier.weight(1f), horizontalAlignment = Alignment.End
+            ) {
+                TextNextButton(R.string.next,pages.size,pagerState)
+            }
         }
     }
 }
@@ -87,37 +103,41 @@ fun PagerScreen(onBoardingPage: OnBoardingPage){
 
 @Composable
 fun ButtonJoin(onClick: () -> Unit){
-    Column(modifier = Modifier.padding(horizontal = 16.dp)) {
-        Button(onClick = onClick,
-            modifier = Modifier
-                .fillMaxWidth(),
-            colors = ButtonDefaults.buttonColors(EnableButton),
-            enabled =  true
-        ) {
-            Text(
-                text = stringResource(id = R.string.gabung),
-                fontWeight = FontWeight.W500
-            )
-        }
+    Button(onClick = onClick,
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp),
+        colors = ButtonDefaults.buttonColors(Purple),
+        enabled =  true
+    ) {
+        Text(
+            text = stringResource(id = R.string.gabung),
+            fontWeight = FontWeight.W500
+        )
     }
 }
 
 @Composable
-fun TextSkipButton(label : String, onClick: () -> Unit){
+fun TextSkipButton(label : Int, onClick: () -> Unit){
     TextButton(onClick = onClick,modifier = Modifier
     ) {
-        Text(text = label, fontSize = 14.sp, color = EnableButton)
+        Text(text = stringResource(id = label), fontSize = 14.sp, color = Purple)
     }
 }
 
+@OptIn(ExperimentalPagerApi::class)
 @Composable
-fun TextNextButton(label : String, isNotVisible : Boolean){
-    TextButton(modifier = Modifier
-        .fillMaxWidth(),
-        enabled = true,
-        onClick = {}
-    ) {
-        Text(text = label, fontSize = 14.sp, color = EnableButton)
+fun TextNextButton(label : Int, size: Int, pageState : PagerState){
+    val scope = rememberCoroutineScope()
+    AnimatedVisibility(visible = pageState.currentPage != 2 ) {
+        TextButton(onClick = {
+            if (pageState.currentPage + 1 < size) scope.launch {
+                pageState.scrollToPage(pageState.currentPage + 1)
+            }
+        },modifier = Modifier
+        ) {
+            Text(text = stringResource(id = label), fontSize = 14.sp, color = Purple)
+        }
     }
 }
 
@@ -126,6 +146,5 @@ fun TextNextButton(label : String, isNotVisible : Boolean){
 @Composable
 @Preview(showBackground = true)
 fun OnBoardingPreview(){
-    onBoardingScreen(onJoinClick = { }) {
-    }
+    onBoardingScreen(onJoinClick = { }) {}
 }

@@ -1,4 +1,4 @@
-package com.example.ecommerce.auth
+package com.example.ecommerce.auth.register
 
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.runtime.Composable

@@ -1,7 +1,5 @@
 package com.example.ecommerce.auth
 
-import com.example.ecommerce.TextFieldState
-import com.example.ecommerce.textFieldStateSaver
 import java.util.regex.Pattern
 
 private const val EMAIL_VALIDATION_REGEX = "^(.+)@(.+)\$"

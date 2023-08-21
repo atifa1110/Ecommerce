@@ -1,7 +1,6 @@
-package com.example.ecommerce.auth
+package com.example.ecommerce.auth.register
 
 import android.util.Log
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -10,24 +9,35 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.ecommerce.R
-import com.example.ecommerce.ui.theme.EnableButton
+import com.example.ecommerce.auth.EmailState
+import com.example.ecommerce.auth.PasswordState
+import com.example.ecommerce.auth.login.DividerButton
+import com.example.ecommerce.auth.login.EmailComponent
+import com.example.ecommerce.auth.login.PasswordComponent
+import com.example.ecommerce.auth.login.TextSyaratKetentuan
+import com.example.ecommerce.ui.theme.Purple
 import com.example.ecommerce.ui.theme.textColor
 
 @ExperimentalMaterial3Api
@@ -38,17 +48,22 @@ fun RegisterScreen(
 ) {
     Scaffold(
         topBar = {
-            TopAppBar(title = {
-                Column(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(64.dp)
-                ) {
-                    Text("Daftar", fontSize = 22.sp, color = textColor, fontWeight = FontWeight.Normal)
-
-                    Spacer(modifier = Modifier.height(1.dp).fillMaxWidth().background(Color.LightGray))
+            CenterAlignedTopAppBar(modifier = Modifier
+                .drawBehind {
+                    val borderSize = 1.dp.toPx()
+                    drawLine(
+                        color = Color.LightGray,
+                        start = Offset(0f,size.height),
+                        end = Offset(size.width,size.height),
+                        strokeWidth = borderSize
+                    )
+                },
+                title = {
+                    Text(stringResource(id = R.string.register),
+                        fontSize = 22.sp, color = textColor,
+                        fontWeight = FontWeight.Normal)
                 }
-            })
+            )
         }
     ) {
         Column(modifier = Modifier
@@ -58,39 +73,30 @@ fun RegisterScreen(
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
 
-            val focusRequester = remember { FocusRequester() }
-            val emailState = remember { EmailState() }
-            val passwordState = remember { PasswordState() }
+            var email = rememberSaveable { mutableStateOf("") }
+            var emailError = rememberSaveable { mutableStateOf(false) }
 
-            val onSubmit = {
-                if (emailState.isValid && passwordState.isValid) {
-                    //onSignInSubmitted(emailState.text, passwordState.text)
-                    Log.d("LoginScreen", "Data is Valid")
-                }
-            }
+            var password = rememberSaveable { mutableStateOf("") }
+            var passwordError = rememberSaveable { mutableStateOf(false) }
 
             Spacer(modifier = Modifier.height(20.dp))
 
-            Email(
-                emailState = emailState,
-                onImeAction = { onSubmit()})
+            EmailComponent(input = email,
+                inputError = emailError)
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            Password(
-                label = stringResource(id = R.string.password),
-                passwordState = passwordState,
-                modifier = Modifier.focusRequester(focusRequester),
-                onImeAction = { onSubmit() }
-            )
+            PasswordComponent(
+                password = password,
+                passwordError = passwordError)
 
             Button(
                 onClick = { onRegisterSubmitted() },
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(vertical = 16.dp),
-                colors = ButtonDefaults.buttonColors(EnableButton),
-                enabled =  emailState.isValid && passwordState.isValid
+                colors = ButtonDefaults.buttonColors(Purple),
+                enabled = !emailError.value && !passwordError.value && email.value.isNotEmpty() && password.value.isNotEmpty()
             ) {
                 Text(
                     text = stringResource(id = R.string.register),
@@ -108,7 +114,7 @@ fun RegisterScreen(
                 enabled = true
             ) {
                 Text(
-                    color = EnableButton,
+                    color = Purple,
                     text = stringResource(id = R.string.login),
                     fontWeight = FontWeight.W500
                 )
@@ -117,4 +123,11 @@ fun RegisterScreen(
             TextSyaratKetentuan(false)
         }
     }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+@Preview(showBackground = true)
+fun RegisterPreview(){
+    RegisterScreen(onRegisterSubmitted = {}) { }
 }

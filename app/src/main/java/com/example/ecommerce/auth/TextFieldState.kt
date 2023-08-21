@@ -1,4 +1,4 @@
-package com.example.ecommerce
+package com.example.ecommerce.auth
 
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf

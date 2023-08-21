@@ -1,4 +1,4 @@
-package com.example.ecommerce.onBoarding
+package com.example.ecommerce.boarding
 
 import androidx.annotation.DrawableRes
 import com.example.ecommerce.R
