@@ -11,10 +11,10 @@ import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 
-class LoginViewModel():ViewModel() {
+@HiltViewModel
+class LoginViewModel@Inject constructor(private val loginRepository: AuthRepository):ViewModel() {
 
-    val loginRepository = LoginRepository()
-    val loginResult: MutableLiveData<BaseResponse<LoginResponse>> = MutableLiveData()
+    val loginResult: MutableLiveData<BaseResponse<String>> = MutableLiveData()
 
     fun loginUser(api: String, loginRequest: AuthRequest) {
         loginResult.value = BaseResponse.Loading()
@@ -22,8 +22,10 @@ class LoginViewModel():ViewModel() {
             try {
                 val response = loginRepository.loginUser(api, loginRequest)
                 if (response.code() == 200) {
-                    loginResult.value = BaseResponse.Success(response.body())
-                } else {
+                    loginResult.value = BaseResponse.Success(response.body().toString())
+                } else if(response.code() == 400){
+                    loginResult.value = BaseResponse.Error(response.message())
+                } else{
                     loginResult.value = BaseResponse.Error(response.message())
                 }
             } catch (ex: Exception) {

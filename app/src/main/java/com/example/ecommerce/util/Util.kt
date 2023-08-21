@@ -1,4 +1,4 @@
-package com.example.ecommerce
+package com.example.ecommerce.util
 
 import android.content.Context
 import android.widget.Toast

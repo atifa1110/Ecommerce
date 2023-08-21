@@ -1,4 +1,4 @@
-package com.example.ecommerce
+package com.example.ecommerce.util
 
 import androidx.compose.material.CircularProgressIndicator
 import androidx.compose.runtime.Composable

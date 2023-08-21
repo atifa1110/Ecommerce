@@ -77,7 +77,9 @@ import kotlin.contracts.contract
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun ProfileScreen(){
+fun ProfileScreen(
+    onNavigateToHome : () -> Unit
+){
 
     var openDialog by remember { mutableStateOf(false) }
     var name = remember { mutableStateOf("") }

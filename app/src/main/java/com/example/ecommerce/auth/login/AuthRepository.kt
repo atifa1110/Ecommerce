@@ -1,19 +1,29 @@
 package com.example.ecommerce.auth.login
 
-import androidx.lifecycle.MutableLiveData
 import com.example.ecommerce.api.method.ApiClient
 import com.example.ecommerce.api.method.ApiService
 import com.example.ecommerce.api.request.AuthRequest
 import com.example.ecommerce.api.response.LoginResponse
 import com.example.ecommerce.api.response.RegisterResponse
+import okhttp3.ResponseBody
+import retrofit2.Call
 import retrofit2.Response
+import retrofit2.Retrofit
+import javax.inject.Inject
 
-class LoginRepository() : ApiService{
+class AuthRepository @Inject constructor(private val retrofit: Retrofit) : ApiService{
+
+    private val service = retrofit.create(ApiService::class.java)
+
     override suspend fun loginUser(api: String, loginRequest: AuthRequest): Response<LoginResponse> {
-       return ApiClient.getApiService().loginUser(api,loginRequest)
+        return service.loginUser(api,loginRequest)
     }
 
     override suspend fun registerUser(api: String, registerRequest: AuthRequest): Response<RegisterResponse> {
-        return ApiClient.getApiService().registerUser(api,registerRequest)
+        return service.registerUser(api,registerRequest)
+    }
+
+    override suspend fun refresh(api: String, token: String): Response<ResponseBody> {
+        return service.refresh(api,token)
     }
 }

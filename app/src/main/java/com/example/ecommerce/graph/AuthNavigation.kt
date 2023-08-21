@@ -6,6 +6,7 @@ import androidx.navigation.NavHostController
 import androidx.navigation.compose.composable
 import androidx.navigation.navigation
 import com.example.ecommerce.auth.login.LoginRoute
+import com.example.ecommerce.auth.profile.ProfileRoute
 import com.example.ecommerce.auth.register.RegisterRoute
 
 @ExperimentalMaterial3Api
@@ -16,7 +17,7 @@ fun NavGraphBuilder.authNavGraph(navController: NavHostController) {
     ) {
         composable(route = Authentication.Login.route) {
             LoginRoute(
-                onLoginSubmitted = {
+                onNavigateToLogin = {
                     navController.navigate(Bottom.Home.route){
                         popUpTo(navController.graph.startDestinationId) {
                             inclusive = true
@@ -24,7 +25,7 @@ fun NavGraphBuilder.authNavGraph(navController: NavHostController) {
                         launchSingleTop = true
                     }
                 },
-                onRegisterClick = {
+                onNavigateToRegister = {
                     navController.navigate(Authentication.Register.route){
                         popUpTo(navController.graph.startDestinationId) {
                             inclusive = true
@@ -36,11 +37,28 @@ fun NavGraphBuilder.authNavGraph(navController: NavHostController) {
         }
         composable(route = Authentication.Register.route) {
             RegisterRoute(
-                onRegisterSubmitted = {
+                onNavigateToProfile = {
                     navController.navigate(Authentication.Profile.route)
                 },
-                onLoginClick = {
-                    navController.navigate(Authentication.Login.route)
+                onNavigateToLogin= {
+                    navController.navigate(Authentication.Login.route){
+                        popUpTo(navController.graph.startDestinationId) {
+                            inclusive = true
+                        }
+                        launchSingleTop = true
+                    }
+                }
+            )
+        }
+        composable(route = Authentication.Profile.route) {
+            ProfileRoute(
+                onNavigateToHome= {
+                    navController.navigate(Graph.Home.route){
+                        popUpTo(navController.graph.startDestinationId) {
+                            inclusive = true
+                        }
+                        launchSingleTop = true
+                    }
                 }
             )
         }
