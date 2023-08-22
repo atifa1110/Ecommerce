@@ -8,9 +8,12 @@ import com.example.ecommerce.api.response.BaseResponse
 import com.example.ecommerce.api.response.LoginResponse
 import com.example.ecommerce.api.response.RegisterResponse
 import com.example.ecommerce.auth.login.AuthRepository
+import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.launch
+import javax.inject.Inject
 
-class RegisterViewModel(private val registerRepository : AuthRepository) : ViewModel() {
+@HiltViewModel
+class RegisterViewModel @Inject constructor(private val registerRepository : AuthRepository) : ViewModel() {
 
     val registerResult: MutableLiveData<BaseResponse<RegisterResponse>> = MutableLiveData()
 

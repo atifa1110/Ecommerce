@@ -19,7 +19,9 @@ import com.example.ecommerce.R
 import com.example.ecommerce.ui.theme.Purple
 
 @Composable
-fun HomeScreen(onLogoutClick: () -> Unit) {
+fun HomeScreen(
+    onLogoutClick: () -> Unit
+) {
     Column (modifier = Modifier.fillMaxSize().padding(16.dp),
         verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally

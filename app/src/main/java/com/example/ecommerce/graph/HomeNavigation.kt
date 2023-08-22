@@ -14,14 +14,16 @@ import com.example.ecommerce.ScreenContent
 import com.example.ecommerce.main.home.HomeRoute
 
 @Composable
-fun HomeNavigation (navController: NavHostController,logout: () -> Unit) {
+fun HomeNavigation (navController: NavHostController,onLogoutClick: () -> Unit) {
     NavHost(navController = navController,
         route = Graph.Home.route,
         startDestination = Bottom.Home.route){
         composable(Bottom.Home.route){
-           HomeRoute {
-               logout
-           }
+           HomeRoute (
+               onLogoutClick = {
+                   onLogoutClick()
+               }
+           )
         }
         composable(Bottom.Store.route){
             ScreenContent(

@@ -15,7 +15,7 @@ import com.google.accompanist.pager.ExperimentalPagerApi
 @Composable
 fun RootNavigationGraph(navController: NavHostController, startDestination: String) {
     NavHost(navController = navController,
-        startDestination = Graph.onBoarding.route) {
+        startDestination = startDestination) {
         composable(route = Graph.onBoarding.route){
             onBoardingRoute(
                 onNavigateToRegister= {

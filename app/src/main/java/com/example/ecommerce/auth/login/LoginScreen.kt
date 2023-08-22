@@ -65,14 +65,17 @@ import androidx.lifecycle.Observer
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.ecommerce.util.CommonDialog
 import com.example.ecommerce.R
+import com.example.ecommerce.api.request.AuthRequest
 import com.example.ecommerce.api.response.BaseResponse
 import com.example.ecommerce.util.showMsg
 import com.example.ecommerce.ui.theme.Purple
 import com.example.ecommerce.ui.theme.textColor
+import com.example.ecommerce.util.Constant
 
 @ExperimentalMaterial3Api
 @Composable
 fun LoginScreen(
+    onNavigateToHome: () -> Unit,
     onLoginSubmitted: () -> Unit,
     onRegisterClick: () -> Unit
 ) {
@@ -84,8 +87,13 @@ fun LoginScreen(
     if (isDialog)
         CommonDialog()
 
-    val loginViewModel : LoginViewModel = hiltViewModel()
+    var email = rememberSaveable { mutableStateOf("") }
+    var emailError = rememberSaveable { mutableStateOf(false) }
 
+    var password = rememberSaveable { mutableStateOf("") }
+    var passwordError = rememberSaveable { mutableStateOf(false) }
+
+    val loginViewModel : LoginViewModel = hiltViewModel()
     loginViewModel.loginResult.observe(lifecycleOwner, Observer {
         when (it) {
             is BaseResponse.Loading -> {
@@ -96,6 +104,7 @@ fun LoginScreen(
                 isDialog = false
                 Log.d("LoginResponse",it.toString())
                 context.showMsg(it.toString())
+                onNavigateToHome()
             }
 
             is BaseResponse.Error -> {
@@ -134,13 +143,6 @@ fun LoginScreen(
             .padding(horizontal = 16.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-
-            var email = rememberSaveable { mutableStateOf("") }
-            var emailError = rememberSaveable { mutableStateOf(false) }
-
-            var password = rememberSaveable { mutableStateOf("") }
-            var passwordError = rememberSaveable { mutableStateOf(false) }
-
             Spacer(modifier = Modifier.height(20.dp))
 
             EmailComponent(input = email,
@@ -153,7 +155,9 @@ fun LoginScreen(
                 passwordError = passwordError)
 
             Button(
-                onClick = { onLoginSubmitted() },
+                onClick = {
+                    loginViewModel.loginUser(Constant.API_KEY, AuthRequest(email.value,password.value,"asdf-qwer-zxcv"))
+                },
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(vertical = 16.dp),
@@ -399,8 +403,8 @@ fun TextFieldErrorEmail(textError: String, color: Color) {
 @Composable
 fun LoginPreview() {
     Box(modifier = Modifier.fillMaxSize()){
-        LoginScreen(onLoginSubmitted = {}) {
-            
+        LoginScreen(onNavigateToHome = { }, onLoginSubmitted = { /*TODO*/ }) {
+
         }
     }
 }

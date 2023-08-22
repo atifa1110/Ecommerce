@@ -1,9 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <style name="Theme.Ecommerce" parent="android:Theme.Material.NoActionBar"/>
+    <style name="Theme.Ecommerce" parent="android:Theme.Material.Light.NoActionBar"/>
 
     <style name="Theme.App.Splash" parent="Theme.SplashScreen">
         <!-- Set the splash screen background, animated icon, and animation duration. -->
+        <item name="windowSplashScreenBackground">@color/white</item>
         <item name="windowSplashScreenAnimatedIcon">@drawable/news_app</item>
         <item name="windowSplashScreenAnimationDuration">200</item>
         <item name="postSplashScreenTheme">@style/Theme.Ecommerce</item>

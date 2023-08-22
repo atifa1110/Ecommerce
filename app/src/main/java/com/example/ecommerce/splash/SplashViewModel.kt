@@ -22,7 +22,7 @@ class SplashViewModel @Inject constructor(
     private val _startDestination: MutableState<String> = mutableStateOf(Graph.onBoarding.route)
     val startDestination: State<String> = _startDestination
 
-    //everytime splash screen open get boarding state
+    //initialize screen page everytime application is open
     init {
         viewModelScope.launch {
             repository.getOnBoardingState().collect { complete ->

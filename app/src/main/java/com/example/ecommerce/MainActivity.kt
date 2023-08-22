@@ -3,6 +3,7 @@ package com.example.ecommerce
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.compose.animation.ExperimentalAnimationApi
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
@@ -20,10 +21,13 @@ import com.example.ecommerce.auth.register.RegisterScreen
 import com.example.ecommerce.graph.RootNavigationGraph
 import com.example.ecommerce.splash.SplashViewModel
 import com.example.ecommerce.ui.theme.EcommerceTheme
+import com.google.accompanist.pager.ExperimentalPagerApi
 import dagger.hilt.android.AndroidEntryPoint
 import javax.inject.Inject
 
 @ExperimentalMaterial3Api
+@ExperimentalAnimationApi
+@ExperimentalPagerApi
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
 
@@ -33,14 +37,15 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        installSplashScreen()
+        installSplashScreen().setKeepOnScreenCondition {
+            !splashViewModel.isLoading.value
+        }
 
         setContent {
             EcommerceTheme {
                 val screen by splashViewModel.startDestination
                 val navController = rememberNavController()
                 RootNavigationGraph(navController,screen)
-                //ProfileScreen()
             }
         }
     }

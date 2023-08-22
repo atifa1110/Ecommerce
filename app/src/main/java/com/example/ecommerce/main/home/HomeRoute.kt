@@ -6,7 +6,7 @@ import androidx.compose.runtime.Composable
 fun HomeRoute(
     onLogoutClick: () -> Unit
 ) {
-    HomeScreen {
+    HomeScreen (
         onLogoutClick
-    }
+    )
 }

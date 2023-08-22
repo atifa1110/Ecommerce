@@ -55,6 +55,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
@@ -63,12 +64,20 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.content.FileProvider
+import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.Observer
 import coil.compose.rememberImagePainter
 import com.example.ecommerce.R
+import com.example.ecommerce.api.request.AuthRequest
+import com.example.ecommerce.api.response.BaseResponse
 import com.example.ecommerce.auth.login.TextSyaratKetentuan
+import com.example.ecommerce.auth.register.RegisterViewModel
 import com.example.ecommerce.ui.theme.LightGray
 import com.example.ecommerce.ui.theme.Purple
 import com.example.ecommerce.ui.theme.textColor
+import com.example.ecommerce.util.CommonDialog
+import com.example.ecommerce.util.Constant
+import com.example.ecommerce.util.showMsg
 import java.io.File
 import java.text.SimpleDateFormat
 import java.util.Date
@@ -78,13 +87,44 @@ import kotlin.contracts.contract
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ProfileScreen(
+    email:String?,
+    password:String?,
     onNavigateToHome : () -> Unit
 ){
+    val context = LocalContext.current
+    val lifecycleOwner = LocalLifecycleOwner.current
+    var isDialog by remember { mutableStateOf(false) }
+
+    if (isDialog) CommonDialog()
+
+    val registerViewModel : RegisterViewModel = hiltViewModel()
+    registerViewModel.registerResult.observe(lifecycleOwner, Observer {
+        when (it) {
+            is BaseResponse.Loading -> {
+                isDialog = true
+            }
+
+            is BaseResponse.Success -> {
+                isDialog = false
+                Log.d("RegisterResponse",it.toString())
+                context.showMsg(it.toString())
+                onNavigateToHome()
+            }
+
+            is BaseResponse.Error -> {
+                isDialog = false
+                Log.d("RegisterResponse",it.msg.toString())
+                context.showMsg(it.msg.toString())
+            }
+            else -> {
+                context.showMsg("Data is Empty")
+            }
+        }
+    })
 
     var openDialog by remember { mutableStateOf(false) }
     var name = remember { mutableStateOf("") }
 
-    val context = LocalContext.current
     var imageUri by remember { mutableStateOf<Uri?>(null) }
     var bitmap by remember { mutableStateOf<Bitmap?>(null) }
 
@@ -128,12 +168,16 @@ fun ProfileScreen(
             )
         }
     ) {
-        Column(modifier = Modifier.padding(it).padding(horizontal = 16.dp),
+        Column(modifier = Modifier
+            .padding(it)
+            .padding(horizontal = 16.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
 
             //Circle Image
-            Column(modifier = Modifier.padding(24.dp).clickable { openDialog = true }
+            Column(modifier = Modifier
+                .padding(24.dp)
+                .clickable { openDialog = true }
                 .size(128.dp)
                 .clip(CircleShape)
                 .background(Purple),
@@ -167,7 +211,9 @@ fun ProfileScreen(
             TextField(label = R.string.name, input = name)
 
             //button done
-            Button(onClick = {},
+            Button(onClick = {
+                registerViewModel.registerUser(Constant.API_KEY, AuthRequest(email,password,"asdf-qwer-zxcv"))
+            },
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(vertical = 16.dp),
@@ -185,7 +231,9 @@ fun ProfileScreen(
             //if dialog is open than will open alert dialog
             if(openDialog) {
                 AlertDialog(onDismissRequest = { openDialog = false }) {
-                    Column(modifier= Modifier.background(Color.White).padding(8.dp)) {
+                    Column(modifier= Modifier
+                        .background(Color.White)
+                        .padding(8.dp)) {
                         Text(modifier = Modifier.padding(top = 16.dp, bottom = 16.dp, start= 12.dp), text = "Pilih Gambar",fontSize = 24.sp, fontWeight = FontWeight.W400)
 
                         TextButton(

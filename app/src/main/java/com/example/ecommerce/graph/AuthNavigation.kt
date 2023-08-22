@@ -3,7 +3,9 @@ package com.example.ecommerce.graph
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.navigation.NavGraphBuilder
 import androidx.navigation.NavHostController
+import androidx.navigation.NavType
 import androidx.navigation.compose.composable
+import androidx.navigation.navArgument
 import androidx.navigation.navigation
 import com.example.ecommerce.auth.login.LoginRoute
 import com.example.ecommerce.auth.profile.ProfileRoute
@@ -17,7 +19,7 @@ fun NavGraphBuilder.authNavGraph(navController: NavHostController) {
     ) {
         composable(route = Authentication.Login.route) {
             LoginRoute(
-                onNavigateToLogin = {
+                onNavigateToHome= {
                     navController.navigate(Bottom.Home.route){
                         popUpTo(navController.graph.startDestinationId) {
                             inclusive = true
@@ -37,8 +39,9 @@ fun NavGraphBuilder.authNavGraph(navController: NavHostController) {
         }
         composable(route = Authentication.Register.route) {
             RegisterRoute(
-                onNavigateToProfile = {
-                    navController.navigate(Authentication.Profile.route)
+                onNavigateToProfile = { email, password ->
+                    //parsing email and password to profile page
+                    navController.navigate("Profile/$email/$password")
                 },
                 onNavigateToLogin= {
                     navController.navigate(Authentication.Login.route){
@@ -50,8 +53,17 @@ fun NavGraphBuilder.authNavGraph(navController: NavHostController) {
                 }
             )
         }
-        composable(route = Authentication.Profile.route) {
+        composable(route = Authentication.Profile.route,
+            arguments = listOf(navArgument("email") { type = NavType.StringType },
+                navArgument("password"){type = NavType.StringType }
+            )
+        ) {
+            //get email and password argument from register page
+            val email = it.arguments?.getString("email")
+            val password = it.arguments?.getString("password")
             ProfileRoute(
+                email,
+                password,
                 onNavigateToHome= {
                     navController.navigate(Graph.Home.route){
                         popUpTo(navController.graph.startDestinationId) {
@@ -68,5 +80,5 @@ fun NavGraphBuilder.authNavGraph(navController: NavHostController) {
 sealed class Authentication(val route: String) {
     object Login : Authentication(route = "Login")
     object Register : Authentication(route = "Register")
-    object Profile : Authentication(route = "Profile")
+    object Profile : Authentication(route = "Profile/{email}/{password}")
 }

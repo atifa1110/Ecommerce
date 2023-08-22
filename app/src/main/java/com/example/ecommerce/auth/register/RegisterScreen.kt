@@ -1,6 +1,5 @@
 package com.example.ecommerce.auth.register
 
-import android.util.Log
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -15,75 +14,37 @@ import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.drawBehind
-import androidx.compose.ui.focus.FocusRequester
-import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.lifecycle.Observer
-import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.ecommerce.R
-import com.example.ecommerce.api.response.BaseResponse
 import com.example.ecommerce.auth.login.DividerButton
 import com.example.ecommerce.auth.login.EmailComponent
 import com.example.ecommerce.auth.login.PasswordComponent
 import com.example.ecommerce.auth.login.TextSyaratKetentuan
 import com.example.ecommerce.ui.theme.Purple
 import com.example.ecommerce.ui.theme.textColor
-import com.example.ecommerce.util.CommonDialog
-import com.example.ecommerce.util.showMsg
 
 @ExperimentalMaterial3Api
 @Composable
 fun RegisterScreen(
-    onRegisterSubmitted: () -> Unit,
+    onRegisterSubmitted: (email: String, password: String) -> Unit,
     onLoginClick: () -> Unit
 ) {
-    val context = LocalContext.current
-    val lifecycleOwner = LocalLifecycleOwner.current
-    var isDialog by remember { mutableStateOf(false) }
+    var email = rememberSaveable { mutableStateOf("") }
+    var emailError = rememberSaveable { mutableStateOf(false) }
 
-    if (isDialog)
-        CommonDialog()
-
-    val registerViewModel: RegisterViewModel = viewModel()
-
-    registerViewModel.registerResult.observe(lifecycleOwner, Observer {
-        when (it) {
-            is BaseResponse.Loading -> {
-                isDialog = true
-            }
-
-            is BaseResponse.Success -> {
-                isDialog = false
-                Log.d("LoginResponse",it.toString())
-                context.showMsg(it.toString())
-            }
-
-            is BaseResponse.Error -> {
-                isDialog = false
-                Log.d("LoginResponse",it.msg.toString())
-                context.showMsg(it.msg.toString())
-            }
-            else -> {
-                context.showMsg("Data is Empty")
-            }
-        }
-    })
+    var password = rememberSaveable { mutableStateOf("") }
+    var passwordError = rememberSaveable { mutableStateOf(false) }
 
     Scaffold(
         topBar = {
@@ -111,13 +72,6 @@ fun RegisterScreen(
             .padding(horizontal = 16.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-
-            var email = rememberSaveable { mutableStateOf("") }
-            var emailError = rememberSaveable { mutableStateOf(false) }
-
-            var password = rememberSaveable { mutableStateOf("") }
-            var passwordError = rememberSaveable { mutableStateOf(false) }
-
             Spacer(modifier = Modifier.height(20.dp))
 
             EmailComponent(input = email,
@@ -130,7 +84,7 @@ fun RegisterScreen(
                 passwordError = passwordError)
 
             Button(
-                onClick = { onRegisterSubmitted() },
+                onClick = { onRegisterSubmitted(email.value,password.value) },
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(vertical = 16.dp),
@@ -168,5 +122,7 @@ fun RegisterScreen(
 @Composable
 @Preview(showBackground = true)
 fun RegisterPreview(){
-    RegisterScreen(onRegisterSubmitted = {}) { }
+//    RegisterScreen(onRegisterSubmitted = {"",""}) {
+//
+//    }
 }

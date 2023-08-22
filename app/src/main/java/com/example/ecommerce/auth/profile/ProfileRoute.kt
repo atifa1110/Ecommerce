@@ -4,8 +4,10 @@ import androidx.compose.runtime.Composable
 
 @Composable
 fun ProfileRoute (
+    email:String?,
+    password:String?,
     onNavigateToHome : () -> Unit
 ){
 
-    ProfileScreen(onNavigateToHome)
+    ProfileScreen(email,password,onNavigateToHome)
 }

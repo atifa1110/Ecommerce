@@ -10,16 +10,13 @@ import com.example.ecommerce.api.request.AuthRequest
 @ExperimentalMaterial3Api
 @Composable
 fun LoginRoute(
-    onNavigateToLogin: () -> Unit,
+    onNavigateToHome: () -> Unit,
     onNavigateToRegister: () -> Unit
 ) {
 
-    val loginViewModel : LoginViewModel = hiltViewModel()
-    val api = Constant.API_KEY
     LoginScreen(
-        onLoginSubmitted =  {
-            loginViewModel.loginUser(api, AuthRequest("test@gmail.com","12345678","asdf-qwer-zxcv"))
-            //onNavigateToLogin
-        },
-        onRegisterClick = onNavigateToRegister)
+        onNavigateToHome = onNavigateToHome,
+        onLoginSubmitted =  {},
+        onRegisterClick = onNavigateToRegister
+    )
 }
