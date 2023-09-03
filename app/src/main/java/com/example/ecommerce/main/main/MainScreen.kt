@@ -90,9 +90,7 @@ fun MainScreen(navController: NavHostController) {
                     popUpTo(Graph.Home.route) {
                         inclusive = true
                     }
-                    launchSingleTop = true
                 }
-
             }
         }
     }
@@ -142,8 +140,12 @@ fun RowScope.AddItem(
         } == true,
         onClick = {
             navController.navigate(screen.route) {
-                popUpTo(navController.graph.findStartDestination().id)
+                popUpTo(navController.graph.findStartDestination().id) {
+                    inclusive = true
+                    saveState = true
+                }
                 launchSingleTop = true
+                restoreState = true
             }
         }
     )
@@ -153,5 +155,5 @@ fun RowScope.AddItem(
 @Composable
 @Preview(showBackground = true)
 fun MainPreview(){
-    //MainScreen()
+    MainScreen(navController = rememberNavController())
 }

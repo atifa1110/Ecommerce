@@ -1,10 +1,13 @@
 package com.example.ecommerce.graph
 
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.material.ExperimentalMaterialApi
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.ListAlt
 import androidx.compose.material.icons.filled.Store
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.navigation.NavHostController
@@ -12,7 +15,11 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import com.example.ecommerce.ScreenContent
 import com.example.ecommerce.main.home.HomeRoute
+import com.example.ecommerce.main.store.StoreScreen
 
+@OptIn(ExperimentalMaterialApi::class, ExperimentalMaterial3Api::class,
+    ExperimentalLayoutApi::class
+)
 @Composable
 fun HomeNavigation (navController: NavHostController,onLogoutClick: () -> Unit) {
     NavHost(navController = navController,
@@ -26,9 +33,7 @@ fun HomeNavigation (navController: NavHostController,onLogoutClick: () -> Unit) 
            )
         }
         composable(Bottom.Store.route){
-            ScreenContent(
-                name = Bottom.Store.route,
-                onClick = {})
+            StoreScreen()
         }
         composable(Bottom.Wishlist.route){
             ScreenContent(
