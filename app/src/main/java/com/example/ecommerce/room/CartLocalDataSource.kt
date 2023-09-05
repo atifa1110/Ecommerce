@@ -1,4 +1,4 @@
 package com.example.ecommerce.room
 
-class CartRepositoryImpl {
+class CartLocalDataSource {
 }
