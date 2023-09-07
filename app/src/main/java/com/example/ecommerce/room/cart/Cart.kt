@@ -1,13 +1,17 @@
 package com.example.ecommerce.room
 
+import androidx.annotation.NonNull
 import androidx.room.ColumnInfo
 import androidx.room.Entity
 import androidx.room.PrimaryKey
-@Entity(tableName = "products")
-data class Products (
+import org.jetbrains.annotations.NotNull
+
+@Entity(tableName = "cart")
+data class Cart (
     @PrimaryKey(autoGenerate = false)
+    @NonNull
     @ColumnInfo(name = "productId")
-    var productId: String?= null,
+    var productId: String,
     @ColumnInfo("productName")
     val productName: String? = null,
     @ColumnInfo("productPrice")
@@ -35,5 +39,9 @@ data class Products (
     @ColumnInfo("productVariantName")
     val productVariantName:String? = null,
     @ColumnInfo("productVariantPrice")
-    val productVariantPrice:String? = null
+    val productVariantPrice:Int? = null,
+    @ColumnInfo("quantity")
+    var quantity:Int? = null,
+    @ColumnInfo("selected")
+    var selected:Boolean? = false
 )
