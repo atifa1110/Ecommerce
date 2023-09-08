@@ -1,4 +1,4 @@
-package com.example.ecommerce.room
+package com.example.ecommerce.room.cart
 
 import android.util.Log
 import com.example.ecommerce.api.model.ProductVariant
@@ -6,15 +6,11 @@ import com.example.ecommerce.api.response.DetailResponse
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.flow
-import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.runBlocking
 
 class CartRepositoryImpl(
     private val localDataSource: CartLocalDataSource
-): CartRepository{
+): CartRepository {
 
     override suspend fun addProductsToCart(
         productDetail: DetailResponse.ProductDetail,
@@ -46,7 +42,6 @@ class CartRepositoryImpl(
         localDataSource.selectedAll(selected)
     }
 
-
     override suspend fun getTotal(): Int {
         val list = localDataSource.getSelected()
         return if(list.isNotEmpty()){
@@ -54,6 +49,15 @@ class CartRepositoryImpl(
         }else{
             0
         }
+    }
+
+    override fun getAllSelected(): Boolean {
+        val list = localDataSource.getAllSelected()
+        var boolean = false
+        list.forEach { cart ->
+            boolean = cart.selected!!
+        }
+        return boolean
     }
 
     override fun getAllCarts(): Flow<List<Cart>> = localDataSource.getAllCart()
@@ -70,7 +74,7 @@ class CartRepositoryImpl(
         return localDataSource.deleteAllCart()
     }
 
-    override suspend fun updateAddQuantity(cart: Cart,quantity: Int) =
+    override suspend fun updateAddQuantity(cart: Cart, quantity: Int) =
         if(cart.quantity==0){
             localDataSource.deleteById(cart.productId)
         }else {

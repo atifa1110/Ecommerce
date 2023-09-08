@@ -1,8 +1,8 @@
 plugins {
     id("com.android.application")
     id("org.jetbrains.kotlin.android")
-    kotlin("kapt")
     id("com.google.dagger.hilt.android")
+    kotlin("kapt")
 }
 
 android {
@@ -40,7 +40,6 @@ android {
     }
     buildFeatures {
         compose = true
-        buildConfig = true
     }
     composeOptions {
         kotlinCompilerExtensionVersion = "1.4.3"
@@ -73,42 +72,76 @@ dependencies {
     debugImplementation("androidx.compose.ui:ui-tooling")
     debugImplementation("androidx.compose.ui:ui-test-manifest")
 
-    //splash screen
+    //Splash screen
     implementation("androidx.core:core-splashscreen:1.0.0")
 
-    //navigation
+    //Navigation
     implementation("androidx.navigation:navigation-runtime-ktx:2.6.0")
     implementation("androidx.navigation:navigation-compose:2.6.0")
 
-    //extended icon
+    //Extended icon
     implementation("androidx.compose.material:material-icons-extended:1.4.3")
 
-    //pager
+    //Pager
     implementation ("com.google.accompanist:accompanist-pager:0.24.2-alpha")
     implementation ("com.google.accompanist:accompanist-pager-indicators:0.24.2-alpha")
 
-    //glide
+    //Glide
     implementation ("com.github.skydoves:landscapist-glide:2.2.6")
 
-    //coil
-    implementation("io.coil-kt:coil-compose:1.4.0")
+    //Coil
+    implementation("io.coil-kt:coil-compose:2.4.0")
 
+    //Retrofit
     implementation ("com.squareup.retrofit2:retrofit:2.9.0")
     implementation ("com.squareup.retrofit2:converter-gson:2.9.0")
-    implementation ("com.squareup.okhttp3:logging-interceptor:4.9.1")
+    implementation ("com.squareup.okhttp3:logging-interceptor:4.11.0")
 
-    //DataStore Preferences
+    //Datastore
     implementation("androidx.datastore:datastore-preferences:1.0.0")
 
     //ViewModel
     implementation("androidx.lifecycle:lifecycle-viewmodel-ktx:2.6.1")
     //LiveData
     implementation("androidx.lifecycle:lifecycle-livedata-ktx:2.6.1")
+    //Chucker
+    debugImplementation("com.github.chuckerteam.chucker:library:4.0.0")
 
-    // Dagger - Hilt
+    //Dagger - Hilt
     implementation("com.google.dagger:hilt-android:2.44")
     kapt("com.google.dagger:hilt-android-compiler:2.44")
     kapt ("androidx.hilt:hilt-compiler:1.0.0")
     implementation ("androidx.hilt:hilt-navigation-compose:1.0.0")
+
+    //Paging
+    implementation("androidx.paging:paging-runtime-ktx:3.2.0")
+    implementation("androidx.paging:paging-compose:3.2.0")
+
+    //Material
+    implementation ("androidx.compose.material:material:1.5.0-beta03")
+
+    //Room
+    val room_version = "2.5.2"
+    implementation("androidx.room:room-runtime:$room_version")
+    annotationProcessor("androidx.room:room-compiler:$room_version")
+    implementation("androidx.room:room-ktx:$room_version")
+    kapt("androidx.room:room-compiler:$room_version")
+
+    val lifecycle_version = "2.6.1"
+    val arch_version = "2.2.0"
+
+    // ViewModel
+    implementation("androidx.lifecycle:lifecycle-viewmodel-ktx:$lifecycle_version")
+    // ViewModel utilities for Compose
+    implementation("androidx.lifecycle:lifecycle-viewmodel-compose:$lifecycle_version")
+    // LiveData
+    implementation("androidx.lifecycle:lifecycle-livedata-ktx:$lifecycle_version")
+    // Lifecycles only (without ViewModel or LiveData)
+    implementation("androidx.lifecycle:lifecycle-runtime-ktx:$lifecycle_version")
+    // Lifecycle utilities for Compose
+    implementation("androidx.lifecycle:lifecycle-runtime-compose:$lifecycle_version")
+
+    // Saved state module for ViewModel
+    implementation("androidx.lifecycle:lifecycle-viewmodel-savedstate:$lifecycle_version")
 
 }

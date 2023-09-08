@@ -14,3 +14,8 @@ val Purple = Color(0xFF6750A4)
 val textColor = Color(0xFF1D1B20)
 val LightGray = Color(0xFFCAC4D0)
 
+val PurpleChip = Color(0xFFE8DEF8)
+val PurplePink = Color(0xFFEADDFF)
+val CardBorder = Color(0xFFDDDDDD)
+val LightPurple = Color(0xFFEADDFF)
+

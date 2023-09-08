@@ -2,15 +2,8 @@ package com.example.ecommerce.auth.profile
 
 
 import android.content.Context
-import android.content.pm.PackageManager
-import android.graphics.Bitmap
-import android.graphics.Camera
-import android.graphics.ImageDecoder
 import android.net.Uri
-import android.os.Build
-import android.provider.MediaStore
 import android.util.Log
-import androidx.activity.compose.ManagedActivityResultLauncher
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.Image
@@ -18,10 +11,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
@@ -52,7 +42,6 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalLifecycleOwner
@@ -65,68 +54,32 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.content.FileProvider
 import androidx.hilt.navigation.compose.hiltViewModel
-import androidx.lifecycle.Observer
 import coil.compose.rememberImagePainter
 import com.example.ecommerce.R
-import com.example.ecommerce.api.request.AuthRequest
 import com.example.ecommerce.api.response.BaseResponse
-import com.example.ecommerce.auth.login.TextSyaratKetentuan
-import com.example.ecommerce.auth.register.RegisterViewModel
+import com.example.ecommerce.auth.login.TextTermCondition
+import com.example.ecommerce.component.ProgressDialog
+import com.example.ecommerce.component.ToastMessage
 import com.example.ecommerce.ui.theme.LightGray
 import com.example.ecommerce.ui.theme.Purple
 import com.example.ecommerce.ui.theme.textColor
-import com.example.ecommerce.util.CommonDialog
-import com.example.ecommerce.util.Constant
-import com.example.ecommerce.util.showMsg
 import java.io.File
-import java.text.SimpleDateFormat
-import java.util.Date
 import java.util.Objects
-import kotlin.contracts.contract
-
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ProfileScreen(
-    email:String?,
-    password:String?,
     onNavigateToHome : () -> Unit
 ){
     val context = LocalContext.current
     val lifecycleOwner = LocalLifecycleOwner.current
     var isDialog by remember { mutableStateOf(false) }
 
-    if (isDialog) CommonDialog()
-
-    val registerViewModel : RegisterViewModel = hiltViewModel()
-    registerViewModel.registerResult.observe(lifecycleOwner, Observer {
-        when (it) {
-            is BaseResponse.Loading -> {
-                isDialog = true
-            }
-
-            is BaseResponse.Success -> {
-                isDialog = false
-                Log.d("RegisterResponse",it.toString())
-                context.showMsg(it.toString())
-                onNavigateToHome()
-            }
-
-            is BaseResponse.Error -> {
-                isDialog = false
-                Log.d("RegisterResponse",it.msg.toString())
-                context.showMsg(it.msg.toString())
-            }
-            else -> {
-                context.showMsg("Data is Empty")
-            }
-        }
-    })
+    if (isDialog) ProgressDialog().ProgressDialog()
 
     var openDialog by remember { mutableStateOf(false) }
-    var name = remember { mutableStateOf("") }
+    val userName = remember { mutableStateOf("") }
 
     var imageUri by remember { mutableStateOf<Uri?>(null) }
-    var bitmap by remember { mutableStateOf<Bitmap?>(null) }
 
     val launcherImage = rememberLauncherForActivityResult(contract =
     ActivityResultContracts.GetContent()) { uri: Uri? ->
@@ -145,6 +98,30 @@ fun ProfileScreen(
         ActivityResultContracts.TakePicture()) {
         capturedImageUri = uri
         Log.d("CapturedImage", capturedImageUri.toString())
+    }
+
+    val profileViewModel : ProfileViewModel = hiltViewModel()
+
+    profileViewModel.profileResult.observe(lifecycleOwner){
+        when (it) {
+            is BaseResponse.Loading -> {
+                isDialog = true
+            }
+
+            is BaseResponse.Success -> {
+                isDialog = false
+                ToastMessage().showMsg(context,it.data!!.message)
+                onNavigateToHome()
+
+            }
+
+            is BaseResponse.Error -> {
+                isDialog = false
+                ToastMessage().showMsg(context,it.msg.toString())
+            }
+
+            else -> {}
+        }
     }
 
     Scaffold(
@@ -208,11 +185,11 @@ fun ProfileScreen(
             }
 
             //text field name
-            TextField(label = R.string.name, input = name)
+            TextField(label = R.string.name, input = userName)
 
             //button done
             Button(onClick = {
-                registerViewModel.registerUser(Constant.API_KEY, AuthRequest(email,password,"asdf-qwer-zxcv"))
+                profileViewModel.getProfileUser(userName.value,"http://192.168.190.125:8080/static/images/")
             },
                 modifier = Modifier
                     .fillMaxWidth()
@@ -226,7 +203,7 @@ fun ProfileScreen(
                 )
             }
 
-            TextSyaratKetentuan(false)
+            TextTermCondition(false)
 
             //if dialog is open than will open alert dialog
             if(openDialog) {
@@ -234,7 +211,10 @@ fun ProfileScreen(
                     Column(modifier= Modifier
                         .background(Color.White)
                         .padding(8.dp)) {
-                        Text(modifier = Modifier.padding(top = 16.dp, bottom = 16.dp, start= 12.dp), text = "Pilih Gambar",fontSize = 24.sp, fontWeight = FontWeight.W400)
+                        Text(modifier = Modifier.padding(top = 16.dp, bottom = 16.dp, start= 12.dp),
+                            fontSize = 24.sp,
+                            text = "Pilih Gambar",
+                            fontWeight = FontWeight.W400)
 
                         TextButton(
                             onClick = {
@@ -261,18 +241,14 @@ fun ProfileScreen(
     }
 }
 
-private fun generateFilename() = "profile-${System.currentTimeMillis()}.jpg"
-
 fun Context.createImageFile(): File {
-    // Create an image file name
-    //val timeStamp = SimpleDateFormat("yyyyMMdd_HHmmss").format(Date())
+    //create an image file name
     val imageFileName = "profile-${System.currentTimeMillis()}"
-    val image = File.createTempFile(
+    return File.createTempFile(
         imageFileName, /* prefix */
         ".jpg", /* suffix */
         externalCacheDir /* directory */
     )
-    return image
 }
 @Composable
 fun TextField(

@@ -15,19 +15,30 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.hilt.navigation.compose.hiltViewModel
 import com.example.ecommerce.R
+import com.example.ecommerce.auth.login.LoginViewModel
+import com.example.ecommerce.main.main.MainViewModel
 import com.example.ecommerce.ui.theme.Purple
 
 @Composable
 fun HomeScreen(
     onLogoutClick: () -> Unit
 ) {
-    Column (modifier = Modifier.fillMaxSize().padding(16.dp),
+    val homeViewModel : HomeViewModel = hiltViewModel()
+
+    Column (modifier = Modifier
+        .fillMaxSize()
+        .padding(16.dp),
         verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally
     ){
         Button(
-            onClick = { onLogoutClick() },
+            onClick = {
+                homeViewModel.saveAccessToken(token = "")
+                homeViewModel.saveLoginState(complete = false)
+                onLogoutClick()
+            },
             modifier = Modifier
                 .padding(vertical = 16.dp),
             colors = ButtonDefaults.buttonColors(Purple),
@@ -44,6 +55,5 @@ fun HomeScreen(
 @Preview(showBackground = true)
 @Composable
 fun HomePreview(){
-    HomeScreen {
-    }
+
 }

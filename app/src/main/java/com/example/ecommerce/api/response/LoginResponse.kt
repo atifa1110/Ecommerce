@@ -8,9 +8,9 @@ data class LoginResponse(
     @SerializedName("message")
     var message: String,
     @SerializedName("data")
-    var data : Data
+    var data : LoginData
 ) {
-    data class Data(
+    data class LoginData(
         @SerializedName("userName")
         var userName: String,
         @SerializedName("userImage")

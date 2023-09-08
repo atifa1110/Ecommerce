@@ -1,4 +1,4 @@
-package com.example.ecommerce.main
+package com.example.ecommerce.main.main
 
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.State
@@ -8,45 +8,35 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.ecommerce.datastore.DataStoreRepositoryImpl
 import com.example.ecommerce.graph.Graph
+import com.example.ecommerce.room.cart.CartRepository
+import com.example.ecommerce.room.favorite.FavoriteRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
-import java.util.concurrent.Flow
 import javax.inject.Inject
+import kotlinx.coroutines.flow.Flow
 
 
 @HiltViewModel
 class MainViewModel @Inject constructor(
-    private val repository: DataStoreRepositoryImpl
+    private val repository: DataStoreRepositoryImpl,
+    private val cartRepository: CartRepository,
+    private val favoriteRepository: FavoriteRepository
 ) : ViewModel() {
 
-    //set destination when app is open
-    private val _startDestination: MutableState<String> = mutableStateOf(Graph.OnBoarding.route)
-    val startDestination: State<String> = _startDestination
+    val cartSize = cartRepository.getAllCarts()
+    val favoriteSize = favoriteRepository.getAllFavorite()
 
-    //has Logged in
-    private val _hasLoggedIn: MutableState<Boolean> = mutableStateOf(false)
-    val hasLoggedIn: State<Boolean> = _hasLoggedIn
-
-    private val _hasCompleteOnBoarding: MutableState<Boolean> = mutableStateOf(false)
-    val hasCompleteOnBoarding: State<Boolean> = _hasCompleteOnBoarding
-
-    fun getOnBoardingState(){
-        viewModelScope.launch {
-            repository.getOnBoardingState().collect { complete ->
-                if (complete) {
-                    //if complete is true than go to authentication page
-                    _startDestination.value = Graph.Authentication.route
-                }
-            }
-        }
+    fun getBoardingState() : Flow<Boolean> {
+        return repository.getOnBoardingState()
     }
 
-    suspend fun getLoginState() : Boolean {
-        return repository.getLoginState().first()
+    fun getLoginState() : Flow<Boolean>  {
+        return repository.getLoginState()
     }
 
-    suspend fun getBoarding() : Boolean {
-        return repository.getOnBoardingState().first()
+    fun getProfileName(): Flow<String> {
+        return repository.getProfileName()
     }
+
 }

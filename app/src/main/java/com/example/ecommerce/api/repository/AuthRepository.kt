@@ -1,4 +1,4 @@
-package com.example.ecommerce.auth.repository
+package com.example.ecommerce.api.repository
 
 import com.example.ecommerce.api.method.ApiService
 import com.example.ecommerce.api.request.AuthRequest

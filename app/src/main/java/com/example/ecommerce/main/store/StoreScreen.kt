@@ -1,10 +1,17 @@
 package com.example.ecommerce.main.store
 
-import android.util.Log
+import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.RepeatMode
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.animation.core.tween
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
@@ -19,175 +26,172 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.GridItemSpan
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.material.ExperimentalMaterialApi
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowForward
-import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.AccountCircle
 import androidx.compose.material.icons.filled.FormatListBulleted
 import androidx.compose.material.icons.filled.GridView
 import androidx.compose.material.icons.filled.Search
+import androidx.compose.material.icons.filled.Star
 import androidx.compose.material.icons.outlined.Tune
+import androidx.compose.material.pullrefresh.PullRefreshIndicator
+import androidx.compose.material.pullrefresh.pullRefresh
+import androidx.compose.material.pullrefresh.rememberPullRefreshState
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.material3.AssistChip
 import androidx.compose.material3.AssistChipDefaults
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
-import androidx.compose.material3.ListItem
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
-import androidx.compose.material3.SearchBar
-import androidx.compose.material3.SearchBarDefaults
-import androidx.compose.material3.Surface
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.MutableState
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.focus.onFocusChanged
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalLifecycleOwner
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.window.Dialog
+import androidx.compose.ui.window.DialogProperties
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.paging.LoadState
 import androidx.paging.compose.LazyPagingItems
 import androidx.paging.compose.collectAsLazyPagingItems
 import androidx.paging.compose.itemKey
-import com.bumptech.glide.load.HttpException
+import coil.compose.AsyncImage
 import com.example.ecommerce.R
 import com.example.ecommerce.api.model.Product
-import com.example.ecommerce.api.request.AuthRequest
-import com.example.ecommerce.api.response.BaseResponse
 import com.example.ecommerce.component.ProgressDialog
-import com.example.ecommerce.component.ToastMessage
+import com.example.ecommerce.ui.theme.CardBorder
 import com.example.ecommerce.ui.theme.Purple
-import com.example.ecommerce.ui.theme.textColor
-import com.example.ecommerce.util.Constant
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import java.io.IOException
-import java.util.Locale
 import java.util.concurrent.TimeoutException
 
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalComposeUiApi::class)
+@ExperimentalMaterialApi
+@ExperimentalMaterial3Api
+@ExperimentalLayoutApi
 @Composable
-fun StoreScreen2() {
+fun StoreScreen(
+    onDetailClick: (id:String) -> Unit
+) {
     val lifecycleOwner = LocalLifecycleOwner.current
-
     var isLoading by rememberSaveable { mutableStateOf(false)}
     if (isLoading) ProgressDialog().ProgressDialog()
     var search by rememberSaveable { mutableStateOf("") }
-    var active by remember { mutableStateOf(false) }
+    var active by remember { mutableStateOf(false)}
 
-    var searchProduct : ArrayList<String> = arrayListOf()
+    //val focusRequester = remember { FocusRequester() }
+    val keyboardController = LocalSoftwareKeyboardController.current
 
-    val productViewModel : StoreViewModel = hiltViewModel()
-    val products = if(search.isEmpty()) productViewModel.getProducts("").collectAsLazyPagingItems() else
-        productViewModel.getProducts(search).collectAsLazyPagingItems()
-    val productsFilter = productViewModel.getProductsFilter("","lenovo",10000000,20000000,"sale").collectAsLazyPagingItems()
+    val storeViewModel : StoreViewModel = hiltViewModel()
+//    storeViewModel.searchText.observe(lifecycleOwner){
+//        search = it
+//    }
 
-    productViewModel.searchResult.observe(lifecycleOwner){
-        when (it) {
-            is BaseResponse.Loading -> {
-                isLoading = true
-            }
-            is BaseResponse.Success -> {
-                isLoading = false
-                searchProduct = it.data!!.data
-            }
-            else -> {}
-        }
-    }
+    val filter by storeViewModel.filter.collectAsState()
+    val products = storeViewModel.getProductsFilter.collectAsLazyPagingItems()
+    storeViewModel.search(search)
 
     Column(modifier = Modifier
         .fillMaxSize()
         .padding(horizontal = 16.dp)){
-        SearchBar(
-            modifier = Modifier.fillMaxWidth(),
-            query = search,
-            colors = SearchBarDefaults.colors(containerColor = Color.White),
-            tonalElevation = 0.dp,
-            onQueryChange = {
-                search = it
-                productViewModel.searchProductList(search)
-            },
-            onSearch = {
-                active = false
-            },
-            active = active,
-            onActiveChange = {
-                active = it
-            },
+
+        var showDialog by remember { mutableStateOf(false) }
+
+        FullSizeSearchDialog(
+            openDialog = showDialog,
+            onCloseDialog = {
+                showDialog = false
+        })
+
+        OutlinedTextField(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(top = 16.dp).clickable{
+                     showDialog = true
+                }
+            ,
             placeholder = {
-                Text(text = stringResource(id = R.string.search),
-                    fontWeight = FontWeight.W400,
-                    fontSize = 16.sp,
-                    style = MaterialTheme.typography.bodyMedium)
+                Text(
+                    text = stringResource(id = R.string.search),
+                    style = MaterialTheme.typography.bodyMedium,
+                )
+            },
+            singleLine = true,
+            maxLines = 1,
+            value = search,
+            onValueChange = {
+                search = it
             },
             leadingIcon = {
-                Icon(imageVector = Icons.Default.Search, contentDescription = "Search")
-            },
-            trailingIcon = {
                 Icon(
-                    modifier = Modifier.clickable {
-                        if(search.isNotEmpty()) {
-                            search = ""
-                        }else{
-                            active = false
-                        }
-                    },
-                    imageVector = Icons.Default.Close,
-                    contentDescription = "close")
-            }
-        ) {
-            val filteredList = productViewModel.filterSearch(search,searchProduct)
-            filteredList.forEach { item ->
-                ListItem(
-                    modifier = Modifier.clickable {
-                        search = item
-                        active = false
-                    },
-                    headlineContent = {
-                        Text(text = item, fontSize = 12.sp, fontWeight = FontWeight.W400)
-                    },
-                    leadingContent = {
-                        Icon(modifier = Modifier.size(18.dp),
-                            imageVector = Icons.Default.Search,
-                            contentDescription = null)
-                    },
-                    trailingContent = {
-                        Icon(modifier = Modifier.size(18.dp),
-                            imageVector = Icons.Default.ArrowForward,
-                            contentDescription = null)
-                    }
+                    imageVector = Icons.Default.Search,
+                    contentDescription = "Search"
                 )
-            }
-        }
-        StoreContent(products)
+            },
+            enabled = false
+        )
+        StoreContent(products,storeViewModel,onDetailClick)
     }
 }
 
-@OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
+
+@ExperimentalMaterialApi
+@ExperimentalMaterial3Api
+@ExperimentalLayoutApi
 @Composable
-fun StoreContent(products : LazyPagingItems<Product>){
+fun StoreContent(
+    products: LazyPagingItems<Product>,
+    storeViewModel: StoreViewModel,
+    onDetailClick: (id: String) -> Unit
+){
     var isClickedGrid by rememberSaveable { mutableStateOf(false)}
     val scope = rememberCoroutineScope()
     var showBottomSheet by remember { mutableStateOf(false) }
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+
+    val dataArray = storeViewModel.dataArray.value ?: emptyList()
 
     Row(
         Modifier
@@ -202,7 +206,53 @@ fun StoreContent(products : LazyPagingItems<Product>){
         val lowestPrice = rememberSaveable { mutableStateOf("") }
         val highestPrice = rememberSaveable { mutableStateOf("") }
 
-        val itemsListFilter : ArrayList<String> = arrayListOf()
+        Row (Modifier.weight(1f)){
+            AssistChip(modifier = Modifier.padding(end = 6.dp),
+                onClick = {  showBottomSheet = true },
+                label = {
+                    Text(text = stringResource(id = R.string.filter))
+                },
+                leadingIcon = {
+                    Icon(
+                        imageVector = Icons.Outlined.Tune,
+                        contentDescription = null,
+                        modifier = Modifier.size(AssistChipDefaults.IconSize)
+                    )
+                }
+            )
+
+            var selectedItemFilter by remember { mutableStateOf("")}
+            LazyRow(modifier = Modifier) {
+                items(dataArray) {item->
+                    if(item.isNotEmpty()){
+                        AssistChip(
+                            modifier = Modifier.padding(end = 6.dp),
+                            onClick = { selectedItemFilter = item },
+                            label = {
+                                Text(text = item)
+                            }
+                        )
+                    }
+                }
+            }
+        }
+
+        Row(verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.End) {
+            Spacer(modifier = Modifier
+                .height(24.dp)
+                .width(1.dp)
+                .background(Color.Gray))
+            Spacer(modifier = Modifier.width(10.dp))
+            Icon(
+                modifier = Modifier.clickable {
+                    isClickedGrid =! isClickedGrid
+                },
+                imageVector = if(isClickedGrid)
+                    Icons.Default.GridView else Icons.Default.FormatListBulleted,
+                contentDescription = "List"
+            )
+        }
 
         if(showBottomSheet) {
             ModalBottomSheet(
@@ -221,6 +271,13 @@ fun StoreContent(products : LazyPagingItems<Product>){
                         Column(Modifier.weight(1f), horizontalAlignment = Alignment.End
                         ) {
                             TextButton(onClick = {
+                                selectedItemCategory = ""
+                                selectedItemList = ""
+                                lowestPrice.value = ""
+                                highestPrice.value = ""
+                                val data = emptyList<String>()
+                                storeViewModel.setDataArray(data)
+                                storeViewModel.resetQuery()
                                 scope.launch {
                                     sheetState.hide()
                                 }.invokeOnCompletion {
@@ -275,6 +332,9 @@ fun StoreContent(products : LazyPagingItems<Product>){
                     }
 
                     Button(onClick = {
+                        val data = listOf(selectedItemCategory, lowestPrice.value, highestPrice.value,selectedItemList)
+                        storeViewModel.setDataArray(data)
+                        storeViewModel.setQuery(selectedItemCategory,null,null,selectedItemList)
                         scope.launch {
                             sheetState.hide()
                         }.invokeOnCompletion {
@@ -295,104 +355,32 @@ fun StoreContent(products : LazyPagingItems<Product>){
                 }
             }
         }
-
-        Row (Modifier.weight(1f)){
-            AssistChip(modifier = Modifier.padding(end = 6.dp),
-                onClick = {  showBottomSheet = true },
-                label = {
-                    Text(text = stringResource(id = R.string.filter))
-                },
-                leadingIcon = {
-                    Icon(
-                        imageVector = Icons.Outlined.Tune,
-                        contentDescription = null,
-                        modifier = Modifier.size(AssistChipDefaults.IconSize)
-                    )
-                }
-            )
-
-            var selectedItemFilter by remember { mutableStateOf("")}
-            LazyRow(modifier = Modifier) {
-                items(itemsListFilter) {item->
-                    if(item.isEmpty()){
-                        null
-                    }else {
-                        AssistChip(
-                            modifier = Modifier.padding(end = 6.dp),
-                            onClick = { selectedItemFilter = item },
-                            label = {
-                                Text(text = item)
-                            }
-                        )
-                    }
-                }
-            }
-        }
-
-        Row(verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.End) {
-            Spacer(modifier = Modifier
-                .height(24.dp)
-                .width(1.dp)
-                .background(Color.Gray))
-            Spacer(modifier = Modifier.width(10.dp))
-            Icon(
-                modifier = Modifier.clickable {
-                    isClickedGrid =! isClickedGrid
-                },
-                imageVector = if(isClickedGrid) Icons.Default.GridView else Icons.Default.FormatListBulleted,
-                contentDescription = "List"
-            )
-        }
     }
 
     Column {
-        StoreProductList(isClickedGrid, products = products)
+        StoreProductList(isClickedGrid, products = products,onDetailClick)
     }
 }
 
-@Composable
-fun StoreErrorPage(title:String,
-                   message: String,
-                   button:Int,
-                   onButtonClick: () -> Unit
-){
-    Column(modifier = Modifier.fillMaxSize(),
-        verticalArrangement = Arrangement.Center,
-        horizontalAlignment = Alignment.CenterHorizontally) {
-        Image(modifier = Modifier.size(128.dp),painter = painterResource(id = R.drawable.smartphone) ,
-            contentDescription = "")
-        Text(modifier = Modifier.padding(top=5.dp),text = title, fontSize = 32.sp,
-            fontWeight = FontWeight.W500)
-        Text(text = message,fontSize = 16.sp,
-            fontWeight = FontWeight.W400)
-        Button(onClick = { onButtonClick() },
-            colors = ButtonDefaults.buttonColors(Purple),
-            enabled = true
-        ) {
-            Text(
-                text = stringResource(id = button),
-                fontWeight = FontWeight.W500
-            )
-        }
-    }
-}
-
+@OptIn(ExperimentalMaterialApi::class)
 @Composable
 fun StoreProductList(
     isClickedGrid: Boolean,
-    products : LazyPagingItems<Product>
+    products : LazyPagingItems<Product>,
+    onDetailClick: (id: String) -> Unit
 ){
     when (val state = products.loadState.refresh) {
         is LoadState.Error -> {
             when (state.error) {
-                is HttpException -> {
-                    StoreErrorPage(
-                        title = "Empty",
-                        message = "Your requested data is unavailable",
-                        button = R.string.reset,
-                        onButtonClick = {}
-                    )
+                is retrofit2.HttpException -> {
+                    if((state.error as retrofit2.HttpException).code()==404) {
+                        StoreErrorPage(
+                            title = "Empty",
+                            message = "Your requested data is unavailable",
+                            button = R.string.reset,
+                            onButtonClick = {}
+                        )
+                    }
                 }
 
                 is IOException -> {
@@ -439,68 +427,121 @@ fun StoreProductList(
         else -> {}
     }
 
-    if(isClickedGrid){
-        LazyVerticalGrid(GridCells.Fixed(2)) {
-            items(count = products.itemCount,
-                key = products.itemKey { it.productId }
-            ) { index ->
-                val item = products[index]
-                CardGrid(product = item)
-            }
+    val refreshScope = rememberCoroutineScope()
+    var refreshing by remember { mutableStateOf(false) }
+    fun refresh() = refreshScope.launch {
+        refreshing = true
+        delay(1500)
+        refreshing = false
+    }
 
-            when (products.loadState.append) {
-                is LoadState.Loading -> {
-                    item {
-                        Column(modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(vertical = 16.dp),
-                            horizontalAlignment = Alignment.CenterHorizontally,
-                            verticalArrangement = Arrangement.Bottom,
-                        ) {
-                            CircularProgressIndicator()
-                        }
-                    }
+    val state = rememberPullRefreshState(refreshing, {products.refresh()})
+
+    if(isClickedGrid){
+        Box(Modifier.pullRefresh(state)) {
+            LazyVerticalGrid(GridCells.Fixed(2)) {
+                items(count = products.itemCount,
+                    key = products.itemKey { it.productId }
+                ) { index ->
+                    val item = products[index]
+                    CardGrid(product = item)
                 }
 
-                else -> {}
+                when (products.loadState.append) {
+                    is LoadState.Loading -> {
+                        item(span = { GridItemSpan(maxLineSpan) }) {
+                            Column(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(vertical = 16.dp),
+                                horizontalAlignment = Alignment.CenterHorizontally,
+                                verticalArrangement = Arrangement.Bottom,
+                            ) {
+                                CircularProgressIndicator()
+                            }
+                        }
+                    }
+
+                    else -> {}
+                }
             }
+            PullRefreshIndicator(refreshing = refreshing, state = state,
+                modifier = Modifier.align(Alignment.TopCenter))
         }
     }else {
-        LazyColumn(modifier = Modifier.fillMaxSize()) {
-            items(count = products.itemCount,
-                key = products.itemKey { it.productId }
-            ) { index ->
-                val item = products[index]
-                CardList(product = item)
-            }
-
-            when (products.loadState.append) { // Pagination
-                is LoadState.Loading -> { // Pagination Loading UI
-                    item {
-                        Column(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(vertical = 16.dp),
-                            horizontalAlignment = Alignment.CenterHorizontally,
-                            verticalArrangement = Arrangement.Bottom,
-                        ) {
-                            CircularProgressIndicator()
+        Box(Modifier.pullRefresh(state)) {
+            LazyColumn(modifier = Modifier.fillMaxSize()) {
+                if (!refreshing) {
+                    items(count = products.itemCount,
+                        key = products.itemKey { it.productId }
+                    ) { index ->
+                        val item = products[index]
+                        CardList(product = item){
+                            onDetailClick(item!!.productId)
                         }
                     }
                 }
+                when (products.loadState.append) { // Pagination
+                    is LoadState.Loading -> { // Pagination Loading UI
+                        item {
+                            Column(modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(vertical = 16.dp),
+                                horizontalAlignment = Alignment.CenterHorizontally,
+                                verticalArrangement = Arrangement.Bottom,
+                            ) {
+                                CircularProgressIndicator()
+                            }
+                        }
+                    }
 
-                else -> {}
+                    else -> {}
+                }
             }
+            PullRefreshIndicator(refreshing = refreshing, state = state,
+                modifier = Modifier.align(Alignment.TopCenter))
         }
     }
 }
 
 @Composable
-fun CardList(product: Product?){
-    Column(Modifier.padding(vertical = 5.dp)) {
+fun StoreErrorPage(
+    title:String,
+    message: String,
+    button:Int,
+    onButtonClick: () -> Unit
+){
+    Column(modifier = Modifier.fillMaxSize(),
+        verticalArrangement = Arrangement.Center,
+        horizontalAlignment = Alignment.CenterHorizontally) {
+        Image(modifier = Modifier.size(128.dp),painter = painterResource(id = R.drawable.smartphone) ,
+            contentDescription = "")
+        Text(modifier = Modifier.padding(top=5.dp),text = title, fontSize = 32.sp,
+            fontWeight = FontWeight.W500)
+        Text(text = message,fontSize = 16.sp,
+            fontWeight = FontWeight.W400)
+        Button(onClick = { onButtonClick() },
+            colors = ButtonDefaults.buttonColors(Purple),
+            enabled = true
+        ) {
+            Text(
+                text = stringResource(id = button),
+                fontWeight = FontWeight.W500
+            )
+        }
+    }
+}
+
+
+@Composable
+fun CardList(product: Product?, onClickCard:() ->Unit){
+    Column(Modifier.padding(vertical = 5.dp).clickable {
+        onClickCard()
+    }) {
         Card(modifier = Modifier
             .fillMaxWidth()
             .clickable {
+                onClickCard()
             }, shape = RoundedCornerShape(8.dp),
             elevation = CardDefaults.cardElevation(3.dp)
         ) {
@@ -617,13 +658,13 @@ fun ShimmerCardList(brush: Brush){
             .fillMaxWidth()
             .clickable {
             }, shape = RoundedCornerShape(8.dp),
-            elevation = CardDefaults.cardElevation(3.dp)
+            border = BorderStroke(2.dp, CardBorder)
         ) {
             Box(modifier = Modifier.background(Color.White)) {
                 Row(modifier = Modifier.padding(10.dp)
                 ) {
-                    Spacer(
-                        modifier = Modifier
+                    //image
+                    Spacer(modifier = Modifier
                             .size(80.dp)
                             .clip(RoundedCornerShape(8.dp))
                             .background(brush)
@@ -634,59 +675,35 @@ fun ShimmerCardList(brush: Brush){
                         .fillMaxWidth()
                         .padding(start = 10.dp)
                     ) {
-
+                        Spacer(
+                                modifier = Modifier
+                                    .height(16.dp)
+                                    .fillMaxWidth(1f)
+                                    .background(brush)
+                        )
+                        Spacer(modifier = Modifier.height(5.dp))
                         Spacer(
                             modifier = Modifier
-                                .height(20.dp)
-                                .clip(RoundedCornerShape(10.dp))
-                                .fillMaxWidth(fraction = 1f)
+                                .height(16.dp)
+                                .fillMaxWidth(1f)
+                                .background(brush)
+                        )
+
+                        Spacer(modifier = Modifier.height(12.dp))
+                        Spacer(
+                            modifier = Modifier
+                                .height(12.dp)
+                                .width(67.dp)
                                 .background(brush)
                         )
                         Spacer(modifier = Modifier.height(5.dp))
                         Spacer(
                             modifier = Modifier
-                                .height(20.dp)
-                                .clip(RoundedCornerShape(10.dp))
-                                .fillMaxWidth(fraction = 1f)
+                                .height(12.dp)
+                                .width(67.dp)
                                 .background(brush)
                         )
-                        Row(Modifier.padding(top = 5.dp),
-                            verticalAlignment = Alignment.CenterVertically){
-                            Spacer(
-                                modifier = Modifier
-                                    .size(20.dp)
-                                    .clip(RoundedCornerShape(10.dp))
-                                    .background(brush)
-                            )
-                            Spacer(modifier = Modifier.width(5.dp))
-                            Spacer(
-                                modifier = Modifier
-                                    .height(20.dp)
-                                    .clip(RoundedCornerShape(10.dp))
-                                    .fillMaxWidth(fraction = 1f)
-                                    .background(brush)
-                            )
-                        }
-
-                        Row(Modifier.padding(top = 5.dp),
-                            verticalAlignment = Alignment.CenterVertically){
-                            Spacer(
-                                modifier = Modifier
-                                    .size(20.dp)
-                                    .clip(RoundedCornerShape(10.dp))
-                                    .background(brush)
-                            )
-                            Spacer(modifier = Modifier.width(5.dp))
-                            Spacer(
-                                modifier = Modifier
-                                    .height(20.dp)
-                                    .clip(RoundedCornerShape(10.dp))
-                                    .fillMaxWidth(fraction = 1f)
-                                    .background(brush)
-                            )
-                        }
                     }
-
                 }
             }
         }
@@ -757,8 +774,7 @@ fun CardGrid(product: Product?){
                         )
                     }
 
-                    Row(
-                        Modifier.padding(top = 2.dp),
+                    Row(Modifier.padding(top = 2.dp),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         Icon(
@@ -815,13 +831,17 @@ fun ShimmerGridList(brush: Brush){
             .width(186.dp)
             .clickable {},
             shape = RoundedCornerShape(8.dp),
-            elevation = CardDefaults.cardElevation(3.dp)
+            border = BorderStroke(2.dp, CardBorder)
         ){
             Column(Modifier.background(Color.White)) {
                 Spacer(
                     modifier = Modifier
                         .size(186.dp)
-                        .clip(RoundedCornerShape(10.dp))
+                        .clip(RoundedCornerShape(
+                            topEnd = 8.dp,
+                            topStart = 8.dp,
+                            bottomEnd = 0.dp,
+                            bottomStart = 0.dp))
                         .fillMaxWidth(fraction = 1f)
                         .background(brush)
                 )
@@ -829,59 +849,32 @@ fun ShimmerGridList(brush: Brush){
                 Column(modifier = Modifier.padding(10.dp)) {
                     Spacer(
                         modifier = Modifier
-                            .height(20.dp)
-                            .clip(RoundedCornerShape(10.dp))
+                            .height(16.dp)
                             .fillMaxWidth(fraction = 1f)
                             .background(brush)
                     )
                     Spacer(modifier = Modifier.height(5.dp))
                     Spacer(
                         modifier = Modifier
-                            .height(20.dp)
-                            .clip(RoundedCornerShape(10.dp))
+                            .height(16.dp)
                             .fillMaxWidth(fraction = 1f)
                             .background(brush)
                     )
 
-                    Row(
-                        Modifier.padding(top = 5.dp),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Spacer(
-                            modifier = Modifier
-                                .size(20.dp)
-                                .clip(RoundedCornerShape(10.dp))
-                                .background(brush)
-                        )
-                        Spacer(modifier = Modifier.width(5.dp))
-                        Spacer(
-                            modifier = Modifier
-                                .height(20.dp)
-                                .clip(RoundedCornerShape(10.dp))
-                                .fillMaxWidth(fraction = 1f)
-                                .background(brush)
-                        )
-                    }
-
-                    Row(
-                        Modifier.padding(top = 5.dp),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Spacer(
-                            modifier = Modifier
-                                .size(20.dp)
-                                .clip(RoundedCornerShape(10.dp))
-                                .background(brush)
-                        )
-                        Spacer(modifier = Modifier.width(5.dp))
-                        Spacer(
-                            modifier = Modifier
-                                .height(20.dp)
-                                .clip(RoundedCornerShape(10.dp))
-                                .fillMaxWidth(fraction = 1f)
-                                .background(brush)
-                        )
-                    }
+                    Spacer(modifier = Modifier.height(10.dp))
+                    Spacer(
+                        modifier = Modifier
+                            .height(16.dp)
+                            .width(85.dp)
+                            .background(brush)
+                    )
+                    Spacer(modifier = Modifier.height(5.dp))
+                    Spacer(
+                        modifier = Modifier
+                            .height(16.dp)
+                            .width(85.dp)
+                            .background(brush)
+                    )
                 }
             }
         }
@@ -922,4 +915,18 @@ fun TextFieldPrice(
 @Composable
 @Preview(showBackground = true)
 fun StoreScreenPreview() {
+}
+
+@Composable
+fun FullSizeSearchDialog(
+    openDialog: Boolean,
+    onCloseDialog: () -> Unit
+) {
+    if(openDialog){
+        Dialog(onDismissRequest = { onCloseDialog() },
+            properties = DialogProperties(usePlatformDefaultWidth = false)
+        ) {
+            SearchScreen(onCloseDialog)
+        }
+    }
 }

@@ -1,4 +1,4 @@
-package com.example.ecommerce.room
+package com.example.ecommerce.room.cart
 
 import androidx.annotation.NonNull
 import androidx.room.ColumnInfo

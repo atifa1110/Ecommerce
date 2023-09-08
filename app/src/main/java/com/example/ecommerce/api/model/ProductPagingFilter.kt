@@ -6,7 +6,7 @@ import com.example.ecommerce.api.method.ApiService
 import com.example.ecommerce.util.Constant
 import kotlinx.coroutines.delay
 
-class ProductPagingSearch (
+class ProductPagingFilter (
     private val service: ApiService,
     private val search : String?,
     private val brand : String?,
@@ -22,20 +22,20 @@ class ProductPagingSearch (
     }
 
     override suspend fun load(params: LoadParams<Int>): LoadResult<Int, Product> {
+        val page = params.key ?: 1
+        val response = service.getProductFilter(search, brand, lowest, highest, sort, 10, page)
+
         return try {
-            val page = params.key ?: 1
-            val response = service.getProductFilter(Constant.AUTHORIZATION,search, brand,lowest,highest, sort,10,page)
-
-            delay(7000)
+            //delay(7000)
             LoadResult.Page(
-                data = response.data.items,
+                data = response.body()!!.data.items,
                 prevKey = null,
-                nextKey = if (page==response.data.totalPages) null else page.plus(1)
+                nextKey = if (page==response.body()!!.data.totalPages) null else page.plus(1)
             )
-
         } catch (error: Exception) {
-            return LoadResult.Error(error)
+            return LoadResult.Error(Throwable(response.errorBody().toString()))
         }
     }
+
 
 }

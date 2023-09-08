@@ -16,14 +16,19 @@ import androidx.navigation.compose.composable
 import com.example.ecommerce.ScreenContent
 import com.example.ecommerce.main.home.HomeRoute
 import com.example.ecommerce.main.store.StoreScreen
+import com.example.ecommerce.main.transaction.TransactionScreen
+import com.example.ecommerce.main.wishlist.WishListScreen
 
 @OptIn(ExperimentalMaterialApi::class, ExperimentalMaterial3Api::class,
     ExperimentalLayoutApi::class
 )
 @Composable
-fun HomeNavigation (navController: NavHostController,onLogoutClick: () -> Unit) {
+fun BottomNavigation (navController: NavHostController,
+                      onLogoutClick: () -> Unit,
+                      onDetailClick: (id : String) -> Unit
+) {
     NavHost(navController = navController,
-        route = Graph.Home.route,
+        route = Main.Home.route,
         startDestination = Bottom.Home.route){
         composable(Bottom.Home.route){
            HomeRoute (
@@ -33,17 +38,18 @@ fun HomeNavigation (navController: NavHostController,onLogoutClick: () -> Unit) 
            )
         }
         composable(Bottom.Store.route){
-            StoreScreen()
+            StoreScreen(
+                onDetailClick = { id->
+                    onDetailClick(id)
+                }
+            )
         }
         composable(Bottom.Wishlist.route){
-            ScreenContent(
-                name = Bottom.Wishlist.route,
-                onClick = {})
+            WishListScreen()
         }
+
         composable(Bottom.Transaction.route){
-            ScreenContent(
-                name = Bottom.Transaction.route,
-                onClick = {})
+            TransactionScreen()
         }
     }
 }

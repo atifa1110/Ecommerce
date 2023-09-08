@@ -6,7 +6,7 @@ import androidx.compose.runtime.Composable
 @ExperimentalMaterial3Api
 @Composable
 fun RegisterRoute(
-    onNavigateToProfile: (email: String,password:String) -> Unit,
+    onNavigateToProfile: () -> Unit,
     onNavigateToLogin: () -> Unit
 ) {
 

@@ -8,7 +8,7 @@
     <string name="email">Email</string>
     <string name="hide_password">Hide Password</string>
     <string name="show_password">Show Password</string>
-    <string name="password">Password</string>
+    <string name="password" translatable="false">Password</string>
     <string name="gabung">Gabung Sekarang</string>
     <string name="skip">Lewati</string>
     <string name="next">Selanjutnya</string>
@@ -23,4 +23,22 @@
     <string name="email_invalid">Email tidak valid</string>
     <string name="password_invalid">Password tidak valid</string>
     <string name="password_min">Minimal 8 karakter</string>
+    <string name="tampilkan">Tampilkan Produk</string>
+    <string name="lowest">Terendah</string>
+    <string name="highest">Tertinggi</string>
+    <string name="search">Search</string>
+    <string name="filter">Filter</string>
+    <string name="sort">Urutkan</string>
+    <string name="reset">Reset</string>
+    <string name="refresh">Refresh</string>
+    <string name="category">Kategori</string>
+    <string name="price">Harga</string>
+    <string name="detail">Detail Produk</string>
+    <string name="buy">Beli Langsung</string>
+    <string name="review">Ulasan Pembeli</string>
+    <string name="dummy">Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry standard dummy text ever since the 1500s, when an unknown printer took a galley of type and scrambled it to make a type specimen book.</string>
+    <string name="cart">Keranjang</string>
+    <string name="checkout">Checkout</string>
+    <string name="status">Status</string>
+    <string name="payment">Pilih Pembayaran</string>
 </resources>

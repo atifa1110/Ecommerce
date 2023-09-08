@@ -2,11 +2,9 @@ package com.example.ecommerce.di
 
 import android.content.Context
 import androidx.room.Room
-import com.example.ecommerce.room.CartDao
-import com.example.ecommerce.room.CartDatabase
-import com.example.ecommerce.room.CartRepository
-import com.example.ecommerce.room.CartRepositoryImpl
-import dagger.Binds
+import com.example.ecommerce.room.cart.CartDao
+import com.example.ecommerce.room.cart.CartDatabase
+import com.example.ecommerce.room.favorite.FavoriteDao
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -17,12 +15,7 @@ import javax.inject.Singleton
 
 @Module
 @InstallIn(SingletonComponent::class)
-object RoomModule {
-    @Provides
-    fun provideProductsDao(cartDatabase: CartDatabase)
-            : CartDao {
-        return cartDatabase.cartDao()
-    }
+object DatabaseModule {
 
     @Provides
     @Singleton
@@ -33,5 +26,17 @@ object RoomModule {
             CartDatabase::class.java,
             "CartDatabase"
         ).fallbackToDestructiveMigration().build()
+    }
+
+    @Provides
+    fun provideProductsDao(cartDatabase: CartDatabase)
+            : CartDao {
+        return cartDatabase.cartDao()
+    }
+
+    @Provides
+    fun provideFavoriteDao(cartDatabase: CartDatabase)
+            : FavoriteDao {
+        return cartDatabase.FavoriteDao()
     }
 }

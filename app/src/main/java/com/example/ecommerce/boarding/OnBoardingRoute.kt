@@ -18,12 +18,15 @@ fun onBoardingRoute(
     onBoardingScreen (
         //set navigation to register and save boarding state to complete
         onJoinClick = {
-            //onBoardingViewModel.saveOnBoardingState(complete = true)
+            onBoardingViewModel.saveOnBoardingState(complete = true)
             onNavigateToRegister()
         },
         //set navigation to login and save boarding state to complete
         onSkipClick = {
-            //onBoardingViewModel.saveOnBoardingState(complete = true)
+            onBoardingViewModel.saveOnBoardingState(complete = true)
+            onNavigateToLogin()
+        },
+        onNavigateToLogin = {
             onNavigateToLogin()
         }
     )

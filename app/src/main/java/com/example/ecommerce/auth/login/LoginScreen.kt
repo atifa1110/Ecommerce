@@ -16,7 +16,6 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.OutlinedTextField
-import androidx.compose.material.TextFieldDefaults
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material.icons.filled.VisibilityOff
@@ -42,7 +41,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.Color.Companion.Gray
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalLifecycleOwner
@@ -61,13 +59,12 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
-import androidx.lifecycle.Observer
-import androidx.lifecycle.viewmodel.compose.viewModel
-import com.example.ecommerce.util.CommonDialog
 import com.example.ecommerce.R
 import com.example.ecommerce.api.request.AuthRequest
 import com.example.ecommerce.api.response.BaseResponse
-import com.example.ecommerce.util.showMsg
+import com.example.ecommerce.component.ProgressDialog
+import com.example.ecommerce.component.ToastMessage
+import com.example.ecommerce.main.main.MainViewModel
 import com.example.ecommerce.ui.theme.Purple
 import com.example.ecommerce.ui.theme.textColor
 import com.example.ecommerce.util.Constant
@@ -80,21 +77,27 @@ fun LoginScreen(
     onRegisterClick: () -> Unit
 ) {
 
+    val loginViewModel: LoginViewModel = hiltViewModel()
+    val mainViewModel: MainViewModel = hiltViewModel()
+
     val context = LocalContext.current
     val lifecycleOwner = LocalLifecycleOwner.current
+
     var isDialog by remember { mutableStateOf(false) }
 
-    if (isDialog)
-        CommonDialog()
+    val progressDialog = ProgressDialog()
+    if (isDialog) progressDialog.ProgressDialog()
 
-    var email = rememberSaveable { mutableStateOf("") }
-    var emailError = rememberSaveable { mutableStateOf(false) }
+    val email = rememberSaveable { mutableStateOf("") }
+    val emailError = rememberSaveable { mutableStateOf(false) }
 
-    var password = rememberSaveable { mutableStateOf("") }
-    var passwordError = rememberSaveable { mutableStateOf(false) }
+    val password = rememberSaveable { mutableStateOf("") }
+    val passwordError = rememberSaveable { mutableStateOf(false) }
 
-    val loginViewModel : LoginViewModel = hiltViewModel()
-    loginViewModel.loginResult.observe(lifecycleOwner, Observer {
+    var accessToken by remember { mutableStateOf("") }
+
+    val showMessage = ToastMessage()
+    loginViewModel.loginResult.observe(lifecycleOwner){
         when (it) {
             is BaseResponse.Loading -> {
                 isDialog = true
@@ -102,21 +105,22 @@ fun LoginScreen(
 
             is BaseResponse.Success -> {
                 isDialog = false
-                Log.d("LoginResponse",it.toString())
-                context.showMsg(it.toString())
+                showMessage.showMsg(context,it.data!!.message)
+                Log.d("ShowMessageLogin",it.data.data.accessToken)
+                loginViewModel.saveAccessToken(it.data.data.accessToken)
+                loginViewModel.saveLoginState(true)
                 onNavigateToHome()
             }
 
             is BaseResponse.Error -> {
                 isDialog = false
-                Log.d("LoginResponse",it.msg.toString())
-                context.showMsg(it.msg.toString())
+                showMessage.showMsg(context,it.msg.toString())
             }
-            else -> {
-                context.showMsg("Data is Empty")
-            }
+
+            else -> {}
         }
-    })
+    }
+
     Scaffold(
         topBar = {
             CenterAlignedTopAppBar(modifier = Modifier
@@ -186,7 +190,7 @@ fun LoginScreen(
                 )
             }
 
-            TextSyaratKetentuan(true)
+            TextTermCondition(true)
         }
     }
 }
@@ -202,7 +206,7 @@ fun DividerButton(tryingToLogin: Boolean = true){
             .height(1.dp)
             .width(120.dp)
             .background(Color.LightGray))
-        Text(modifier = Modifier.padding(horizontal = 20.dp),
+        Text(
             text = if(tryingToLogin)stringResource(id = R.string.daftar_dengan) else stringResource(id = R.string.masuk_dengan),
             fontSize = MaterialTheme.typography.bodySmall.fontSize,
             fontWeight = FontWeight.Normal
@@ -215,7 +219,7 @@ fun DividerButton(tryingToLogin: Boolean = true){
 }
 
 @Composable
-fun TextSyaratKetentuan(tryingToLogin: Boolean = true) {
+fun TextTermCondition(tryingToLogin: Boolean = true) {
     val initialText = if (tryingToLogin) "Dengan masuk disini, kamu menyetujui " else "Dengan daftar disini, kamu menyetujui "
     val syarat = "Syarat & Ketentuan"
     val serta = "serta "
@@ -262,17 +266,6 @@ fun EmailComponent(input : MutableState<String>,
                 style = MaterialTheme.typography.bodyMedium,
             )
         },
-        colors =
-        if (!inputError.value) TextFieldDefaults.outlinedTextFieldColors(
-            backgroundColor = Color.Transparent,
-            focusedLabelColor = Gray
-        )else TextFieldDefaults.outlinedTextFieldColors(
-            backgroundColor = Color.Transparent,
-            cursorColor = MaterialTheme.colorScheme.error,
-            focusedBorderColor = MaterialTheme.colorScheme.error,
-            focusedLabelColor = MaterialTheme.colorScheme.error,
-        ),
-
         keyboardOptions = KeyboardOptions(
             keyboardType = KeyboardType.Email,
             imeAction = ImeAction.Next),
@@ -281,7 +274,7 @@ fun EmailComponent(input : MutableState<String>,
         value = input.value,
         onValueChange = {
             input.value = it
-            inputError.value = !Patterns.EMAIL_ADDRESS.matcher(it).matches() || it.isEmpty()
+            inputError.value = !Patterns.EMAIL_ADDRESS.matcher(it).matches() && it.isNotEmpty()
         },
         isError = inputError.value
     )
@@ -290,17 +283,16 @@ fun EmailComponent(input : MutableState<String>,
         TextFieldError(textError = R.string.email_invalid,
             color = MaterialTheme.colorScheme.error)
     }else {
-        if(input.value.isNotEmpty()) {
-            TextFieldErrorEmail(textError = "Contoh: ${input.value}",
-                color = Gray)
-        }
+        TextFieldErrorEmail(textError = if(input.value.isEmpty()) "Contoh: test@gmail.com" else "Contoh: ${input.value}",
+            color = Color.Gray
+        )
     }
 }
 
 @Composable
 fun PasswordComponent(password : MutableState<String>,
-                               passwordError : MutableState<Boolean>) {
-
+                      passwordError : MutableState<Boolean>
+) {
     val localFocusManager = LocalFocusManager.current
     val passwordVisible = remember { mutableStateOf(false) }
 
@@ -311,17 +303,7 @@ fun PasswordComponent(password : MutableState<String>,
                 text = stringResource(id = R.string.password),
                 style = MaterialTheme.typography.bodyMedium,
             )
-        },colors =
-        if (!passwordError.value) TextFieldDefaults.outlinedTextFieldColors(
-            backgroundColor = Color.Transparent,
-            focusedLabelColor = Gray
-        )else TextFieldDefaults.outlinedTextFieldColors(
-            backgroundColor = Color.Transparent,
-            cursorColor = MaterialTheme.colorScheme.error,
-            focusedBorderColor =MaterialTheme.colorScheme.error,
-            focusedLabelColor = MaterialTheme.colorScheme.error
-            //unfocusedBorderColor = Color.Red
-        ),
+        },
         keyboardOptions = KeyboardOptions(
             keyboardType = KeyboardType.Password,
             imeAction = ImeAction.Done
@@ -334,8 +316,7 @@ fun PasswordComponent(password : MutableState<String>,
         value = password.value,
         onValueChange = {
             password.value = it
-            passwordError.value = password.value.isEmpty() || password.value.length <=7
-            //onTextSelected(it)
+            passwordError.value = it.isNotEmpty() && it.length <=7
         },
         trailingIcon = {
             val iconImage = if (passwordVisible.value) {
@@ -360,7 +341,6 @@ fun PasswordComponent(password : MutableState<String>,
             }
 
         },
-
         visualTransformation = if (passwordVisible.value) VisualTransformation.None else PasswordVisualTransformation(),
         isError = passwordError.value
     )
@@ -368,9 +348,7 @@ fun PasswordComponent(password : MutableState<String>,
     if(passwordError.value){
         TextFieldError(textError = R.string.password_invalid, color = MaterialTheme.colorScheme.error)
     }else {
-        if(password.value.isNotEmpty()) {
-            TextFieldError(textError = R.string.password_min, color = Color.Gray)
-        }
+        TextFieldError(textError = R.string.password_min, color = Color.Gray)
     }
 }
 

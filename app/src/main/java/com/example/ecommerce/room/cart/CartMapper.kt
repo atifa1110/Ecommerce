@@ -1,15 +1,9 @@
-package com.example.ecommerce.room
+package com.example.ecommerce.room.cart
 
 import com.example.ecommerce.api.model.ProductVariant
 import com.example.ecommerce.api.response.DetailResponse
 
-fun DetailResponse.ProductDetail.toEntity(variant : ProductVariant): Cart{
-    var variantName : String? = ""
-    var variantPrice : Int? = 0
-    productVariant!!.forEach {
-        variantName = it.variantName
-        variantPrice = it.variantPrice
-    }
+fun DetailResponse.ProductDetail.toEntity(variant : ProductVariant): Cart {
     return Cart(
         productId = productId!!,
         productName = productName,

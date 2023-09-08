@@ -1,4 +1,4 @@
-package com.example.ecommerce.room
+package com.example.ecommerce.room.cart
 
 import androidx.room.Dao
 import androidx.room.Insert
@@ -16,6 +16,9 @@ interface CartDao {
 
     @Query("SELECT * FROM cart Where selected = 1")
     suspend fun getSelected() : List<Cart>
+
+    @Query("SELECT * FROM cart")
+    fun getAllSelected() : List<Cart>
 
     @Query("SELECT SUM(quantity * productPrice) FROM cart WHERE selected = 1")
     suspend fun getTotal(): Int

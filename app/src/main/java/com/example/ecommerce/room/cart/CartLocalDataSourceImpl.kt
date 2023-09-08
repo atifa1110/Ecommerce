@@ -1,11 +1,11 @@
-package com.example.ecommerce.room
+package com.example.ecommerce.room.cart
 
 import kotlinx.coroutines.flow.Flow
 import javax.inject.Inject
 
 class CartLocalDataSourceImpl @Inject constructor(
     private val cartDao: CartDao
-) : CartLocalDataSource{
+) : CartLocalDataSource {
     override suspend fun addToCart(cart: Cart) {
         return cartDao.addToCart(cart)
     }
@@ -32,6 +32,10 @@ class CartLocalDataSourceImpl @Inject constructor(
 
     override fun getAllCart(): Flow<List<Cart>> {
         return cartDao.getAllCart()
+    }
+
+    override fun getAllSelected(): List<Cart> {
+        return cartDao.getAllSelected()
     }
 
     override suspend fun deleteById(id: String) {

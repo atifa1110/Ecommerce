@@ -2,8 +2,18 @@ package com.example.ecommerce.datastore
 
 import kotlinx.coroutines.flow.Flow
 
-interface DataStoreAbstract {
-    suspend fun saveOnBoardingState (complete:Boolean)
+interface DataStoreRepository {
 
-    suspend fun getOnBoardingState() : Flow<Boolean>
+    suspend fun saveOnBoardingState (complete:Boolean)
+    fun getOnBoardingState() : Flow<Boolean>
+
+    suspend fun saveHasLoginState (complete:Boolean)
+    fun getLoginState() : Flow<Boolean>
+
+    suspend fun saveProfileName (name:String)
+    fun getProfileName() : Flow<String>
+
+    suspend fun saveAccessToken (token:String)
+    fun getAccessToken() : Flow<String>
+
 }

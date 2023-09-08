@@ -1,4 +1,4 @@
-package com.example.ecommerce.room
+package com.example.ecommerce.room.cart
 
 import kotlinx.coroutines.flow.Flow
 
@@ -12,13 +12,17 @@ interface CartLocalDataSource {
     fun findById(id: String): Cart
 
     suspend fun getSelected() : List<Cart>
+
     suspend fun getTotal(): Int
 
     fun getAllCart(): Flow<List<Cart>>
 
+    fun getAllSelected() : List<Cart>
+
     suspend fun deleteById(id: String)
 
     suspend fun deletedBySelected()
+
     suspend fun deleteAllCart()
 
     suspend fun update(id: String, quantity: Int?)

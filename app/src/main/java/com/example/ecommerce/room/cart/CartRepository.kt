@@ -1,7 +1,8 @@
-package com.example.ecommerce.room
+package com.example.ecommerce.room.cart
 
 import com.example.ecommerce.api.model.ProductVariant
 import com.example.ecommerce.api.response.DetailResponse
+import com.example.ecommerce.room.cart.Cart
 import kotlinx.coroutines.flow.Flow
 
 interface CartRepository {
@@ -16,6 +17,8 @@ interface CartRepository {
 
     suspend fun getTotal(): Int
 
+    fun getAllSelected() : Boolean
+
     fun getAllCarts() : Flow<List<Cart>>
 
     suspend fun deleteById(id: String)
@@ -24,5 +27,5 @@ interface CartRepository {
 
     suspend fun deleteAllCart()
 
-    suspend fun updateAddQuantity(cart : Cart,quantity:Int)
+    suspend fun updateAddQuantity(cart : Cart, quantity:Int)
 }
