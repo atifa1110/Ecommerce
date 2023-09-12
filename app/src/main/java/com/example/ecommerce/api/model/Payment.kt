@@ -14,9 +14,9 @@ data class Payment(
 @Parcelize
 data class Item (
     @SerializedName("label")
-    val label : String,
+    val label : String?=null,
     @SerializedName("image")
-    val image : String,
+    val image : String?= null,
     @SerializedName("status")
-    val status : Boolean
+    val status : Boolean?=null
 ) : Parcelable

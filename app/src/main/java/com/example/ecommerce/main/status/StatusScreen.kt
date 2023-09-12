@@ -108,7 +108,7 @@ fun StatusScreen(navController : NavHostController){
                         colors = ButtonDefaults.buttonColors(Purple)
                     ) {
                         Text(
-                            text = "Selesai",
+                            text = stringResource(id = R.string.done),
                             fontWeight = FontWeight.W500
                         )
                     }
@@ -129,7 +129,7 @@ fun StatusScreen(navController : NavHostController){
                         elevation = CardDefaults.cardElevation(3.dp)) {
                         Column(modifier = Modifier
                             .background(Color.White)
-                            .padding(top=40.dp, start = 16.dp,end=16.dp, bottom = 16.dp)) {
+                            .padding(top = 40.dp, start = 16.dp, end = 16.dp, bottom = 16.dp)) {
                             Column(modifier=Modifier.fillMaxWidth(),
                                 horizontalAlignment = Alignment.CenterHorizontally) {
                                 Text(
@@ -140,7 +140,9 @@ fun StatusScreen(navController : NavHostController){
                                 )
                             }
 
-                            Column(modifier=Modifier.fillMaxWidth().padding(top = 10.dp),
+                            Column(modifier= Modifier
+                                .fillMaxWidth()
+                                .padding(top = 10.dp),
                                 horizontalAlignment = Alignment.CenterHorizontally) {
                                 RatingBar(
                                     maxRating = 5,

@@ -65,7 +65,11 @@ class CartRepositoryImpl(
         }
     }
 
-    override fun getAllSelected(): List<Cart> {
+    override fun getAllSelectedList(): List<Cart> {
+        return localDataSource.getAllSelectedList()
+    }
+
+    override fun getAllSelected(): Flow<List<Cart>> {
         return localDataSource.getAllSelected()
     }
 
@@ -92,7 +96,7 @@ class CartRepositoryImpl(
         }
 
     override suspend fun checkSelected(): Boolean {
-        val result = localDataSource.getAllSelected()
+        val result = localDataSource.getAllSelectedList()
         return if(result.size>=1) true else false
     }
 }

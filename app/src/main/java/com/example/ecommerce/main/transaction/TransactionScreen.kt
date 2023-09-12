@@ -2,6 +2,7 @@ package com.example.ecommerce.main.transaction
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -14,6 +15,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.Card
 import androidx.compose.material.Divider
@@ -21,43 +23,97 @@ import androidx.compose.material.Icon
 import androidx.compose.material.Text
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.ShoppingBag
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.hilt.navigation.compose.hiltViewModel
+import coil.compose.AsyncImage
 import com.example.ecommerce.main.detail.ErrorPage
 import com.example.ecommerce.R
+import com.example.ecommerce.api.model.Transaction
+import com.example.ecommerce.api.response.BaseResponse
+import com.example.ecommerce.component.ToastMessage
 import com.example.ecommerce.ui.theme.LightPurple
 import com.example.ecommerce.ui.theme.Purple
 
 @Composable
 @Preview(showBackground = true)
 fun TransactionScreen() {
-    Column(modifier = Modifier.fillMaxSize()) {
-//        ErrorPage(title ="Empty",
-//            message = "Your requested data is unavailable",
-//            button = R.string.refresh,
-//            onButtonClick = {  },
-//            alpha =1F)
+    val lifecycleOwner = LocalLifecycleOwner.current
+    val context = LocalContext.current
+    val transactionViewModel : TransactionViewModel = hiltViewModel()
+    var isLoading by remember { mutableStateOf(false) }
+    var listTransaction : List<Transaction> = emptyList()
 
-        LazyColumn(modifier = Modifier.fillMaxSize().padding(top = 11.dp)) {
-            repeat(2){
-                item {
-                    CardTransaction()
+    transactionViewModel.transactionResult.observe(lifecycleOwner){
+        when (it) {
+            is BaseResponse.Loading -> {
+                isLoading = true
+            }
+
+            is BaseResponse.Success -> {
+                isLoading = false
+                listTransaction = it.data!!.data
+            }
+
+            is BaseResponse.Error -> {
+                isLoading = false
+                ToastMessage().showMsg(context,it.msg.toString())
+            }
+
+            else -> {}
+        }
+    }
+
+    Column(modifier = Modifier.fillMaxSize()) {
+        if (isLoading)
+            Column(modifier = Modifier
+                .fillMaxSize()
+                .background(Color.White),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.Center,
+            ) {
+                CircularProgressIndicator(color = Purple)
+            }
+
+        if(listTransaction.isEmpty()) {
+            ErrorPage(
+                title = "Empty",
+                message = "Your requested data is unavailable",
+                button = R.string.refresh,
+                onButtonClick = { },
+                alpha = 1F
+            )
+        }
+
+            LazyColumn(modifier = Modifier
+                .fillMaxSize()
+                .padding(vertical = 10.dp)) {
+                items(listTransaction) { item ->
+                    CardTransaction(item)
                 }
             }
-        }
+
     }
 }
 
 @Composable
-fun CardTransaction() {
-    Column (Modifier.padding(top=5.dp, start = 16.dp,end=16.dp)){
+fun CardTransaction(transaction: Transaction) {
+    Column (Modifier.padding(top=8.dp, start = 16.dp,end=16.dp)){
         Card(modifier = Modifier.fillMaxWidth(),
             shape = RoundedCornerShape(8.dp)) {
             Column(modifier = Modifier.fillMaxWidth()) {
@@ -79,11 +135,13 @@ fun CardTransaction() {
                             modifier = Modifier.weight(1f),
                             horizontalArrangement = Arrangement.Start
                         ) {
+
                             Icon(
                                 modifier = Modifier.size(28.dp),
                                 imageVector = Icons.Outlined.ShoppingBag,
                                 contentDescription = "Shopping Bag"
                             )
+
                             Spacer(modifier = Modifier.width(10.dp))
 
                             Column {
@@ -93,7 +151,7 @@ fun CardTransaction() {
                                     fontWeight = FontWeight.W600
                                 )
                                 Text(
-                                    text = "4 Jun 2023",
+                                    text = transaction.date,
                                     fontSize = 10.sp,
                                     fontWeight = FontWeight.W400
                                 )
@@ -143,12 +201,20 @@ fun CardTransaction() {
                             modifier = Modifier.size(40.dp),
                             shape = RoundedCornerShape(8.dp)
                         ) {
-                            Box(modifier = Modifier.fillMaxSize()) {
-                                Image(
-                                    modifier = Modifier.fillMaxSize(),
-                                    painter = painterResource(id = R.drawable.thumbnail),
-                                    contentDescription = "Image"
-                                )
+                            Box(modifier = Modifier.size(40.dp)) {
+                                if(transaction.image.isEmpty()) {
+                                    Image(
+                                        modifier = Modifier.fillMaxSize(),
+                                        painter = painterResource(id = R.drawable.thumbnail),
+                                        contentDescription = "Image"
+                                    )
+                                }else{
+                                    AsyncImage(
+                                        modifier = Modifier.fillMaxSize(),
+                                        model = transaction.image,
+                                        contentDescription = "Transaction image"
+                                    )
+                                }
                             }
                         }
 
@@ -156,7 +222,8 @@ fun CardTransaction() {
 
                         Column(modifier = Modifier.fillMaxWidth()) {
                             Text(
-                                text = "Lenovo Legion 7 16 I7 11800 16GB 1TB SSD..",
+                                text = transaction.name,
+                                maxLines = 1,
                                 fontSize = 14.sp,
                                 fontWeight = FontWeight.W500
                             )
@@ -170,8 +237,8 @@ fun CardTransaction() {
 
 
                     Row(modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(top = 10.dp),
+                        .fillMaxWidth()
+                        .padding(top = 10.dp),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         Column(
@@ -184,7 +251,7 @@ fun CardTransaction() {
                                 fontWeight = FontWeight.W400
                             )
                             Text(
-                                text = "Rp23.000.000",
+                                text = "Rp${transaction.total}",
                                 fontSize = 12.sp,
                                 fontWeight = FontWeight.W600
                             )
@@ -196,13 +263,17 @@ fun CardTransaction() {
                         ) {
                             Card(
                                 modifier = Modifier
+                                    .alpha(if(transaction.rating == null) 1f else 0f)
+                                    .clickable {
+
+                                    }
                                     .height(24.dp)
                                     .width(84.dp),
-                                shape = RoundedCornerShape(100.dp)
+                                shape = RoundedCornerShape(100.dp),
                             ) {
                                 Box(modifier = Modifier
-                                        .fillMaxSize()
-                                        .background(Purple),
+                                    .fillMaxSize()
+                                    .background(Purple),
                                     contentAlignment = Alignment.Center
                                 ) {
                                     Text(

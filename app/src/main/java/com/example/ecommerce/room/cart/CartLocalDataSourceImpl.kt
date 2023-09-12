@@ -34,7 +34,11 @@ class CartLocalDataSourceImpl @Inject constructor(
         return cartDao.getAllCart()
     }
 
-    override fun getAllSelected(): List<Cart> {
+    override fun getAllSelectedList(): List<Cart> {
+        return cartDao.getAllSelectedList()
+    }
+
+    override fun getAllSelected(): Flow<List<Cart>> {
         return cartDao.getAllSelected()
     }
 

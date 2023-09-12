@@ -8,6 +8,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.navArgument
 import androidx.navigation.navigation
 import com.example.ecommerce.api.model.Item
+import com.example.ecommerce.api.model.Payment
 import com.example.ecommerce.api.model.PaymentType
 import com.example.ecommerce.api.model.ProductType
 import com.example.ecommerce.auth.profile.ProfileRoute
@@ -68,8 +69,9 @@ fun NavGraphBuilder.mainNavGraph(
             arguments = listOf(
                 navArgument("listCheckout") { type = ProductType()}
             ),
-        ){
-            val checkoutItem = it.arguments?.getParcelable<ListCheckout>("listCheckout")
+        ){ backStackEntry ->
+            val checkoutItem = backStackEntry.arguments?.getParcelable<ListCheckout>("listCheckout")
+            val paymentItem = backStackEntry.savedStateHandle.get<Item>("payment")
             CheckoutScreen(
                 navController,
                 checkoutItem,
@@ -78,7 +80,8 @@ fun NavGraphBuilder.mainNavGraph(
                 },
                 productPayment = {
                     navController.navigate(Main.Status.route)
-                }
+                },
+                paymentItem = paymentItem
             )
         }
 

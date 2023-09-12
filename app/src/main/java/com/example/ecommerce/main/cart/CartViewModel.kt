@@ -36,6 +36,7 @@ class CartViewModel @Inject constructor(
 
     init {
         getAllCart()
+        getAllSelected()
     }
 
     fun getCheckedSelected(){
@@ -45,11 +46,20 @@ class CartViewModel @Inject constructor(
         }
     }
 
-    fun getAllSelected(size : Int){
+    fun checkSelected(size : Int){
         viewModelScope.launch(Dispatchers.IO) {
-           val result = cartRepository.getAllSelected()
+           val result = cartRepository.getAllSelectedList()
             Log.d("CartRepository",result.toString())
             _selectedAll.value = size == result.size
+        }
+    }
+
+    private fun getAllSelected(){
+        viewModelScope.launch {
+            val result = cartRepository.getAllSelected()
+            _uiState.update {
+                it.copy(cartSelected = result)
+            }
         }
     }
 
@@ -113,27 +123,6 @@ class CartViewModel @Inject constructor(
             cartRepository.selectedAll(checked)
         }
     }
-    fun deleteAllCart() {
-        viewModelScope.launch {
-            try {
-                cartRepository.deleteAllCart()
-                _uiState.update {
-                    it.copy(
-                        cartList = emptyFlow(),
-                        isError = false,
-                        message = "Deleted Success"
-                    )
-                }
-            } catch (error: Exception) {
-                _uiState.update {
-                    it.copy(
-                        isError = true,
-                        message = "Deleted Failed"
-                    )
-                }
-            }
-        }
-    }
 
     fun getTotal(){
         viewModelScope.launch {
@@ -155,6 +144,7 @@ class CartViewModel @Inject constructor(
 
 data class ShowCartUiState(
     val cartList : Flow<List<Cart>> = emptyFlow(),
+    val cartSelected : Flow<List<Cart>> = emptyFlow(),
     val isError : Boolean = false,
     val isLoading: Boolean = false,
     val message : String? = null,

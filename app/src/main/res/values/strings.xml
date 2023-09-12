@@ -34,11 +34,19 @@
     <string name="category">Kategori</string>
     <string name="price">Harga</string>
     <string name="detail">Detail Produk</string>
-    <string name="buy">Beli Langsung</string>
+    <string name="buy_rightaway">Beli Langsung</string>
+    <string name="buy">Beli</string>
     <string name="review">Ulasan Pembeli</string>
+    <string name="dummy_notification">Transaksi anda sedang di proses oleh penjual, mohon ditunggu untuk update selanjutnya di aplikasi. Sambil menunggu, anda bisa cari barang lain terlebih dahulu</string>
     <string name="dummy">Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry standard dummy text ever since the 1500s, when an unknown printer took a galley of type and scrambled it to make a type specimen book.</string>
     <string name="cart">Keranjang</string>
     <string name="checkout">Checkout</string>
     <string name="status">Status</string>
-    <string name="payment">Pilih Pembayaran</string>
+    <string name="choose_payment">Pilih Pembayaran</string>
+    <string name="payment">Pembayaran</string>
+    <string name="total">Total Bayar</string>
+    <string name="description">Deskripsi produk</string>
+    <string name="see_all">Lihat semua</string>
+    <string name="transaction_done">Transaction Berhasil</string>
+    <string name="info">Info</string>
 </resources>

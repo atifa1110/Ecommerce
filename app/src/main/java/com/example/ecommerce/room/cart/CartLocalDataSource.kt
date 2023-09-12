@@ -17,7 +17,9 @@ interface CartLocalDataSource {
 
     fun getAllCart(): Flow<List<Cart>>
 
-    fun getAllSelected() : List<Cart>
+    fun getAllSelectedList() : List<Cart>
+
+    fun getAllSelected() : Flow<List<Cart>>
 
     suspend fun deleteById(id: String)
 

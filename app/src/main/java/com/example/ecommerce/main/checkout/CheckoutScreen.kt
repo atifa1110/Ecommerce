@@ -48,6 +48,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
@@ -55,11 +57,17 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
+import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavHostController
-import androidx.paging.compose.itemKey
+import com.example.ecommerce.api.model.Item
 import coil.compose.AsyncImage
 import com.example.ecommerce.R
+import com.example.ecommerce.api.request.FulfillmentRequest
+import com.example.ecommerce.api.response.BaseResponse
+import com.example.ecommerce.component.ToastMessage
 import com.example.ecommerce.room.cart.Cart
+import com.example.ecommerce.room.cart.CartItem
 import com.example.ecommerce.room.cart.ListCheckout
 import com.example.ecommerce.ui.theme.LightGray
 import com.example.ecommerce.ui.theme.Purple
@@ -71,9 +79,38 @@ fun CheckoutScreen(
     navController: NavHostController,
     listCheckout: ListCheckout?,
     choosePayment: () -> Unit,
-    productPayment: () -> Unit
+    productPayment: () -> Unit,
+    paymentItem : Item?
 ){
-    val listCheckout : List<Cart> = listCheckout!!.listCheckout!!
+    val lifecycleOwner = LocalLifecycleOwner.current
+    val context = LocalContext.current
+    val checkoutViewModel : CheckoutViewModel = hiltViewModel()
+
+    var isLoading by remember { mutableStateOf(false) }
+    val checkoutItem : List<Cart> = listCheckout!!.listCheckout!!
+    val cartItem : List<CartItem> = checkoutItem.map { CartItem(it.productId,it.productVariantName,it.quantity) };
+    val uiState by checkoutViewModel.uiState.collectAsStateWithLifecycle()
+
+    checkoutViewModel.checkOutResult.observe(lifecycleOwner){
+        when (it) {
+            is BaseResponse.Loading -> {
+                isLoading = true
+            }
+
+            is BaseResponse.Success -> {
+                isLoading = false
+                ToastMessage().showMsg(context,it.data!!.message)
+                productPayment()
+            }
+
+            is BaseResponse.Error -> {
+                isLoading = false
+                ToastMessage().showMsg(context,it.msg.toString())
+            }
+
+            else -> {}
+        }
+    }
 
     Scaffold(
         topBar = {
@@ -119,7 +156,7 @@ fun CheckoutScreen(
                     )
 
                     Text(
-                        text = "Rp23.000.000",
+                        text = "Rp${uiState.total}",
                         fontSize = 16.sp,
                         fontWeight = FontWeight.W600
                     )
@@ -130,8 +167,11 @@ fun CheckoutScreen(
                     horizontalAlignment = Alignment.End
                 ) {
                     Button(
-                        modifier = Modifier, onClick = { productPayment() },
-                        colors = ButtonDefaults.buttonColors(Purple)
+                        modifier = Modifier, onClick = {
+                            checkoutViewModel.fulfillment(FulfillmentRequest(paymentItem!!.label,cartItem))
+                        },
+                        colors = ButtonDefaults.buttonColors(Purple),
+                        enabled = paymentItem!=null
                     ) {
                         Text(
                             text = "Bayar",
@@ -146,6 +186,16 @@ fun CheckoutScreen(
             .fillMaxSize()
             .padding(it)
         ) {
+            if (isLoading)
+                Column(modifier = Modifier
+                        .fillMaxSize()
+                        .background(Color.White),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.Center,
+                ) {
+                    CircularProgressIndicator(color = Purple)
+                }
+
             Column (modifier = Modifier.padding(16.dp)){
                 Text(text = "Barang yang dibeli",
                     fontSize = 16.sp,
@@ -154,12 +204,16 @@ fun CheckoutScreen(
 
                 Spacer(modifier = Modifier.height(10.dp))
 
-                //list
                 LazyColumn(modifier = Modifier
                     .fillMaxWidth()
                     .background(Color.White)){
-                    items(listCheckout){ item ->
-                        CardCheckout(cart = item)
+                    items(checkoutItem){ item ->
+                        CardCheckout(
+                            cart = item,
+                            addQuantity = { it->
+                                checkoutViewModel.addQuantity(item,it)
+                            }
+                        )
                     }
                 }
             }
@@ -168,7 +222,7 @@ fun CheckoutScreen(
 
             Column (modifier = Modifier.padding(16.dp)){
                 Text(
-                    text = "Pembayaran",
+                    text = stringResource(id = R.string.payment),
                     fontSize = 16.sp,
                     fontWeight = FontWeight.W500
                 )
@@ -194,20 +248,28 @@ fun CheckoutScreen(
                                 horizontalArrangement = Arrangement.Start,
                                 verticalAlignment = Alignment.CenterVertically
                             ) {
-                                Icon(
-                                    imageVector = Icons.Default.AddCard,
-                                    contentDescription = "Card"
-                                )
+
+                                if(paymentItem==null) {
+                                    Icon(
+                                        imageVector = Icons.Default.AddCard,
+                                        contentDescription = "Card"
+                                    )
+                                }else{
+                                    AsyncImage(
+                                        modifier = Modifier.size(48.dp,32.dp),
+                                        model = paymentItem.image,
+                                        contentDescription = "Payment Image"
+                                    )
+                                }
+
                                 Spacer(modifier = Modifier.width(10.dp))
                                 Text(
-                                    text = "Pilih Pembayaran",
+                                    text = if(paymentItem==null) "Pilih Pembayaran" else paymentItem.label!!,
                                     fontSize = 14.sp,
                                     fontWeight = FontWeight.W500
                                 )
                             }
-                            Row(
-                                modifier = Modifier.weight(1f),
-                                horizontalArrangement = Arrangement.End
+                            Row(horizontalArrangement = Arrangement.End
                             ) {
                                 Icon(
                                     imageVector = Icons.Default.ArrowForwardIos,
@@ -224,7 +286,13 @@ fun CheckoutScreen(
 
 
 @Composable
-fun CardCheckout(cart : Cart){
+fun CardCheckout(
+    cart : Cart,
+    addQuantity : (quantity : Int) -> Unit
+){
+    var count by remember { mutableStateOf(cart.quantity) }
+
+    Log.d("count", cart.quantity.toString())
     Row(modifier = Modifier.padding(vertical = 8.dp)){
             Card(
                 modifier = Modifier.size(80.dp),
@@ -264,8 +332,8 @@ fun CardCheckout(cart : Cart){
                     fontWeight = FontWeight.W400
                 )
                 Text(
-                    text = "Stok ${cart.stock}",
-                    color = Color.Black,
+                    text = if(cart.stock!! > 9) "Stok ${cart.stock}" else "Sisa ${cart.stock}",
+                    color = if(cart.stock > 9) Color.Black else Color.Red,
                     fontSize = 10.sp,
                     fontWeight = FontWeight.W400
                 )
@@ -286,21 +354,12 @@ fun CardCheckout(cart : Cart){
                         )
                     }
 
-                    Row(
-                        modifier = Modifier
-                            .background(Color.White)
-                            .fillMaxWidth()
-                            .weight(1f),
+                    Row(modifier = Modifier
+                        .background(Color.White)
+                        .fillMaxWidth()
+                        .weight(1f),
                         horizontalArrangement = Arrangement.End
                     ) {
-                        Icon(
-                            modifier = Modifier
-                                .size(20.dp)
-                                .clickable { },
-                            imageVector = Icons.TwoTone.DeleteOutline,
-                            contentDescription = " Delete"
-                        )
-                        Spacer(modifier = Modifier.width(10.dp))
                         Card(
                             modifier = Modifier
                                 .height(20.dp)
@@ -318,19 +377,25 @@ fun CardCheckout(cart : Cart){
                             ) {
                                 Icon(modifier = Modifier
                                     .size(14.dp)
-                                    .clickable {},
+                                    .clickable {
+                                        count = if (count!! > 0) count!! - 1 else count
+                                    },
                                     imageVector = Icons.Default.Remove,
                                     contentDescription = "Remove"
                                 )
                                 Spacer(modifier = Modifier.width(10.dp))
                                 Text(
-                                    text = "${cart.quantity}", fontSize = 12.sp,
+                                    text = count.toString(), fontSize = 12.sp,
                                     fontWeight = FontWeight.W500
                                 )
                                 Spacer(modifier = Modifier.width(10.dp))
                                 Icon(modifier = Modifier
                                     .size(14.dp)
-                                    .clickable {},
+                                    .clickable {
+                                        count =
+                                            if (count!! >= 1 && count != cart.stock) count!! + 1 else if (count == cart.stock) count else 1
+                                        addQuantity(count!!)
+                                    },
                                     imageVector = Icons.Default.Add,
                                     contentDescription = "Add"
                                 )
@@ -339,20 +404,5 @@ fun CardCheckout(cart : Cart){
                     }
                 }
             }
-    }
-}
-
-
-@Composable
-fun OpenPaymentScreen(
-    openDialog: Boolean,
-    onCloseDialog: () -> Unit
-) {
-    if(openDialog){
-        Dialog(onDismissRequest = { onCloseDialog() },
-            properties = DialogProperties(usePlatformDefaultWidth = false)
-        ) {
-           // PaymentScreen(onCloseDialog)
-        }
     }
 }

@@ -135,9 +135,6 @@ fun DetailScreen(
     }
 
     val uiState by detailViewModel.uiState.collectAsState()
-    val scaffoldState: ScaffoldState = rememberScaffoldState()
-    val context = LocalContext.current
-
     val scope = rememberCoroutineScope()
     val snackbarHostState = remember { SnackbarHostState() }
 
@@ -347,7 +344,7 @@ fun DetailScreen(
                     Column(Modifier.padding(16.dp)) {
                         Text(
                             modifier = Modifier.fillMaxWidth(),
-                            text = "Deskripsi produk",
+                            text = stringResource(id = R.string.description),
                             fontSize = 16.sp,
                             fontWeight = FontWeight.W500
                         )
@@ -390,7 +387,7 @@ fun DetailScreen(
                             ) {
                                 TextButton(onClick = { onReviewClick(result.productId!!) }) {
                                     Text(
-                                        text = "Lihat semua",
+                                        text = stringResource(id = R.string.see_all),
                                         fontSize = 12.sp,
                                         fontWeight = FontWeight.W500
                                     )

@@ -86,8 +86,9 @@ fun CartScreen(
     val cart = uiState.cartList.collectAsStateWithLifecycle(emptyList()).value
     val total = uiState.total
 
-    val jsonCheckout = Uri.encode(Gson().toJson(ListCheckout(cart)))
-    cardViewModel.getAllSelected(cart.size)
+    val cartSelected = uiState.cartSelected.collectAsStateWithLifecycle(emptyList()).value
+    val jsonCheckout = Uri.encode(Gson().toJson(ListCheckout(cartSelected)))
+    cardViewModel.checkSelected(cart.size)
     cardViewModel.getCheckedSelected()
 
     val buttonVisible by cardViewModel.buttonVisible.collectAsStateWithLifecycle()
@@ -132,7 +133,7 @@ fun CartScreen(
                         horizontalAlignment = Alignment.Start
                     ) {
                         Text(
-                            text = "Total Bayar",
+                            text = stringResource(id = R.string.total),
                             fontSize = 12.sp,
                             fontWeight = FontWeight.W400
                         )
@@ -158,7 +159,7 @@ fun CartScreen(
                             enabled = buttonVisible
                         ) {
                             Text(
-                                text = "Beli",
+                                text = stringResource(id = R.string.buy),
                                 fontWeight = FontWeight.W500
                             )
                         }
@@ -374,9 +375,7 @@ fun CardCart(
                                     modifier = Modifier
                                         .size(14.dp)
                                         .clickable {
-                                            count =
-                                                if (count!! >= 1 && count != cart.stock) count!! + 1 else if (count == cart.stock) count else 1
-                                            Log.d("Count Quantity", count.toString())
+                                            count = if (count!! >= 1 && count != cart.stock) count!! + 1 else if (count == cart.stock) count else 1
                                             addQuantity(count!!)
                                         },
                                     imageVector = Icons.Default.Add,

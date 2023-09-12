@@ -114,7 +114,7 @@ fun PaymentScreen(
             },
                 title = {
                     Text(
-                        stringResource(id = R.string.payment),
+                        stringResource(id = R.string.choose_payment),
                         fontSize = 22.sp, color = textColor,
                         fontWeight = FontWeight.Normal)
                 },
@@ -133,8 +133,7 @@ fun PaymentScreen(
             .background(Color.White)
         ) {
             if (isLoading)
-                Column(
-                    modifier = Modifier
+                Column(modifier = Modifier
                         .fillMaxSize()
                         .background(Color.White),
                     horizontalAlignment = Alignment.CenterHorizontally,
@@ -198,7 +197,7 @@ fun CardPayment(item: Item, onItemClick: (payment: Item) -> Unit){
                     Row(modifier = Modifier.weight(1f),
                         horizontalArrangement = Arrangement.Start,
                         verticalAlignment = Alignment.CenterVertically) {
-                        if(item.image.isEmpty()){
+                        if(item.image!!.isEmpty()){
                             Icon(imageVector = Icons.Default.AddCard,
                                 contentDescription = "Card")
                         }else{
@@ -210,7 +209,7 @@ fun CardPayment(item: Item, onItemClick: (payment: Item) -> Unit){
                         Spacer(modifier = Modifier.width(10.dp))
 
                         Text(modifier = Modifier.weight(1f),
-                            text = if(item.label.isEmpty()) "Pilih Pembayaran" else item.label,
+                            text = if(item.label!!.isEmpty()) "Pilih Pembayaran" else item.label,
                             fontSize = 14.sp,
                             fontWeight = FontWeight.W500
                         )

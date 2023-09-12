@@ -21,7 +21,9 @@ interface CartRepository {
 
     suspend fun getTotal(): Int
 
-    fun getAllSelected() : List<Cart>
+    fun getAllSelectedList() : List<Cart>
+
+    fun getAllSelected() : Flow<List<Cart>>
 
     fun getAllCarts() : Flow<List<Cart>>
 

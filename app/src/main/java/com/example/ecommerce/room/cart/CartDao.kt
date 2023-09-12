@@ -18,7 +18,10 @@ interface CartDao {
     suspend fun getSelected() : List<Cart>
 
     @Query("SELECT * FROM cart Where selected = 1")
-    fun getAllSelected() : List<Cart>
+    fun getAllSelectedList() : List<Cart>
+
+    @Query("SELECT * FROM cart Where selected = 1")
+    fun getAllSelected() : Flow<List<Cart>>
 
     @Query("SELECT SUM(quantity * productPrice) FROM cart WHERE selected = 1")
     suspend fun getTotal(): Int

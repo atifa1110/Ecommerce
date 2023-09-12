@@ -24,3 +24,4 @@ fun ProductDetail.toEntity(variant : ProductVariant): Cart {
         selected = false
     )
 }
+
