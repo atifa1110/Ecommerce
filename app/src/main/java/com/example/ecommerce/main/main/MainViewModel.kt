@@ -6,6 +6,7 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.ecommerce.datastore.DataStoreRepository
 import com.example.ecommerce.datastore.DataStoreRepositoryImpl
 import com.example.ecommerce.graph.Graph
 import com.example.ecommerce.room.cart.CartRepository
@@ -27,9 +28,7 @@ class MainViewModel @Inject constructor(
     val cartSize = cartRepository.getAllCarts()
     val favoriteSize = favoriteRepository.getAllFavorite()
 
-    fun getBoardingState() : Flow<Boolean> {
-        return repository.getOnBoardingState()
-    }
+    val getBoardingState = repository.getOnBoardingState()
 
     fun getLoginState() : Flow<Boolean>  {
         return repository.getLoginState()

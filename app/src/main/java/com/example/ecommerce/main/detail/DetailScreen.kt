@@ -21,6 +21,8 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.IconButton
 import androidx.compose.material.ScaffoldState
+import androidx.compose.material.SnackbarHost
+import androidx.compose.material.SnackbarHostState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Favorite
@@ -47,6 +49,7 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -67,6 +70,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavHostController
 import coil.compose.AsyncImage
 import com.example.ecommerce.R
+import com.example.ecommerce.api.model.ProductDetail
 import com.example.ecommerce.api.model.ProductVariant
 import com.example.ecommerce.api.response.BaseResponse
 import com.example.ecommerce.api.response.DetailResponse
@@ -78,6 +82,7 @@ import com.google.accompanist.pager.ExperimentalPagerApi
 import com.google.accompanist.pager.HorizontalPager
 import com.google.accompanist.pager.HorizontalPagerIndicator
 import com.google.accompanist.pager.rememberPagerState
+import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalPagerApi::class)
 @Composable
@@ -91,7 +96,7 @@ fun DetailScreen(
     var isSuccess by remember { mutableStateOf(false) }
     var isLoading by remember { mutableStateOf(false) }
     var isError by remember { mutableStateOf(false) }
-    var result by remember { mutableStateOf(DetailResponse.ProductDetail())}
+    var result by remember { mutableStateOf(ProductDetail())}
     var price by remember { mutableStateOf(0) }
     var totalPrice by remember { mutableStateOf(0) }
     val pagerState = rememberPagerState()
@@ -133,13 +138,19 @@ fun DetailScreen(
     val scaffoldState: ScaffoldState = rememberScaffoldState()
     val context = LocalContext.current
 
-    val productLocal by detailViewModel.productLocal.collectAsState()
+    val scope = rememberCoroutineScope()
+    val snackbarHostState = remember { SnackbarHostState() }
 
     uiState.message?.let { message ->
-        ToastMessage().showMsg(context,message)
+        scope.launch {
+            snackbarHostState.showSnackbar(message)
+        }
     }
 
     Scaffold(
+        snackbarHost = {
+            SnackbarHost(hostState = snackbarHostState)
+        },
         topBar = {
             TopAppBar(modifier = Modifier.drawBehind {
                 val borderSize = 1.dp.toPx()
@@ -234,6 +245,7 @@ fun DetailScreen(
                                 Icon(modifier = Modifier.clickable {
                                     //isFavorite = !isFavorite
                                     if(isFavorite){
+                                        detailViewModel.setUnFavorite()
                                         detailViewModel.deleteFavoriteById(id)
                                     }else {
                                         detailViewModel.addFavoriteToCart(
@@ -309,15 +321,18 @@ fun DetailScreen(
 
                         val itemsList: List<ProductVariant> = result.productVariant!!
                         var selectedItem by remember { mutableStateOf(itemsList[0].variantName) }
+                        var selectedPrice by remember { mutableStateOf(itemsList[0].variantPrice) }
+
                         LazyRow(modifier = Modifier.fillMaxWidth()) {
                             items(itemsList) {item->
+                               detailViewModel.setProductDataVariant(selectedItem,selectedPrice)
                                FilterChip(
                                     modifier = Modifier.padding(end = 6.dp),
-                                    selected = (item.variantName == selectedItem),
+                                    selected = (selectedItem == item.variantName),
                                     onClick = {
                                         selectedItem = item.variantName
-                                        price = item.variantPrice
-                                        detailViewModel.setProductDataVariant(item.variantName,price)
+                                        selectedPrice = item.variantPrice
+                                        detailViewModel.setProductDataVariant(selectedItem,selectedPrice)
                                     },
                                     label = {
                                         Text(text = item.variantName)

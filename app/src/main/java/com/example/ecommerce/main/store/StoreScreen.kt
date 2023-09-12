@@ -1,5 +1,7 @@
 package com.example.ecommerce.main.store
 
+import android.annotation.SuppressLint
+import android.util.Log
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.animateFloat
@@ -69,18 +71,12 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
-import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.focus.FocusRequester
-import androidx.compose.ui.focus.focusRequester
-import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalFocusManager
-import androidx.compose.ui.platform.LocalLifecycleOwner
-import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
@@ -102,12 +98,8 @@ import com.example.ecommerce.api.model.Product
 import com.example.ecommerce.component.ProgressDialog
 import com.example.ecommerce.ui.theme.CardBorder
 import com.example.ecommerce.ui.theme.Purple
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
-import java.io.IOException
-import java.util.concurrent.TimeoutException
 
-@OptIn(ExperimentalComposeUiApi::class)
 @ExperimentalMaterialApi
 @ExperimentalMaterial3Api
 @ExperimentalLayoutApi
@@ -115,43 +107,31 @@ import java.util.concurrent.TimeoutException
 fun StoreScreen(
     onDetailClick: (id:String) -> Unit
 ) {
-    val lifecycleOwner = LocalLifecycleOwner.current
-    var isLoading by rememberSaveable { mutableStateOf(false)}
-    if (isLoading) ProgressDialog().ProgressDialog()
+    var storeViewModel : StoreViewModel = hiltViewModel()
     var search by rememberSaveable { mutableStateOf("") }
-    var active by remember { mutableStateOf(false)}
-
-    //val focusRequester = remember { FocusRequester() }
-    val keyboardController = LocalSoftwareKeyboardController.current
-
-    val storeViewModel : StoreViewModel = hiltViewModel()
-//    storeViewModel.searchText.observe(lifecycleOwner){
-//        search = it
-//    }
-
-    val filter by storeViewModel.filter.collectAsState()
+    var showDialog by remember { mutableStateOf(false) }
     val products = storeViewModel.getProductsFilter.collectAsLazyPagingItems()
-    storeViewModel.search(search)
+    var isClickedGrid by rememberSaveable { mutableStateOf(false)}
+
+    var searchData = storeViewModel.searchData.collectAsState()
+    storeViewModel.searchQuery(searchData.value)
+
+    SearchDialog(
+        openDialog = showDialog,
+        onCloseDialog = {
+            showDialog = false
+        },
+        searchData.value
+    )
 
     Column(modifier = Modifier
         .fillMaxSize()
         .padding(horizontal = 16.dp)){
 
-        var showDialog by remember { mutableStateOf(false) }
-
-        FullSizeSearchDialog(
-            openDialog = showDialog,
-            onCloseDialog = {
-                showDialog = false
-        })
-
-        OutlinedTextField(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(top = 16.dp).clickable{
-                     showDialog = true
-                }
-            ,
+        OutlinedTextField(modifier = Modifier
+            .fillMaxWidth()
+            .padding(top = 16.dp)
+            .clickable { showDialog = true },
             placeholder = {
                 Text(
                     text = stringResource(id = R.string.search),
@@ -160,7 +140,7 @@ fun StoreScreen(
             },
             singleLine = true,
             maxLines = 1,
-            value = search,
+            value = searchData.value,
             onValueChange = {
                 search = it
             },
@@ -172,11 +152,45 @@ fun StoreScreen(
             },
             enabled = false
         )
-        StoreContent(products,storeViewModel,onDetailClick)
+
+        when (val state = products.loadState.refresh) {
+            is LoadState.Error -> {
+                StoreErrorPage(title = "Empty",
+                    message = "Error",
+                    button = R.string.refresh,
+                    onButtonClick = {
+                        products.refresh()
+                        storeViewModel.resetQuery()
+                    }
+                )
+            }
+
+            is LoadState.Loading -> {
+                if(isClickedGrid){
+                    AnimatedFilter()
+                    LazyVerticalGrid(GridCells.Fixed(2)) {
+                        repeat(10){
+                            item {AnimatedGridShimmer() }
+                        }
+                    }
+                }else {
+                    AnimatedFilter()
+                    repeat(7) {
+                        AnimatedListShimmer()
+                    }
+                }
+            }
+            else -> {
+                StoreContent(products = products,
+                    storeViewModel = storeViewModel ,
+                    onDetailClick = onDetailClick)
+            }
+        }
     }
 }
 
 
+@SuppressLint("StateFlowValueCalledInComposition")
 @ExperimentalMaterialApi
 @ExperimentalMaterial3Api
 @ExperimentalLayoutApi
@@ -192,19 +206,24 @@ fun StoreContent(
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
 
     val dataArray = storeViewModel.dataArray.value ?: emptyList()
+    val filter = storeViewModel.filter.value
+    val selectedCategory = filter.brand ?: ""
+    val selectedList = filter.sort ?: ""
+    val lowest = if(filter.lowest==null) "" else "${filter.lowest}"
+    val highest = if(filter.highest==null) "" else "${filter.highest}"
 
-    Row(
-        Modifier
-            .fillMaxWidth()
-            .padding(top = 8.dp), verticalAlignment = Alignment.CenterVertically){
+    Row(modifier = Modifier.fillMaxWidth().padding(top = 8.dp)
+        ,verticalAlignment = Alignment.CenterVertically){
         val itemsCategory = listOf("Apple", "Asus", "Dell", "Lenovo")
-        var selectedItemCategory by remember { mutableStateOf("")}
+        var selectedItemCategory by rememberSaveable { mutableStateOf(selectedCategory)}
+        Log.d("SelectedItemCategory",selectedItemCategory)
 
         val itemsList = listOf("Ulasan", "Penjualan", "Harga Terendah", "Harga Tertinggi")
-        var selectedItemList by remember { mutableStateOf("")}
+        var selectedItemList by rememberSaveable { mutableStateOf(selectedList)}
+        Log.d("SelectedItemList",selectedItemList)
 
-        val lowestPrice = rememberSaveable { mutableStateOf("") }
-        val highestPrice = rememberSaveable { mutableStateOf("") }
+        val lowestPrice = rememberSaveable { mutableStateOf(lowest) }
+        val highestPrice = rememberSaveable { mutableStateOf(highest) }
 
         Row (Modifier.weight(1f)){
             AssistChip(modifier = Modifier.padding(end = 6.dp),
@@ -277,6 +296,7 @@ fun StoreContent(
                                 highestPrice.value = ""
                                 val data = emptyList<String>()
                                 storeViewModel.setDataArray(data)
+                                storeViewModel.setSearchText("")
                                 storeViewModel.resetQuery()
                                 scope.launch {
                                     sheetState.hide()
@@ -334,7 +354,11 @@ fun StoreContent(
                     Button(onClick = {
                         val data = listOf(selectedItemCategory, lowestPrice.value, highestPrice.value,selectedItemList)
                         storeViewModel.setDataArray(data)
-                        storeViewModel.setQuery(selectedItemCategory,null,null,selectedItemList)
+                        val brand = if(selectedItemCategory.isEmpty()) null else selectedItemCategory
+                        val sort = if(selectedItemList.isEmpty()) null else selectedItemList
+                        val lowest = if(lowestPrice.value.isEmpty()) null else lowestPrice.value.toInt()
+                        val highest = if(highestPrice.value.isEmpty()) null else highestPrice.value.toInt()
+                        storeViewModel.setQuery(brand,lowest,highest,sort)
                         scope.launch {
                             sheetState.hide()
                         }.invokeOnCompletion {
@@ -369,72 +393,8 @@ fun StoreProductList(
     products : LazyPagingItems<Product>,
     onDetailClick: (id: String) -> Unit
 ){
-    when (val state = products.loadState.refresh) {
-        is LoadState.Error -> {
-            when (state.error) {
-                is retrofit2.HttpException -> {
-                    if((state.error as retrofit2.HttpException).code()==404) {
-                        StoreErrorPage(
-                            title = "Empty",
-                            message = "Your requested data is unavailable",
-                            button = R.string.reset,
-                            onButtonClick = {}
-                        )
-                    }
-                }
-
-                is IOException -> {
-                    StoreErrorPage(
-                        title = "Connection",
-                        message = "Your connection is unavailable",
-                        button = R.string.refresh,
-                        onButtonClick = { products.refresh()}
-                    )
-                }
-
-                is TimeoutException-> {
-                    StoreErrorPage(
-                        title = "Time Out",
-                        message = "Time Out",
-                        button = R.string.refresh,
-                        onButtonClick = { products.refresh()}
-                    )
-                }
-
-                else -> {
-                    StoreErrorPage(title = "500",
-                        message = "Internal Server Error",
-                        button = R.string.refresh,
-                        onButtonClick = { products.refresh()}
-                    )
-                }
-            }
-        }
-
-        is LoadState.Loading -> {
-            if(isClickedGrid){
-                LazyVerticalGrid(GridCells.Fixed(2)) {
-                    repeat(10){
-                        item {  AnimatedGridShimmer() }
-                    }
-                }
-            }else {
-                repeat(7) {
-                    AnimatedListShimmer()
-                }
-            }
-        }
-        else -> {}
-    }
-
     val refreshScope = rememberCoroutineScope()
     var refreshing by remember { mutableStateOf(false) }
-    fun refresh() = refreshScope.launch {
-        refreshing = true
-        delay(1500)
-        refreshing = false
-    }
-
     val state = rememberPullRefreshState(refreshing, {products.refresh()})
 
     if(isClickedGrid){
@@ -535,9 +495,12 @@ fun StoreErrorPage(
 
 @Composable
 fun CardList(product: Product?, onClickCard:() ->Unit){
-    Column(Modifier.padding(vertical = 5.dp).clickable {
-        onClickCard()
-    }) {
+    Column(
+        Modifier
+            .padding(vertical = 5.dp)
+            .clickable {
+                onClickCard()
+            }) {
         Card(modifier = Modifier
             .fillMaxWidth()
             .clickable {
@@ -622,6 +585,70 @@ fun CardList(product: Product?, onClickCard:() ->Unit){
 }
 
 @Composable
+@Preview(showBackground = true)
+fun AnimatedFilter(){
+    val shimmerColors = listOf(
+        Color.LightGray.copy(alpha = 0.6f),
+        Color.LightGray.copy(alpha = 0.2f),
+        Color.LightGray.copy(alpha = 0.6f),
+    )
+
+    val transition = rememberInfiniteTransition(label = "")
+    val translateAnim = transition.animateFloat(
+        initialValue = 0f,
+        targetValue = 1000f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(
+                durationMillis = 1000,
+                easing = FastOutSlowInEasing
+            ),
+            repeatMode = RepeatMode.Reverse
+        ), label = ""
+    )
+
+    val brush = Brush.linearGradient(
+        colors = shimmerColors,
+        start = Offset.Zero,
+        end = Offset(x = translateAnim.value, y = translateAnim.value))
+
+    Filter(brush = brush)
+}
+
+@Composable
+fun Filter(brush: Brush){
+    Row (modifier = Modifier
+        .fillMaxWidth()
+        .padding(top = 8.dp, bottom = 8.dp),
+        verticalAlignment = Alignment.CenterVertically){
+        Row(modifier = Modifier.weight(1f),
+            horizontalArrangement = Arrangement.Start) {
+            Spacer(
+                modifier = Modifier
+                    .width(84.dp)
+                    .height(32.dp)
+                    .clip(RoundedCornerShape(8.dp))
+                    .background(brush)
+            )
+        }
+
+        Row(horizontalArrangement = Arrangement.End) {
+            Spacer(modifier = Modifier
+                .height(24.dp)
+                .width(1.dp)
+                .background(brush))
+            Spacer(modifier = Modifier.width(10.dp))
+            Spacer(
+                modifier = Modifier
+                    .size(24.dp)
+                    .clip(RoundedCornerShape(8.dp))
+                    .background(brush)
+            )
+        }
+
+    }
+}
+
+@Composable
 fun AnimatedListShimmer() {
     val shimmerColors = listOf(
         Color.LightGray.copy(alpha = 0.6f),
@@ -645,8 +672,7 @@ fun AnimatedListShimmer() {
     val brush = Brush.linearGradient(
         colors = shimmerColors,
         start = Offset.Zero,
-        end = Offset(x = translateAnim.value, y = translateAnim.value)
-    )
+        end = Offset(x = translateAnim.value, y = translateAnim.value))
 
     ShimmerCardList(brush = brush)
 }
@@ -665,9 +691,9 @@ fun ShimmerCardList(brush: Brush){
                 ) {
                     //image
                     Spacer(modifier = Modifier
-                            .size(80.dp)
-                            .clip(RoundedCornerShape(8.dp))
-                            .background(brush)
+                        .size(80.dp)
+                        .clip(RoundedCornerShape(8.dp))
+                        .background(brush)
                     )
                     Spacer(modifier = Modifier.width(8.dp))
 
@@ -821,6 +847,7 @@ fun AnimatedGridShimmer(){
         start = Offset.Zero,
         end = Offset(x = translateAnim.value, y = translateAnim.value)
     )
+
     ShimmerGridList(brush = brush)
 }
 
@@ -837,11 +864,14 @@ fun ShimmerGridList(brush: Brush){
                 Spacer(
                     modifier = Modifier
                         .size(186.dp)
-                        .clip(RoundedCornerShape(
-                            topEnd = 8.dp,
-                            topStart = 8.dp,
-                            bottomEnd = 0.dp,
-                            bottomStart = 0.dp))
+                        .clip(
+                            RoundedCornerShape(
+                                topEnd = 8.dp,
+                                topStart = 8.dp,
+                                bottomEnd = 0.dp,
+                                bottomStart = 0.dp
+                            )
+                        )
                         .fillMaxWidth(fraction = 1f)
                         .background(brush)
                 )
@@ -918,15 +948,16 @@ fun StoreScreenPreview() {
 }
 
 @Composable
-fun FullSizeSearchDialog(
+fun SearchDialog(
     openDialog: Boolean,
-    onCloseDialog: () -> Unit
+    onCloseDialog: () -> Unit,
+    searchData : String
 ) {
     if(openDialog){
         Dialog(onDismissRequest = { onCloseDialog() },
             properties = DialogProperties(usePlatformDefaultWidth = false)
         ) {
-            SearchScreen(onCloseDialog)
+            SearchScreen(onCloseDialog,searchData)
         }
     }
 }

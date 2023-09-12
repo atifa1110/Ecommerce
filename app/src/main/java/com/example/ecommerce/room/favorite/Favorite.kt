@@ -37,6 +37,8 @@ data class Favorite(
     val productVariantName:String? = null,
     @ColumnInfo("productVariantPrice")
     val productVariantPrice:Int? = null,
+    @ColumnInfo("quantity")
+    var quantity:Int? = null,
     @ColumnInfo("favorite")
     var favorite:Boolean? = false
 )

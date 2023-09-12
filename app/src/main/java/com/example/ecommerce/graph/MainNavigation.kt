@@ -7,6 +7,9 @@ import androidx.navigation.NavType
 import androidx.navigation.compose.composable
 import androidx.navigation.navArgument
 import androidx.navigation.navigation
+import com.example.ecommerce.api.model.Item
+import com.example.ecommerce.api.model.PaymentType
+import com.example.ecommerce.api.model.ProductType
 import com.example.ecommerce.auth.profile.ProfileRoute
 import com.example.ecommerce.main.cart.CartScreen
 import com.example.ecommerce.main.checkout.CheckoutScreen
@@ -15,14 +18,12 @@ import com.example.ecommerce.main.main.MainScreen
 import com.example.ecommerce.main.payment.PaymentScreen
 import com.example.ecommerce.main.review.ReviewScreen
 import com.example.ecommerce.main.status.StatusScreen
-import com.example.ecommerce.main.store.SearchScreen
+import com.example.ecommerce.room.cart.ListCheckout
 
 @ExperimentalMaterial3Api
 fun NavGraphBuilder.mainNavGraph(
-    navController: NavHostController
-) {
-    navigation(
-        route = Graph.Main.route,
+    navController: NavHostController) {
+    navigation(route = Graph.Main.route,
         startDestination = Main.Home.route
     ) {
         composable(route = Main.Profile.route) {
@@ -51,21 +52,27 @@ fun NavGraphBuilder.mainNavGraph(
         }
 
         composable(route = Main.Review.route,
-            arguments = listOf(navArgument("id") {type = NavType.StringType})){
-                backStackEntry ->
+            arguments = listOf(navArgument("id") {type = NavType.StringType})
+        ){ backStackEntry ->
             val id = backStackEntry.arguments?.getString("id") ?: ""
             ReviewScreen(navController,id)
         }
 
         composable(route = Main.Cart.route){
-            CartScreen(navController){
-                navController.navigate(Main.Checkout.route)
+            CartScreen(navController){ listCheck ->
+                navController.navigate("Checkout/$listCheck")
             }
         }
 
-        composable(route = Main.Checkout.route){
+        composable(route = Main.Checkout.route,
+            arguments = listOf(
+                navArgument("listCheckout") { type = ProductType()}
+            ),
+        ){
+            val checkoutItem = it.arguments?.getParcelable<ListCheckout>("listCheckout")
             CheckoutScreen(
                 navController,
+                checkoutItem,
                 choosePayment = {
                     navController.navigate(Main.Payment.route)
                 },
@@ -76,7 +83,18 @@ fun NavGraphBuilder.mainNavGraph(
         }
 
         composable(route = Main.Payment.route){
-            PaymentScreen(navController)
+            PaymentScreen(
+                onNavigateBack = {
+                    navController.navigateUp()
+                },
+                onItemClick = { paymentItem ->
+                    navController
+                        .previousBackStackEntry
+                        ?.savedStateHandle
+                        ?.set("payment", paymentItem)
+                    navController.popBackStack()
+                }
+            )
         }
 
         composable(route = Main.Status.route){
@@ -91,7 +109,7 @@ sealed class Main(val route: String) {
     object Detail : Main("Detail/{id}")
     object Review : Main("Review/{id}")
     object Cart : Main("Cart")
-    object Checkout : Main("Checkout")
+    object Checkout : Main("Checkout/{listCheckout}")
     object Payment : Main("Payment")
     object Status : Main("Status")
 }

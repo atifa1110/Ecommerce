@@ -16,9 +16,9 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.Checkbox
-import androidx.compose.material.CheckboxDefaults
 import androidx.compose.material.IconButton
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
@@ -48,8 +48,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
@@ -57,17 +55,12 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
-import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavHostController
+import androidx.paging.compose.itemKey
 import coil.compose.AsyncImage
 import com.example.ecommerce.R
-import com.example.ecommerce.api.model.Item
-import com.example.ecommerce.api.model.Payment
-import com.example.ecommerce.api.response.BaseResponse
-import com.example.ecommerce.auth.login.LoginViewModel
-import com.example.ecommerce.component.ToastMessage
-import com.example.ecommerce.main.payment.PaymentScreen
-import com.example.ecommerce.main.store.SearchScreen
+import com.example.ecommerce.room.cart.Cart
+import com.example.ecommerce.room.cart.ListCheckout
 import com.example.ecommerce.ui.theme.LightGray
 import com.example.ecommerce.ui.theme.Purple
 import com.example.ecommerce.ui.theme.textColor
@@ -76,9 +69,12 @@ import com.example.ecommerce.ui.theme.textColor
 @Composable
 fun CheckoutScreen(
     navController: NavHostController,
+    listCheckout: ListCheckout?,
     choosePayment: () -> Unit,
     productPayment: () -> Unit
 ){
+    val listCheckout : List<Cart> = listCheckout!!.listCheckout!!
+
     Scaffold(
         topBar = {
             TopAppBar(modifier = Modifier.drawBehind {
@@ -151,15 +147,21 @@ fun CheckoutScreen(
             .padding(it)
         ) {
             Column (modifier = Modifier.padding(16.dp)){
-                Text(
-                    text = "Barang yang dibeli",
+                Text(text = "Barang yang dibeli",
                     fontSize = 16.sp,
                     fontWeight = FontWeight.W500
                 )
 
                 Spacer(modifier = Modifier.height(10.dp))
 
-                CardCheckout()
+                //list
+                LazyColumn(modifier = Modifier
+                    .fillMaxWidth()
+                    .background(Color.White)){
+                    items(listCheckout){ item ->
+                        CardCheckout(cart = item)
+                    }
+                }
             }
 
             Divider(thickness = 4.dp)
@@ -222,8 +224,8 @@ fun CheckoutScreen(
 
 
 @Composable
-fun CardCheckout(){
-    Row(modifier = Modifier){
+fun CardCheckout(cart : Cart){
+    Row(modifier = Modifier.padding(vertical = 8.dp)){
             Card(
                 modifier = Modifier.size(80.dp),
                 shape = RoundedCornerShape(8.dp)
@@ -232,11 +234,18 @@ fun CardCheckout(){
                     modifier = Modifier.fillMaxSize(),
                     contentAlignment = Alignment.Center
                 ) {
+                    if(cart.image!!.isEmpty()) {
                         Image(
                             modifier = Modifier.fillMaxSize(),
                             painter = painterResource(id = R.drawable.thumbnail),
                             contentDescription = "image"
                         )
+                    }else{
+                        AsyncImage(
+                            modifier = Modifier.fillMaxSize(),
+                            model = cart.image,
+                            contentDescription = "Cart Image")
+                    }
                 }
             }
 
@@ -244,18 +253,18 @@ fun CardCheckout(){
 
             Column(modifier = Modifier.fillMaxWidth()) {
                 Text(
-                    text = "Produk Name",
+                    text = cart.productName!!,
                     maxLines = 1,
                     fontSize = 14.sp,
                     fontWeight = FontWeight.W500
                 )
                 Text(
-                    text = "16 GB",
+                    text = cart.productVariantName!!,
                     fontSize = 10.sp,
                     fontWeight = FontWeight.W400
                 )
                 Text(
-                    text = "Stok 9",
+                    text = "Stok ${cart.stock}",
                     color = Color.Black,
                     fontSize = 10.sp,
                     fontWeight = FontWeight.W400
@@ -271,7 +280,7 @@ fun CardCheckout(){
                         horizontalAlignment = Alignment.Start
                     ) {
                         Text(
-                            text = "Rp23.000.000",
+                            text = "Rp${cart.productPrice}",
                             fontSize = 14.sp,
                             fontWeight = FontWeight.W500
                         )
@@ -315,14 +324,13 @@ fun CardCheckout(){
                                 )
                                 Spacer(modifier = Modifier.width(10.dp))
                                 Text(
-                                    text = "1", fontSize = 12.sp,
+                                    text = "${cart.quantity}", fontSize = 12.sp,
                                     fontWeight = FontWeight.W500
                                 )
                                 Spacer(modifier = Modifier.width(10.dp))
-                                Icon(
-                                    modifier = Modifier
-                                        .size(14.dp)
-                                        .clickable {},
+                                Icon(modifier = Modifier
+                                    .size(14.dp)
+                                    .clickable {},
                                     imageVector = Icons.Default.Add,
                                     contentDescription = "Add"
                                 )

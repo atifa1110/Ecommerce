@@ -1,9 +1,13 @@
 package com.example.ecommerce.main.wishlist
 
+import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.ecommerce.api.model.ProductDetail
+import com.example.ecommerce.api.model.ProductVariant
 import com.example.ecommerce.main.cart.ShowCartUiState
 import com.example.ecommerce.room.cart.Cart
+import com.example.ecommerce.room.cart.CartRepository
 import com.example.ecommerce.room.favorite.Favorite
 import com.example.ecommerce.room.favorite.FavoriteRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -19,7 +23,8 @@ import javax.inject.Inject
 
 @HiltViewModel
 class WishViewModel @Inject constructor(
-    private val favoriteRepository: FavoriteRepository
+    private val favoriteRepository: FavoriteRepository,
+    private val cartRepository: CartRepository
 ) : ViewModel(){
 
     private val _uiState = MutableStateFlow(ShowFavoriteUiState())
@@ -53,6 +58,22 @@ class WishViewModel @Inject constructor(
     fun deleteFavoriteById(id:String){
         viewModelScope.launch {
             favoriteRepository.deleteFavoriteById(id)
+            _uiState.update {
+                it.copy(
+                    message = "Produk berhasil dihapus dari favorit"
+                )
+            }
+        }
+    }
+
+    fun addFavoriteToCart(favorite : Favorite) {
+        viewModelScope.launch {
+            cartRepository.addFavoriteToCart(favorite)
+            _uiState.update {
+                it.copy(
+                    message = "Produk berhasil ditambahkan ke keranjang"
+                )
+            }
         }
     }
 }

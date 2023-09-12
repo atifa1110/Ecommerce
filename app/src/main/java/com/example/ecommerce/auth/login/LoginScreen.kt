@@ -30,7 +30,9 @@ import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -64,21 +66,23 @@ import com.example.ecommerce.api.request.AuthRequest
 import com.example.ecommerce.api.response.BaseResponse
 import com.example.ecommerce.component.ProgressDialog
 import com.example.ecommerce.component.ToastMessage
+import com.example.ecommerce.graph.Graph
 import com.example.ecommerce.main.main.MainViewModel
 import com.example.ecommerce.ui.theme.Purple
 import com.example.ecommerce.ui.theme.textColor
 import com.example.ecommerce.util.Constant
+import kotlinx.coroutines.flow.collect
 
 @ExperimentalMaterial3Api
 @Composable
 fun LoginScreen(
     onNavigateToHome: () -> Unit,
     onLoginSubmitted: () -> Unit,
-    onRegisterClick: () -> Unit
+    onRegisterClick: () -> Unit,
+    onNavigateToBoarding: () -> Unit,
 ) {
-
     val loginViewModel: LoginViewModel = hiltViewModel()
-    val mainViewModel: MainViewModel = hiltViewModel()
+    val mainViewModel : MainViewModel = hiltViewModel()
 
     val context = LocalContext.current
     val lifecycleOwner = LocalLifecycleOwner.current
@@ -105,9 +109,9 @@ fun LoginScreen(
 
             is BaseResponse.Success -> {
                 isDialog = false
-                showMessage.showMsg(context,it.data!!.message)
-                Log.d("ShowMessageLogin",it.data.data.accessToken)
-                loginViewModel.saveAccessToken(it.data.data.accessToken)
+                //showMessage.showMsg(context,it.data!!.message)
+                //Log.d("ShowMessageLogin",it.data.data.accessToken)
+                loginViewModel.saveAccessToken(it.data!!.data.accessToken)
                 loginViewModel.saveLoginState(true)
                 onNavigateToHome()
             }
@@ -381,8 +385,7 @@ fun TextFieldErrorEmail(textError: String, color: Color) {
 @Composable
 fun LoginPreview() {
     Box(modifier = Modifier.fillMaxSize()){
-        LoginScreen(onNavigateToHome = { }, onLoginSubmitted = { /*TODO*/ }) {
-
-        }
+        LoginScreen(onNavigateToHome = { }, onLoginSubmitted = { /*TODO*/ },
+            onRegisterClick = {}, onNavigateToBoarding = { })
     }
 }

@@ -1,6 +1,7 @@
 package com.example.ecommerce.room.favorite
 
 import android.util.Log
+import com.example.ecommerce.api.model.ProductDetail
 import com.example.ecommerce.api.model.ProductVariant
 import com.example.ecommerce.api.response.DetailResponse
 import com.example.ecommerce.room.cart.Cart
@@ -13,7 +14,7 @@ class FavoriteRepositoryImpl(
     private val localDataSource: FavoriteLocalDataSource
 ): FavoriteRepository {
     override suspend fun addProductsToFavorite(
-        productDetail: DetailResponse.ProductDetail,
+        productDetail: ProductDetail,
         productVariant: ProductVariant
     ) {
         localDataSource.addToFavorite(productDetail.toEntity(productVariant))

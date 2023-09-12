@@ -1,5 +1,6 @@
 package com.example.ecommerce.main.cart
 
+import android.net.Uri
 import android.util.Log
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
@@ -34,16 +35,20 @@ import androidx.compose.material3.Divider
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
@@ -60,29 +65,32 @@ import androidx.navigation.NavHostController
 import androidx.navigation.compose.rememberNavController
 import coil.compose.AsyncImage
 import com.example.ecommerce.R
+import com.example.ecommerce.api.model.Item
 import com.example.ecommerce.main.detail.ErrorPage
 import com.example.ecommerce.room.cart.Cart
+import com.example.ecommerce.room.cart.ListCheckout
 import com.example.ecommerce.ui.theme.LightGray
 import com.example.ecommerce.ui.theme.Purple
 import com.example.ecommerce.ui.theme.textColor
+import com.google.gson.Gson
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun CartScreen(
     navController: NavHostController,
-    onCheckOut:() -> Unit
+    onCheckOut:(listCheck : String) -> Unit
 ){
-    val lifecycleOwner = LocalLifecycleOwner.current
-    //var isError by remember { mutableStateOf(false) }
-    //var errorMessage by remember { mutableStateOf("") }
     val cardViewModel : CartViewModel = hiltViewModel()
 
     val uiState by cardViewModel.uiState.collectAsStateWithLifecycle()
     val cart = uiState.cartList.collectAsStateWithLifecycle(emptyList()).value
-    val isError = uiState.isError
-    Log.d("isError",isError.toString())
-    val message = uiState.message
     val total = uiState.total
+
+    val jsonCheckout = Uri.encode(Gson().toJson(ListCheckout(cart)))
+    cardViewModel.getAllSelected(cart.size)
+    cardViewModel.getCheckedSelected()
+
+    val buttonVisible by cardViewModel.buttonVisible.collectAsStateWithLifecycle()
 
     Scaffold(
         topBar = {
@@ -142,8 +150,12 @@ fun CartScreen(
                         horizontalAlignment = Alignment.End
                     ) {
                         Button(
-                            modifier = Modifier, onClick = { onCheckOut() },
-                            colors = ButtonDefaults.buttonColors(Purple)
+                            modifier = Modifier,
+                            onClick = {
+                                onCheckOut(jsonCheckout)
+                            },
+                            colors = ButtonDefaults.buttonColors(Purple),
+                            enabled = buttonVisible
                         ) {
                             Text(
                                 text = "Beli",
@@ -155,11 +167,11 @@ fun CartScreen(
             }
         }
     ) {
-        Column(modifier = Modifier
-            .fillMaxSize()
-            .padding(it)) {
+        Column(modifier = Modifier.fillMaxSize()) {
             if(cart.isEmpty()){
-                Column(modifier = Modifier.background(Color.White).fillMaxSize()) {
+                Column(modifier = Modifier
+                    .background(Color.White)
+                    .fillMaxSize()) {
                     ErrorPage(
                         title = "Empty",
                         message = "Your requested data is unavailable",
@@ -170,17 +182,19 @@ fun CartScreen(
                 }
             }
 
-            Column(modifier = Modifier.fillMaxSize()) {
+            Column(modifier = Modifier
+                .fillMaxSize()
+                .padding(it)) {
                 val checkedState by cardViewModel.selectedAll.collectAsStateWithLifecycle()
 
-                Row(modifier = Modifier.padding(start = 5.dp, end = 8.dp)
-                ) {
-                    Row(modifier = Modifier.fillMaxWidth().weight(1f),
-                        horizontalArrangement = Arrangement.Start,
-                        verticalAlignment = Alignment.CenterVertically
+                Row(modifier = Modifier.padding(start = 5.dp, end = 8.dp)) {
+                    Row(modifier = Modifier
+                        .fillMaxWidth()
+                        .weight(1f),
+                        horizontalArrangement = Arrangement.Start
+                        ,verticalAlignment = Alignment.CenterVertically
                     ) {
-                        Checkbox(
-                            checked = checkedState,
+                        Checkbox(checked = checkedState,
                             onCheckedChange = {
                                 cardViewModel.selectedAllCart(it)
                             },
@@ -189,11 +203,10 @@ fun CartScreen(
                         Text(text = "Pilih Semua")
                     }
 
-                    Column(
-                        modifier = Modifier.fillMaxWidth().weight(1f),
-                        horizontalAlignment = Alignment.End
-                    ) {
-                        TextButton(onClick = {cardViewModel.deletedCartBySelected()}) {
+                    Column(horizontalAlignment = Alignment.End) {
+                        TextButton(
+                            modifier = Modifier.alpha(if(buttonVisible) 1f else 0f),
+                            onClick = {cardViewModel.deletedCartBySelected()}) {
                             Text(
                                 text = "Hapus",
                                 fontSize = 14.sp,
@@ -236,7 +249,6 @@ fun CardCart(
     addQuantity: (quantity: Int) -> Unit
 ){
     var count by remember { mutableStateOf(cart.quantity)}
-    //val checkedState = remember { mutableStateOf(false) }
 
     Column(modifier = Modifier){
         Row(modifier = Modifier
@@ -247,7 +259,6 @@ fun CardCart(
             Checkbox(
                 checked = cart.selected!!,
                 onCheckedChange = {
-                    //checkedState.value = it
                     onChecked(it)
                 },
                 colors = CheckboxDefaults.colors(Purple)
@@ -384,7 +395,7 @@ fun CardCart(
 @Preview(showBackground = true)
 fun CartScreenPreview(){
     val controller = rememberNavController()
-    CartScreen(controller,{})
+    //CartScreen(controller,{})
 }
 
 @Composable
@@ -393,6 +404,5 @@ fun CardCartPreview() {
     Column (modifier = Modifier
         .fillMaxSize()
         .background(Color.White)){
-
     }
 }

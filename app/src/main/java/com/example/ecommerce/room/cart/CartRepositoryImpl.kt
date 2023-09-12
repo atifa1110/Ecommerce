@@ -1,8 +1,11 @@
 package com.example.ecommerce.room.cart
 
 import android.util.Log
+import com.example.ecommerce.api.model.ProductDetail
 import com.example.ecommerce.api.model.ProductVariant
 import com.example.ecommerce.api.response.DetailResponse
+import com.example.ecommerce.room.favorite.Favorite
+import com.example.ecommerce.room.favorite.toEntityCart
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
@@ -12,10 +15,9 @@ class CartRepositoryImpl(
     private val localDataSource: CartLocalDataSource
 ): CartRepository {
 
-    override suspend fun addProductsToCart(
-        productDetail: DetailResponse.ProductDetail,
-        productVariant: ProductVariant
-    ) {
+    override suspend fun addProductsToCart(productDetail: ProductDetail,
+        productVariant: ProductVariant) {
+
         CoroutineScope(Dispatchers.IO).launch {
             //search for id
             val cart = localDataSource.findById(productDetail.productId!!)
@@ -30,6 +32,18 @@ class CartRepositoryImpl(
                 var quantity = productDetail.toEntity(productVariant).quantity
                 Log.d("QuantityCart", quantity.toString())
                 localDataSource.update(productDetail.productId, quantity!! + 1)
+            }
+        }
+    }
+
+    override suspend fun addFavoriteToCart(favorite: Favorite) {
+        CoroutineScope(Dispatchers.IO).launch {
+            val cart = localDataSource.findById(favorite.productId)
+            if(cart == null){
+                localDataSource.addToCart(favorite.toEntityCart())
+                Log.d("CartRepositoryImpl", "Success Add to cart")
+            }else{
+                localDataSource.update(favorite.productId, favorite.quantity!!+1)
             }
         }
     }
@@ -51,16 +65,12 @@ class CartRepositoryImpl(
         }
     }
 
-    override fun getAllSelected(): Boolean {
-        val list = localDataSource.getAllSelected()
-        var boolean = false
-        list.forEach { cart ->
-            boolean = cart.selected!!
-        }
-        return boolean
+    override fun getAllSelected(): List<Cart> {
+        return localDataSource.getAllSelected()
     }
 
-    override fun getAllCarts(): Flow<List<Cart>> = localDataSource.getAllCart()
+    override fun getAllCarts(): Flow<List<Cart>>
+    = localDataSource.getAllCart()
     
     override suspend fun deleteById(id: String) {
         return localDataSource.deleteById(id)
@@ -80,4 +90,9 @@ class CartRepositoryImpl(
         }else {
             localDataSource.update(cart.productId, quantity)
         }
+
+    override suspend fun checkSelected(): Boolean {
+        val result = localDataSource.getAllSelected()
+        return if(result.size>=1) true else false
     }
+}

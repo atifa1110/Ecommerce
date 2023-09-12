@@ -1,12 +1,16 @@
 package com.example.ecommerce.room.cart
 
+import android.os.Parcelable
 import androidx.annotation.NonNull
 import androidx.room.ColumnInfo
 import androidx.room.Entity
 import androidx.room.PrimaryKey
+import com.example.ecommerce.graph.Main
+import kotlinx.parcelize.Parcelize
 import org.jetbrains.annotations.NotNull
 
 @Entity(tableName = "cart")
+@Parcelize
 data class Cart (
     @PrimaryKey(autoGenerate = false)
     @NonNull
@@ -44,4 +48,9 @@ data class Cart (
     var quantity:Int? = null,
     @ColumnInfo("selected")
     var selected:Boolean? = false
-)
+) : Parcelable
+
+@Parcelize
+data class ListCheckout(
+    val listCheckout : List<Cart>? = emptyList()
+) : Parcelable

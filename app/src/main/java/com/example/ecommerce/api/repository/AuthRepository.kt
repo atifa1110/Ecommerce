@@ -25,11 +25,11 @@ class AuthRepository @Inject constructor(
     }
 
     suspend fun profileUser(
-        authorization: String,
+       // authorization: String,
         userName: String,
         userImage: String
     ): Response<ProfileResponse> {
-        return service.profileUser(authorization,userName,userImage)
+        return service.profileUser(userName,userImage)
     }
 
     suspend fun refresh(api: String, token: String): Response<ResponseBody> {

@@ -35,16 +35,21 @@ import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
@@ -55,81 +60,115 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil.compose.AsyncImage
 import com.example.ecommerce.R
 import com.example.ecommerce.api.model.Product
+import com.example.ecommerce.component.ToastMessage
 import com.example.ecommerce.main.cart.CardCart
 import com.example.ecommerce.main.detail.ErrorPage
 import com.example.ecommerce.main.store.AnimatedGridShimmer
 import com.example.ecommerce.main.store.AnimatedListShimmer
 import com.example.ecommerce.room.favorite.Favorite
 import com.example.ecommerce.ui.theme.Purple
+import kotlinx.coroutines.launch
 
 @Composable
 fun WishListScreen() {
     val wishViewModel : WishViewModel = hiltViewModel()
+    val scope = rememberCoroutineScope()
+    val snackBarHostState = remember { SnackbarHostState() }
     val uiState by wishViewModel.uiState.collectAsStateWithLifecycle()
     val favorite by uiState.favoriteList.collectAsStateWithLifecycle(emptyList())
     var isClickedGrid by rememberSaveable { mutableStateOf(false)}
 
-    Column(Modifier.padding(16.dp)) {
-        if(favorite.isEmpty()) {
-            ErrorPage(
-                title = "Empty",
-                message = "Your requested data is unavailable",
-                button = R.string.refresh,
-                onButtonClick = {},
-                alpha = 0F
-            )
+    uiState.message?.let { message ->
+        scope.launch {
+            snackBarHostState.showSnackbar(message)
         }
+    }
 
-        Row (modifier = Modifier
-            .fillMaxWidth()
-            .padding(bottom = 10.dp)) {
-            Row(modifier= Modifier.weight(1f),
-                horizontalArrangement = Arrangement.Start) {
-                Text(
-                    modifier = Modifier.fillMaxWidth(),
-                    text = "${favorite.size} Barang",
-                    fontSize = 14.sp,
-                    fontWeight = FontWeight.W400
+    Scaffold(
+        snackbarHost = {
+            SnackbarHost(hostState = snackBarHostState)
+        },
+    ) {
+        Column(Modifier.padding(it).padding(16.dp)) {
+            if (favorite.isEmpty()) {
+                ErrorPage(
+                    title = "Empty",
+                    message = "Your requested data is unavailable",
+                    button = R.string.refresh,
+                    onButtonClick = {},
+                    alpha = 0F
                 )
             }
 
-            Row(modifier= Modifier.weight(1f),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.End
+            Row(modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(bottom = 10.dp)
             ) {
-                Spacer(
-                    modifier = Modifier
-                        .height(24.dp)
-                        .width(1.dp)
-                        .background(Color.Gray)
-                )
-                Spacer(modifier = Modifier.width(10.dp))
-                Icon(
-                    modifier = Modifier.clickable {
-                        isClickedGrid = !isClickedGrid
-                    },
-                    imageVector = if (isClickedGrid)
-                        Icons.Default.GridView else Icons.Default.FormatListBulleted,
-                    contentDescription = "List"
-                )
-            }
-        }
+                Row(
+                    modifier = Modifier.weight(1f),
+                    horizontalArrangement = Arrangement.Start
+                ) {
+                    Text(
+                        modifier = Modifier.fillMaxWidth(),
+                        text = "${favorite.size} Barang",
+                        fontSize = 14.sp,
+                        fontWeight = FontWeight.W400
+                    )
+                }
 
-        if(isClickedGrid){
-            LazyVerticalGrid(GridCells.Fixed(2)) {
-                items(favorite){ item->
-                    CardGrid(favorite = item){
-                        wishViewModel.deleteFavoriteById(it)
-                    }
+                Row(
+                    modifier = Modifier.weight(1f),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.End
+                ) {
+                    Spacer(
+                        modifier = Modifier
+                            .height(24.dp)
+                            .width(1.dp)
+                            .background(Color.Gray)
+                    )
+                    Spacer(modifier = Modifier.width(10.dp))
+                    Icon(
+                        modifier = Modifier.clickable {
+                            isClickedGrid = !isClickedGrid
+                        },
+                        imageVector = if (isClickedGrid)
+                            Icons.Default.GridView else Icons.Default.FormatListBulleted,
+                        contentDescription = "List"
+                    )
                 }
             }
-        }else {
-            LazyColumn(modifier = Modifier
-                .fillMaxSize()
-                .background(Color.White)) {
-                items(favorite) { item ->
-                    CardList(favorite = item){
-                        wishViewModel.deleteFavoriteById(it)
+
+            if (isClickedGrid) {
+                LazyVerticalGrid(GridCells.Fixed(2)) {
+                    items(favorite) { item ->
+                        CardGrid(
+                            favorite = item,
+                            onDeleteFavorite = {
+                                wishViewModel.deleteFavoriteById(it)
+                            },
+                            onAddToCart = {
+                                wishViewModel.addFavoriteToCart(item)
+                            }
+                        )
+                    }
+                }
+            } else {
+                LazyColumn(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .background(Color.White)
+                ) {
+                    items(favorite) { item ->
+                        CardList(
+                            favorite = item,
+                            onDeleteFavorite = {
+                                wishViewModel.deleteFavoriteById(it)
+                            },
+                            onAddToCart = {
+                                wishViewModel.addFavoriteToCart(item)
+                            }
+                        )
                     }
                 }
             }
@@ -140,6 +179,7 @@ fun WishListScreen() {
 @Composable
 fun CardList(
     favorite: Favorite,
+    onAddToCart : () -> Unit,
     onDeleteFavorite : (id:String) -> Unit
 ){
     Column(
@@ -267,7 +307,7 @@ fun CardList(
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .height(32.dp),
-                            onClick = { },
+                            onClick = { onAddToCart() },
                         ) {
                             Text(
                                 color = Purple,
@@ -288,6 +328,7 @@ fun CardList(
 @Composable
 fun CardGrid(
     favorite: Favorite,
+    onAddToCart : () -> Unit,
     onDeleteFavorite : (id:String) -> Unit
 ){
     Column(Modifier.padding(top = 5.dp, bottom = 5.dp, end = 5.dp)) {
@@ -400,7 +441,7 @@ fun CardGrid(
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .height(32.dp),
-                            onClick = { },
+                            onClick = { onAddToCart() },
                         ) {
                             Text(
                                 color = Purple,

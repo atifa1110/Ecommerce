@@ -38,14 +38,12 @@ interface ApiService {
 
     @POST("profile")
     suspend fun profileUser (
-        @Header("Authorization") authorization : String,
         @Query("userName") userName : String,
         @Query("userImage") userImage : String
     ) : Response<ProfileResponse>
 
     @POST("products")
     suspend fun getProductFilter(
-        //@Header("Authorization") authorization: String,
         @Query("search") search: String?,
         @Query("brand") brand:String?,
         @Query("lowest") lowestPrice : Int?,
@@ -57,19 +55,16 @@ interface ApiService {
 
     @POST("search")
     suspend fun searchProductList(
-        //@Header("Authorization") authorization: String,
         @Query("query") query: String
     ) : Response<SearchResponse>
 
     @GET("products/{id}")
     suspend fun getProductDetail(
-        //@Header("Authorization") authorization: String,
         @Path("id") id: String
     ) : Response<DetailResponse>
 
     @GET("review/{id}")
     suspend fun getProductReview(
-        //@Header("Authorization") authorization: String,
-        @Path("id") id: String
+         @Path("id") id: String
     ) : Response<ReviewResponse>
 }

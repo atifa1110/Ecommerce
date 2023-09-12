@@ -26,7 +26,7 @@ class ProductPagingFilter (
         val response = service.getProductFilter(search, brand, lowest, highest, sort, 10, page)
 
         return try {
-            //delay(7000)
+            delay(2000)
             LoadResult.Page(
                 data = response.body()!!.data.items,
                 prevKey = null,

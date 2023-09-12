@@ -1,15 +1,19 @@
 package com.example.ecommerce.room.cart
 
+import com.example.ecommerce.api.model.ProductDetail
 import com.example.ecommerce.api.model.ProductVariant
 import com.example.ecommerce.api.response.DetailResponse
 import com.example.ecommerce.room.cart.Cart
+import com.example.ecommerce.room.favorite.Favorite
 import kotlinx.coroutines.flow.Flow
 
 interface CartRepository {
     suspend fun addProductsToCart(
-        productDetail: DetailResponse.ProductDetail,
+        productDetail: ProductDetail,
         productVariant: ProductVariant
     )
+
+    suspend fun addFavoriteToCart(favorite : Favorite)
 
     suspend fun selected(id: String,selected: Boolean)
 
@@ -17,7 +21,7 @@ interface CartRepository {
 
     suspend fun getTotal(): Int
 
-    fun getAllSelected() : Boolean
+    fun getAllSelected() : List<Cart>
 
     fun getAllCarts() : Flow<List<Cart>>
 
@@ -28,4 +32,6 @@ interface CartRepository {
     suspend fun deleteAllCart()
 
     suspend fun updateAddQuantity(cart : Cart, quantity:Int)
+
+    suspend fun checkSelected() : Boolean
 }

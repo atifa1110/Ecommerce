@@ -70,7 +70,10 @@ import com.example.ecommerce.ui.theme.textColor
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun PaymentScreen(navController: NavHostController) {
+fun PaymentScreen(
+    onNavigateBack : () -> Unit,
+    onItemClick : (payment: Item) -> Unit
+) {
     val context = LocalContext.current
     val lifecycleOwner = LocalLifecycleOwner.current
     val paymentViewModel : PaymentViewModel = hiltViewModel()
@@ -117,8 +120,7 @@ fun PaymentScreen(navController: NavHostController) {
                 },
                 navigationIcon = {
                     IconButton(onClick = {
-                        navController.popBackStack()
-                        //onCloseDialog()
+                        onNavigateBack()
                     }) {
                         Icon(Icons.Default.ArrowBack,"back button")
                     }
@@ -144,7 +146,7 @@ fun PaymentScreen(navController: NavHostController) {
             LazyColumn (modifier = Modifier.fillMaxSize()){
                 if (result.isNotEmpty()) {
                     items(result.size) { index ->
-                        PaymentComposable(result[index])
+                        PaymentComposable(result[index], onItemClick)
                     }
                 }
             }
@@ -153,7 +155,7 @@ fun PaymentScreen(navController: NavHostController) {
 }
 
 @Composable
-fun PaymentComposable(payment: Payment) {
+fun PaymentComposable(payment: Payment, onItemClick: (payment: Item) -> Unit) {
     Column(modifier = Modifier) {
         Column(modifier = Modifier.fillMaxWidth().padding(start = 16.dp,top=16.dp)) {
             Text(
@@ -168,7 +170,7 @@ fun PaymentComposable(payment: Payment) {
         Column {
             payment.item.forEach { virtual ->
                 Column {
-                    CardPayment(virtual)
+                    CardPayment(virtual, onItemClick)
                 }
             }
         }
@@ -180,9 +182,10 @@ fun PaymentComposable(payment: Payment) {
 
 
 @Composable
-fun CardPayment(item: Item){
+fun CardPayment(item: Item, onItemClick: (payment: Item) -> Unit){
     Column{
-        Card (modifier= Modifier
+        Card (modifier= Modifier.clickable {
+            onItemClick(item) }
             .fillMaxWidth()
             .padding(start = 16.dp)) {
             Column(modifier = Modifier
@@ -207,7 +210,7 @@ fun CardPayment(item: Item){
                         Spacer(modifier = Modifier.width(10.dp))
 
                         Text(modifier = Modifier.weight(1f),
-                            text = item.label,
+                            text = if(item.label.isEmpty()) "Pilih Pembayaran" else item.label,
                             fontSize = 14.sp,
                             fontWeight = FontWeight.W500
                         )

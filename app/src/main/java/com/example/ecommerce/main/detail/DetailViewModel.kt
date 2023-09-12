@@ -5,6 +5,7 @@ import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.ecommerce.api.model.ProductDetail
 import com.example.ecommerce.api.model.ProductVariant
 import com.example.ecommerce.api.repository.ProductRepository
 import com.example.ecommerce.api.response.BaseResponse
@@ -33,6 +34,7 @@ class DetailViewModel @Inject constructor(
     private val _detailResult: MutableLiveData<BaseResponse<DetailResponse>> = MutableLiveData()
     val detailResult: LiveData<BaseResponse<DetailResponse>> get() = _detailResult
 
+
     fun getProductDetail(id:String){
         _detailResult.value = BaseResponse.Loading()
         viewModelScope.launch {
@@ -60,38 +62,46 @@ class DetailViewModel @Inject constructor(
     fun getFavoriteById(id:String){
         viewModelScope.launch(Dispatchers.IO) {
             val result  = favoriteRepository.getFavoriteById(id)
-            Log.d("GetFavoriteById",result.toString())
             if(result.isNotEmpty()){
                 _isFavorite.value = true
             }
         }
     }
 
-    fun deleteFavoriteById(id:String){
-        viewModelScope.launch(Dispatchers.IO) {
-            val result = favoriteRepository.deleteFavoriteById(id)
-        }
+    fun setUnFavorite(){
+        _isFavorite.value = false
     }
 
-    fun addProductsToCart(productDetail: DetailResponse.ProductDetail, productVariant: ProductVariant) {
-        viewModelScope.launch {
-            val result = cartRepository.addProductsToCart(productDetail,productVariant)
+    fun deleteFavoriteById(id:String){
+        viewModelScope.launch(Dispatchers.IO) {
+            favoriteRepository.deleteFavoriteById(id)
             _uiState.update {
                 it.copy(
-                    isSaved = true,
-                    message = "Produk Berhasil ditambahkan ke keranjang"
+                    message = "Produk berhasil dihapus dari favorit"
                 )
             }
         }
     }
 
-    fun addFavoriteToCart(productDetail: DetailResponse.ProductDetail, productVariant: ProductVariant) {
+    fun addProductsToCart(productDetail: ProductDetail, productVariant: ProductVariant) {
+        viewModelScope.launch {
+            val result = cartRepository.addProductsToCart(productDetail,productVariant)
+            _uiState.update {
+                it.copy(
+                    isSaved = true,
+                    message = "Produk berhasil ditambahkan ke keranjang"
+                )
+            }
+        }
+    }
+
+    fun addFavoriteToCart(productDetail: ProductDetail, productVariant: ProductVariant) {
         viewModelScope.launch {
             val result = favoriteRepository.addProductsToFavorite(productDetail,productVariant)
             _uiState.update {
                 it.copy(
                     isSaved = true,
-                    message = "Produk Berhasil ditambahkan ke keranjang"
+                    message = "Produk berhasil ditambahkan ke favorit"
                 )
             }
             _isFavorite.value = true

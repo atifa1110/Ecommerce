@@ -14,11 +14,10 @@ import com.example.ecommerce.auth.register.RegisterRoute
 
 @ExperimentalMaterial3Api
 fun NavGraphBuilder.authNavGraph(
-    navController: NavHostController
-) {
+    navController: NavHostController) {
     navigation(
         route = Graph.Authentication.route,
-        startDestination = Authentication.Login.route
+        startDestination = Authentication.Login.route,
     ) {
         composable(route = Authentication.Login.route) {
             LoginRoute(
@@ -31,6 +30,13 @@ fun NavGraphBuilder.authNavGraph(
                 },
                 onNavigateToRegister = {
                     navController.navigate(Authentication.Register.route){
+                        popUpTo(navController.graph.startDestinationId) {
+                            inclusive = true
+                        }
+                    }
+                },
+                onNavigateToBoarding = {
+                    navController.navigate(Graph.OnBoarding.route){
                         popUpTo(navController.graph.startDestinationId) {
                             inclusive = true
                         }

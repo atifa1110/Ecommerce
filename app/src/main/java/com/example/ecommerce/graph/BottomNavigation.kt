@@ -31,7 +31,7 @@ fun BottomNavigation (navController: NavHostController,
         route = Main.Home.route,
         startDestination = Bottom.Home.route){
         composable(Bottom.Home.route){
-           HomeRoute (
+           HomeRoute(
                onLogoutClick = {
                    onLogoutClick()
                }

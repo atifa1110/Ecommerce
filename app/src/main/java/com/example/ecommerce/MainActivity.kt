@@ -10,6 +10,7 @@ import androidx.compose.material.ExperimentalMaterialApi
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -40,13 +41,13 @@ class MainActivity : ComponentActivity() {
         installSplashScreen()
         super.onCreate(savedInstanceState)
         setContent {
-            val boarding = mainViewModel.getBoardingState().collectAsState(false)
-            val screenBoarding = if(boarding.value) Graph.Authentication.route else Graph.OnBoarding.route
+            val boarding by mainViewModel.getBoardingState.collectAsState(false)
+            val screenBoarding = if(boarding) Graph.Authentication.route else Graph.OnBoarding.route
 
-            val login = mainViewModel.getLoginState().collectAsState(false)
-            val screenLogin = if(login.value) Graph.Main.route else screenBoarding
+            val login = mainViewModel.getLoginState().collectAsStateWithLifecycle(null)
+            val screenLogin = if(login.value == true) Graph.Main.route else screenBoarding
 
-            val profile = mainViewModel.getProfileName().collectAsState(initial = "")
+            val profile = mainViewModel.getProfileName().collectAsStateWithLifecycle("")
             val screenProfile = if(profile.value.isNotEmpty()) Main.Home.route else Main.Profile.route
 
             EcommerceTheme {

@@ -29,7 +29,7 @@ class ProfileViewModel@Inject constructor(
         _profileResult.value = BaseResponse.Loading()
         viewModelScope.launch {
             try {
-                val response = profileRepository.profileUser(Constant.AUTHORIZATION,userName,userImage)
+                val response = profileRepository.profileUser(userName,userImage)
                 if (response.code() == 200 && response.isSuccessful) {
                     _profileResult.value = BaseResponse.Success(response.body())
                 } else{

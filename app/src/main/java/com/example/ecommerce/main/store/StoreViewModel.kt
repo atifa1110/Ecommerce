@@ -38,16 +38,19 @@ class StoreViewModel @Inject constructor(
         _dataArray.value = data
     }
 
+    private val _searchData = MutableStateFlow("")
+    val searchData = _searchData.asStateFlow()
+
     private val _searchText : MutableLiveData<String> = MutableLiveData()
     val searchText: LiveData<String> = _searchText
 
     fun setSearchText (text:String){
-        _searchText.value = text
+        _searchData.value = text
     }
 
     fun searchProductList(query : String){
         _searchResult.value = BaseResponse.Loading()
-        viewModelScope.launch (Dispatchers.IO) {
+        viewModelScope.launch {
             try {
                 val response = productRepository.searchProductList(query)
                 if (response.code() == 200 && response.isSuccessful) {
@@ -66,7 +69,7 @@ class StoreViewModel @Inject constructor(
     private val _filter = MutableStateFlow(ProductFilter())
     val filter = _filter.asStateFlow()
 
-    fun search(search: String?){
+    fun searchQuery(search: String?){
         _filter.update { it.copy(search = search) }
     }
 

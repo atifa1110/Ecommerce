@@ -11,6 +11,7 @@ import com.example.ecommerce.api.repository.AuthRepository
 import com.example.ecommerce.datastore.DataStoreRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.launch
 import org.json.JSONObject
 import javax.inject.Inject
@@ -54,4 +55,9 @@ class LoginViewModel@Inject constructor(
             repository.saveAccessToken(token = token)
         }
     }
+
+    fun getBoardingState() : Flow<Boolean> {
+        return repository.getOnBoardingState()
+    }
+
 }

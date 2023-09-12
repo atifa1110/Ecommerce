@@ -26,6 +26,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowForward
@@ -77,7 +78,8 @@ import com.example.ecommerce.graph.Main
 
 @OptIn(ExperimentalComposeUiApi::class)
 @Composable
-fun SearchScreen(onCloseDialog: () -> Unit = {}) {
+fun SearchScreen(onCloseDialog: () -> Unit = {},
+                 searchData:String) {
     val lifecycleOwner = LocalLifecycleOwner.current
     val storeViewModel : StoreViewModel = hiltViewModel()
     var isLoading by rememberSaveable { mutableStateOf(false)}
@@ -90,7 +92,7 @@ fun SearchScreen(onCloseDialog: () -> Unit = {}) {
             CircularProgressIndicator()
         }
 
-    val searchText = remember { mutableStateOf("") }
+    val searchText = remember { mutableStateOf(searchData) }
     var searchResults by remember { mutableStateOf(emptyList<String>()) }
     val filteredResults by remember(searchResults, searchText) {
         derivedStateOf {
@@ -140,6 +142,7 @@ fun SearchScreen(onCloseDialog: () -> Unit = {}) {
                             keyboardController?.show()
                         }
                     },
+                storeViewModel,
                 hint = "Search",
                 onSearch = {
                     storeViewModel.searchProductList(it)
@@ -185,12 +188,14 @@ fun SearchScreen(onCloseDialog: () -> Unit = {}) {
 @Composable
 fun CustomSearchBar(
     modifier: Modifier = Modifier,
+    storeViewModel: StoreViewModel,
     hint: String = "Search",
     onSearch: (String) -> Unit,
     searchText:MutableState<String>,
     onCloseDialog: () -> Unit
 ) {
-    Box(modifier = Modifier.fillMaxWidth().padding(top = 16.dp, start = 16.dp, end = 16.dp)) {
+    Box(modifier = Modifier.fillMaxWidth().padding(top = 16.dp,
+        start = 16.dp, end = 16.dp)) {
         OutlinedTextField(
             modifier = modifier,
             placeholder = {
@@ -202,6 +207,12 @@ fun CustomSearchBar(
             textStyle = MaterialTheme.typography.bodyMedium,
             keyboardOptions = KeyboardOptions.Default.copy(
                 imeAction = ImeAction.Search
+            ),
+            keyboardActions = KeyboardActions(
+                onSearch = {
+                    storeViewModel.setSearchText(searchText.value)
+                    onCloseDialog()
+                }
             ),
             singleLine = true,
             maxLines = 1,
@@ -221,6 +232,7 @@ fun CustomSearchBar(
                     modifier = Modifier.clickable {
                         if(searchText.value.isNotEmpty()) {
                             searchText.value = ""
+                            storeViewModel.setSearchText("")
                         }else{
                             onCloseDialog()
                         }

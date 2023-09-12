@@ -30,6 +30,10 @@ class DataStoreRepositoryImpl @Inject constructor(
         }
     }
 
+    val isAuthenticated: Flow<Boolean> = dataStore.data.map { preferences ->
+        preferences[PreferencesKey.onBoardingKey] ?: false
+    }
+
     override fun getOnBoardingState(): Flow<Boolean> {
         return dataStore.data
             .catch { exception ->
