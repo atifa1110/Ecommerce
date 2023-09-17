@@ -22,6 +22,7 @@ import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CenterAlignedTopAppBar
+import androidx.compose.material3.Divider
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -39,6 +40,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.geometry.Offset
@@ -46,6 +48,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalLifecycleOwner
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.TextStyle
@@ -73,6 +76,7 @@ import com.example.ecommerce.ui.theme.textColor
 import com.example.ecommerce.util.Constant
 import kotlinx.coroutines.flow.collect
 
+@OptIn(ExperimentalComposeUiApi::class)
 @ExperimentalMaterial3Api
 @Composable
 fun LoginScreen(
@@ -82,15 +86,14 @@ fun LoginScreen(
     onNavigateToBoarding: () -> Unit,
 ) {
     val loginViewModel: LoginViewModel = hiltViewModel()
-    val mainViewModel : MainViewModel = hiltViewModel()
-
     val context = LocalContext.current
     val lifecycleOwner = LocalLifecycleOwner.current
+    val keyboardController = LocalSoftwareKeyboardController.current
 
-    var isDialog by remember { mutableStateOf(false) }
+    var isLoading by remember { mutableStateOf(false) }
 
     val progressDialog = ProgressDialog()
-    if (isDialog) progressDialog.ProgressDialog()
+    if (isLoading) progressDialog.ProgressDialog()
 
     val email = rememberSaveable { mutableStateOf("") }
     val emailError = rememberSaveable { mutableStateOf(false) }
@@ -98,27 +101,22 @@ fun LoginScreen(
     val password = rememberSaveable { mutableStateOf("") }
     val passwordError = rememberSaveable { mutableStateOf(false) }
 
-    var accessToken by remember { mutableStateOf("") }
-
-    val showMessage = ToastMessage()
     loginViewModel.loginResult.observe(lifecycleOwner){
         when (it) {
             is BaseResponse.Loading -> {
-                isDialog = true
+                isLoading = true
             }
 
             is BaseResponse.Success -> {
-                isDialog = false
-                //showMessage.showMsg(context,it.data!!.message)
-                //Log.d("ShowMessageLogin",it.data.data.accessToken)
+                isLoading = false
                 loginViewModel.saveAccessToken(it.data!!.data.accessToken)
                 loginViewModel.saveLoginState(true)
                 onNavigateToHome()
             }
 
             is BaseResponse.Error -> {
-                isDialog = false
-                showMessage.showMsg(context,it.msg.toString())
+                isLoading = false
+                ToastMessage().showMsg(context,it.msg.toString())
             }
 
             else -> {}
@@ -127,22 +125,17 @@ fun LoginScreen(
 
     Scaffold(
         topBar = {
-            CenterAlignedTopAppBar(modifier = Modifier
-                .drawBehind {
-                    val borderSize = 1.dp.toPx()
-                    drawLine(
-                        color = Color.LightGray,
-                        start = Offset(0f,size.height),
-                        end = Offset(size.width,size.height),
-                        strokeWidth = borderSize
-                    )
-            },
-                title = {
-                    Text(stringResource(id = R.string.login),
-                    fontSize = 22.sp, color = textColor,
-                    fontWeight = FontWeight.Normal)
-                }
-            )
+            Column {
+                CenterAlignedTopAppBar(
+                    title = {
+                        Text(
+                            stringResource(id = R.string.login),
+                            style = MaterialTheme.typography.titleLarge
+                        )
+                    }
+                )
+                Divider()
+            }
         }
     ) {
         Column(modifier = Modifier
@@ -181,16 +174,17 @@ fun LoginScreen(
             DividerButton(true)
 
             OutlinedButton(
-                onClick = { onRegisterClick() },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(vertical = 16.dp),
-                enabled = true
+                onClick = {
+                    keyboardController?.hide()
+                    onRegisterClick()
+                },
+                modifier = Modifier.fillMaxWidth()
+                    .padding(vertical = 16.dp)
             ) {
                 Text(
                     color = Purple,
                     text = stringResource(id = R.string.register),
-                    fontWeight = FontWeight.W500
+                    style = MaterialTheme.typography.labelLarge
                 )
             }
 
@@ -201,34 +195,35 @@ fun LoginScreen(
 
 @Composable
 fun DividerButton(tryingToLogin: Boolean = true){
-    Row(
-        modifier = Modifier,
-        verticalAlignment = Alignment.CenterVertically,
+    Row(verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.Center
     ) {
-        Spacer(modifier = Modifier
-            .height(1.dp)
-            .width(120.dp)
-            .background(Color.LightGray))
+        Row (modifier = Modifier.weight(1f),
+            horizontalArrangement = Arrangement.Start){
+            Divider()
+        }
+
         Text(
+            modifier = Modifier.padding(horizontal = 10.dp),
             text = if(tryingToLogin)stringResource(id = R.string.daftar_dengan) else stringResource(id = R.string.masuk_dengan),
             fontSize = MaterialTheme.typography.bodySmall.fontSize,
             fontWeight = FontWeight.Normal
         )
-        Spacer(modifier = Modifier
-            .height(1.dp)
-            .width(120.dp)
-            .background(Color.LightGray))
+
+        Row (modifier = Modifier.weight(1f),
+            horizontalArrangement = Arrangement.End){
+            Divider()
+        }
     }
 }
 
 @Composable
 fun TextTermCondition(tryingToLogin: Boolean = true) {
-    val initialText = if (tryingToLogin) "Dengan masuk disini, kamu menyetujui " else "Dengan daftar disini, kamu menyetujui "
-    val syarat = "Syarat & Ketentuan"
-    val serta = "serta "
-    val kebijakan = "Kebijakan Privasi "
-    val toko = "TokoPhincon."
+    val initialText = if (tryingToLogin) stringResource(id = R.string.by_entering_login)+" " else stringResource(id = R.string.by_entering_register)+" "
+    val syarat = stringResource(id = R.string.term_condition) +" "
+    val serta = stringResource(id = R.string.and) +" "
+    val kebijakan = stringResource(id = R.string.privacy_policy) +" "
+    val toko = stringResource(id = R.string.toko_phincon)
 
     val annotatedString = buildAnnotatedString {
         append(initialText)
@@ -384,8 +379,9 @@ fun TextFieldErrorEmail(textError: String, color: Color) {
 @Preview(showBackground = true)
 @Composable
 fun LoginPreview() {
-    Box(modifier = Modifier.fillMaxSize()){
-        LoginScreen(onNavigateToHome = { }, onLoginSubmitted = { /*TODO*/ },
-            onRegisterClick = {}, onNavigateToBoarding = { })
+    Column(modifier = Modifier.fillMaxSize()){
+        LoginScreen(onNavigateToHome = {}, onLoginSubmitted = {},
+            onRegisterClick = {}, onNavigateToBoarding = {}
+        )
     }
 }

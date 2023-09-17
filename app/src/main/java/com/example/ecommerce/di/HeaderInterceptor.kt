@@ -5,6 +5,7 @@ import androidx.activity.viewModels
 import androidx.compose.runtime.collectAsState
 import com.example.ecommerce.datastore.DataStoreRepositoryImpl
 import com.example.ecommerce.main.main.MainViewModel
+import com.example.ecommerce.util.Constant
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.collect

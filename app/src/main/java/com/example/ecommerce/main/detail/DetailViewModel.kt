@@ -34,7 +34,6 @@ class DetailViewModel @Inject constructor(
     private val _detailResult: MutableLiveData<BaseResponse<DetailResponse>> = MutableLiveData()
     val detailResult: LiveData<BaseResponse<DetailResponse>> get() = _detailResult
 
-
     fun getProductDetail(id:String){
         _detailResult.value = BaseResponse.Loading()
         viewModelScope.launch {
@@ -85,7 +84,7 @@ class DetailViewModel @Inject constructor(
 
     fun addProductsToCart(productDetail: ProductDetail, productVariant: ProductVariant) {
         viewModelScope.launch {
-            val result = cartRepository.addProductsToCart(productDetail,productVariant)
+            cartRepository.addProductsToCart(productDetail,productVariant)
             _uiState.update {
                 it.copy(
                     isSaved = true,
@@ -97,7 +96,7 @@ class DetailViewModel @Inject constructor(
 
     fun addFavoriteToCart(productDetail: ProductDetail, productVariant: ProductVariant) {
         viewModelScope.launch {
-            val result = favoriteRepository.addProductsToFavorite(productDetail,productVariant)
+            favoriteRepository.addProductsToFavorite(productDetail,productVariant)
             _uiState.update {
                 it.copy(
                     isSaved = true,
@@ -105,12 +104,6 @@ class DetailViewModel @Inject constructor(
                 )
             }
             _isFavorite.value = true
-        }
-    }
-
-    fun snackBarMessageShown() {
-        _uiState.update {
-            it.copy(message = null)
         }
     }
 

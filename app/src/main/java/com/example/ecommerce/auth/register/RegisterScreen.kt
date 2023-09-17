@@ -10,7 +10,9 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CenterAlignedTopAppBar
+import androidx.compose.material3.Divider
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
@@ -88,22 +90,17 @@ fun RegisterScreen(
 
     Scaffold(
         topBar = {
-            CenterAlignedTopAppBar(modifier = Modifier
-                .drawBehind {
-                    val borderSize = 1.dp.toPx()
-                    drawLine(
-                        color = Color.LightGray,
-                        start = Offset(0f,size.height),
-                        end = Offset(size.width,size.height),
-                        strokeWidth = borderSize
-                    )
-                },
-                title = {
-                    Text(stringResource(id = R.string.register),
-                        fontSize = 22.sp, color = textColor,
-                        fontWeight = FontWeight.Normal)
-                }
-            )
+            Column {
+                CenterAlignedTopAppBar(
+                    title = {
+                        Text(
+                            stringResource(id = R.string.register),
+                            style = MaterialTheme.typography.titleLarge
+                        )
+                    }
+                )
+                Divider()
+            }
         }
     ) {
         Column(modifier = Modifier
@@ -164,7 +161,7 @@ fun RegisterScreen(
 @Composable
 @Preview(showBackground = true)
 fun RegisterPreview(){
-//    RegisterScreen(onRegisterSubmitted = {"",""}) {
-//
-//    }
+    RegisterScreen(onRegisterSubmitted = { /*TODO*/ }) {
+
+    }
 }

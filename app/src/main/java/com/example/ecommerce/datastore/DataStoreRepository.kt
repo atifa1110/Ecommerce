@@ -4,6 +4,7 @@ import kotlinx.coroutines.flow.Flow
 
 interface DataStoreRepository {
 
+    suspend fun enableDarkTheme(enabled: Boolean)
     suspend fun saveOnBoardingState (complete:Boolean)
     fun getOnBoardingState() : Flow<Boolean>
 

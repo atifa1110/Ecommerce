@@ -25,6 +25,25 @@ class MainViewModel @Inject constructor(
     private val favoriteRepository: FavoriteRepository
 ) : ViewModel() {
 
+    private val _isLoading: MutableState<Boolean> = mutableStateOf(true)
+    val isLoading: State<Boolean> = _isLoading
+
+    private val _startDestination: MutableState<String> = mutableStateOf(Graph.Authentication.route)
+    val startDestination: State<String> = _startDestination
+
+    fun getOnBoardingState() {
+        viewModelScope.launch {
+            repository.getOnBoardingState().collect { completed ->
+                if (completed) {
+                    _startDestination.value = Graph.Authentication.route
+                } else {
+                    _startDestination.value = Graph.OnBoarding.route
+                }
+            }
+            _isLoading.value = false
+        }
+    }
+
     val cartSize = cartRepository.getAllCarts()
     val favoriteSize = favoriteRepository.getAllFavorite()
 

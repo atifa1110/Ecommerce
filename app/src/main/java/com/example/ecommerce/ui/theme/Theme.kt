@@ -16,15 +16,56 @@ import androidx.compose.ui.platform.LocalView
 import androidx.core.view.WindowCompat
 
 private val DarkColorScheme = darkColorScheme(
-    primary = Purple80,
-    secondary = PurpleGrey80,
-    tertiary = Pink80
+    primary = primaryDark,
+    onPrimary = onPrimaryDark,
+    secondary = secondaryDark,
+    onSecondary = onSecondaryDark,
+    tertiary = tertiaryDark,
+    onTertiary = onTertiaryDark,
+    error = errorDark,
+    onError = onErrorDark,
+    primaryContainer = primaryContainerDark,
+    onPrimaryContainer = onPrimaryContainerDark,
+    secondaryContainer = secondaryContainerDark,
+    onSecondaryContainer = onSecondaryContainerDark,
+    tertiaryContainer = tertiaryContainerDark,
+    onTertiaryContainer = onTertiaryContainerDark,
+    errorContainer = errorContainerDark,
+    onErrorContainer = onErrorContainerDark,
+    surface = surfaceDark,
+    onSurface = onSurfaceDark,
+    onSurfaceVariant = onSurfaceVarDark,
+    outline = outlineDark,
+    outlineVariant = outlineVariantDark,
+    inverseOnSurface = inverseSurfaceDark,
+    inversePrimary = inversePrimaryDark
 )
 
 private val LightColorScheme = lightColorScheme(
-    primary = Purple40,
-    secondary = PurpleGrey40,
-    tertiary = Pink40
+    primary = primary,
+    onPrimary = onPrimary,
+    secondary = secondary,
+    onSecondary = onSecondary,
+    tertiary = tertiary,
+    onTertiary = onTertiary,
+    error = error,
+    onError = onError,
+    primaryContainer = primaryContainer,
+    onPrimaryContainer = onPrimaryContainer,
+    secondaryContainer = secondaryContainer,
+    onSecondaryContainer = onSecondaryContainer,
+    tertiaryContainer = tertiaryContainer,
+    onTertiaryContainer = onTertiaryContainer,
+    errorContainer = errorContainer,
+    onErrorContainer = onErrorContainer,
+    surface = surface,
+    onSurface = onSurface,
+    onSurfaceVariant = onSurfaceVar,
+    outline = outline,
+    outlineVariant = outlineVariant,
+    inverseOnSurface = inverseSurface,
+    inversePrimary = inversePrimary
+
 
     /* Other default colors to override
     background = Color(0xFFFFFBFE),

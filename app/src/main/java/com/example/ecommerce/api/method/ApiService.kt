@@ -1,5 +1,6 @@
 package com.example.ecommerce.api.method
 
+import com.example.ecommerce.api.request.ProfileRequest
 import com.example.ecommerce.api.request.AuthRequest
 import com.example.ecommerce.api.response.DetailResponse
 import com.example.ecommerce.api.response.LoginResponse
@@ -8,12 +9,14 @@ import com.example.ecommerce.api.response.ProfileResponse
 import com.example.ecommerce.api.response.RegisterResponse
 import com.example.ecommerce.api.response.ReviewResponse
 import com.example.ecommerce.api.response.SearchResponse
-import okhttp3.ResponseBody
+import okhttp3.MultipartBody
 import retrofit2.Response
 import retrofit2.http.Body
 import retrofit2.http.GET
 import retrofit2.http.Header
+import retrofit2.http.Multipart
 import retrofit2.http.POST
+import retrofit2.http.Part
 import retrofit2.http.Path
 import retrofit2.http.Query
 
@@ -32,14 +35,15 @@ interface ApiService {
 
     @POST("refresh")
     suspend fun refreshToken (
-        @Header("API_KEY") api : String ,
+        @Header("API_KEY") api : String,
         @Query("token") token : String
-    ) : Response<ResponseBody>
+    ) : Response<RegisterResponse>
 
+    @Multipart
     @POST("profile")
     suspend fun profileUser (
-        @Query("userName") userName : String,
-        @Query("userImage") userImage : String
+        @Part userImage : MultipartBody.Part,
+        @Part userName : MultipartBody.Part
     ) : Response<ProfileResponse>
 
     @POST("products")

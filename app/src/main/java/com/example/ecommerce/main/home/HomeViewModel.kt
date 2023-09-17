@@ -3,16 +3,31 @@ package com.example.ecommerce.main.home
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.ecommerce.datastore.DataStoreRepository
+import com.example.ecommerce.datastore.DataStoreRepositoryImpl
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 @HiltViewModel
 class HomeViewModel @Inject constructor(
-    private val repository: DataStoreRepository
+    private val repository: DataStoreRepositoryImpl
 ): ViewModel() {
+
+    val isDarkThemeEnabled: StateFlow<Boolean> = repository.isDarkThemeEnabled.stateIn(
+        scope = viewModelScope,
+        started = SharingStarted.WhileSubscribed(1000L),
+        initialValue = false
+    )
+
+    fun enableDarkTheme(enabled: Boolean) = viewModelScope.launch {
+        repository.enableDarkTheme(enabled)
+    }
+
     fun saveLoginState(complete: Boolean) {
         viewModelScope.launch(Dispatchers.IO) {
             repository.saveHasLoginState(complete = complete)

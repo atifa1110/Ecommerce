@@ -5,6 +5,7 @@ import androidx.paging.PagingState
 import com.example.ecommerce.api.method.ApiService
 import com.example.ecommerce.util.Constant
 import kotlinx.coroutines.delay
+import retrofit2.HttpException
 
 class ProductPagingFilter (
     private val service: ApiService,
@@ -27,6 +28,10 @@ class ProductPagingFilter (
 
         return try {
             delay(2000)
+            if(!response.isSuccessful){
+                return LoadResult.Error(HttpException(response))
+            }
+
             LoadResult.Page(
                 data = response.body()!!.data.items,
                 prevKey = null,

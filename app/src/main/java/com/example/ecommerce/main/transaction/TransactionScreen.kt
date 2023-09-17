@@ -1,5 +1,7 @@
 package com.example.ecommerce.main.transaction
 
+import android.net.Uri
+import android.util.Log
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -36,6 +38,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -44,15 +47,19 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import coil.compose.AsyncImage
 import com.example.ecommerce.main.detail.ErrorPage
 import com.example.ecommerce.R
+import com.example.ecommerce.api.model.Fulfillment
 import com.example.ecommerce.api.model.Transaction
 import com.example.ecommerce.api.response.BaseResponse
 import com.example.ecommerce.component.ToastMessage
+import com.example.ecommerce.room.cart.CartItem
 import com.example.ecommerce.ui.theme.LightPurple
 import com.example.ecommerce.ui.theme.Purple
+import com.google.gson.Gson
 
 @Composable
-@Preview(showBackground = true)
-fun TransactionScreen() {
+fun TransactionScreen(
+    onNavigateToStatus : (transaction : String) -> Unit
+) {
     val lifecycleOwner = LocalLifecycleOwner.current
     val context = LocalContext.current
     val transactionViewModel : TransactionViewModel = hiltViewModel()
@@ -72,7 +79,6 @@ fun TransactionScreen() {
 
             is BaseResponse.Error -> {
                 isLoading = false
-                ToastMessage().showMsg(context,it.msg.toString())
             }
 
             else -> {}
@@ -82,8 +88,7 @@ fun TransactionScreen() {
     Column(modifier = Modifier.fillMaxSize()) {
         if (isLoading)
             Column(modifier = Modifier
-                .fillMaxSize()
-                .background(Color.White),
+                .fillMaxSize(),
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.Center,
             ) {
@@ -92,8 +97,8 @@ fun TransactionScreen() {
 
         if(listTransaction.isEmpty()) {
             ErrorPage(
-                title = "Empty",
-                message = "Your requested data is unavailable",
+                title = stringResource(id = R.string.empty),
+                message = stringResource(id = R.string.resource),
                 button = R.string.refresh,
                 onButtonClick = { },
                 alpha = 1F
@@ -104,7 +109,10 @@ fun TransactionScreen() {
                 .fillMaxSize()
                 .padding(vertical = 10.dp)) {
                 items(listTransaction) { item ->
-                    CardTransaction(item)
+                    CardTransaction(
+                        item,
+                        onNavigateToStatus
+                   )
                 }
             }
 
@@ -112,7 +120,11 @@ fun TransactionScreen() {
 }
 
 @Composable
-fun CardTransaction(transaction: Transaction) {
+fun CardTransaction(
+    transaction: Transaction,
+    onNavigateToStatus : (transaction : String) -> Unit
+) {
+    Log.d("TransactionData", transaction.toString())
     Column (Modifier.padding(top=8.dp, start = 16.dp,end=16.dp)){
         Card(modifier = Modifier.fillMaxWidth(),
             shape = RoundedCornerShape(8.dp)) {
@@ -146,7 +158,7 @@ fun CardTransaction(transaction: Transaction) {
 
                             Column {
                                 Text(
-                                    text = "Belanja",
+                                    text = stringResource(id = R.string.shopping),
                                     fontSize = 10.sp,
                                     fontWeight = FontWeight.W600
                                 )
@@ -227,14 +239,14 @@ fun CardTransaction(transaction: Transaction) {
                                 fontSize = 14.sp,
                                 fontWeight = FontWeight.W500
                             )
+                            val item : List<Int> = transaction.items.map { it.quantity!! }
                             Text(
-                                text = "1 barang",
+                                text = "${item.sum()} barang",
                                 fontSize = 10.sp,
                                 fontWeight = FontWeight.W400
                             )
                         }
                     }
-
 
                     Row(modifier = Modifier
                         .fillMaxWidth()
@@ -263,9 +275,22 @@ fun CardTransaction(transaction: Transaction) {
                         ) {
                             Card(
                                 modifier = Modifier
-                                    .alpha(if(transaction.rating == null) 1f else 0f)
+                                    .alpha(
+                                        if (transaction.rating == "0" && transaction.review == "" ||
+                                            transaction.rating == null && transaction.review == null
+                                        ) 1f else 0f
+                                    )
                                     .clickable {
-
+                                        val fulfillment = Fulfillment(
+                                            transaction.invoiceId,
+                                            transaction.status,
+                                            transaction.date,
+                                            transaction.time,
+                                            transaction.payment,
+                                            transaction.total
+                                        )
+                                        val jsonFulfillment = Uri.encode(Gson().toJson(fulfillment))
+                                        onNavigateToStatus(jsonFulfillment)
                                     }
                                     .height(24.dp)
                                     .width(84.dp),

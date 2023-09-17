@@ -34,6 +34,7 @@ import androidx.compose.material3.Card
 import androidx.compose.material3.Divider
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
@@ -67,6 +68,7 @@ import coil.compose.AsyncImage
 import com.example.ecommerce.R
 import com.example.ecommerce.api.model.Item
 import com.example.ecommerce.main.detail.ErrorPage
+import com.example.ecommerce.main.detail.currency
 import com.example.ecommerce.room.cart.Cart
 import com.example.ecommerce.room.cart.ListCheckout
 import com.example.ecommerce.ui.theme.LightGray
@@ -95,30 +97,24 @@ fun CartScreen(
 
     Scaffold(
         topBar = {
-            TopAppBar(modifier = Modifier.drawBehind {
-                val borderSize = 2.dp.toPx()
-                drawLine(
-                    color = LightGray,
-                    start = Offset(0f,size.height),
-                    end = Offset(size.width,size.height),
-                    strokeWidth = borderSize
-                )
-            },
-                title = {
-                    Text(
-                        stringResource(id = R.string.cart),
-                        fontSize = 22.sp, color = textColor,
-                        fontWeight = FontWeight.Normal)
-                },
-                navigationIcon = {
-                    IconButton(onClick = {
-                        navController.popBackStack()
-                        cardViewModel.selectedAllCart(false)
-                    }) {
-                        Icon(Icons.Default.ArrowBack,"back button")
+            Column {
+                TopAppBar(
+                    title = {
+                        Text(stringResource(id = R.string.cart),
+                            style = MaterialTheme.typography.titleLarge
+                        )
+                    },
+                    navigationIcon = {
+                        IconButton(onClick = {
+                            navController.popBackStack()
+                            cardViewModel.selectedAllCart(false)
+                        }) {
+                            Icon(Icons.Default.ArrowBack, "back button")
+                        }
                     }
-                }
-            )
+                )
+                Divider()
+            }
         }, bottomBar = {
             if(cart.isNotEmpty()) {
                 Divider()
@@ -139,7 +135,7 @@ fun CartScreen(
                         )
                         cardViewModel.getTotal()
                         Text(
-                            text = "Rp${total}",
+                            text = currency(total!!),
                             fontSize = 16.sp,
                             fontWeight = FontWeight.W600
                         )
@@ -174,8 +170,8 @@ fun CartScreen(
                     .background(Color.White)
                     .fillMaxSize()) {
                     ErrorPage(
-                        title = "Empty",
-                        message = "Your requested data is unavailable",
+                        title = stringResource(id = R.string.empty),
+                        message = stringResource(id = R.string.resource),
                         button = R.string.refresh,
                         onButtonClick = {},
                         0f
@@ -201,7 +197,7 @@ fun CartScreen(
                             },
                             colors = CheckboxDefaults.colors(Purple)
                         )
-                        Text(text = "Pilih Semua")
+                        Text(text = stringResource(id = R.string.choose_all))
                     }
 
                     Column(horizontalAlignment = Alignment.End) {
@@ -209,7 +205,7 @@ fun CartScreen(
                             modifier = Modifier.alpha(if(buttonVisible) 1f else 0f),
                             onClick = {cardViewModel.deletedCartBySelected()}) {
                             Text(
-                                text = "Hapus",
+                                text = stringResource(id = R.string.erase),
                                 fontSize = 14.sp,
                                 fontWeight = FontWeight.W500
                             )
@@ -319,7 +315,7 @@ fun CardCart(
                         horizontalAlignment = Alignment.Start
                     ) {
                         Text(
-                            text = "Rp${cart.productPrice}",
+                            text = currency(cart.productPrice!!),
                             fontSize = 14.sp,
                             fontWeight = FontWeight.W500
                         )
@@ -337,7 +333,7 @@ fun CardCart(
                                 .size(20.dp)
                                 .clickable { onDeleteCart() },
                             imageVector = Icons.TwoTone.DeleteOutline,
-                            contentDescription = " Delete"
+                            contentDescription = "Delete"
                         )
                         Spacer(modifier = Modifier.width(10.dp))
                         Card(
@@ -375,7 +371,8 @@ fun CardCart(
                                     modifier = Modifier
                                         .size(14.dp)
                                         .clickable {
-                                            count = if (count!! >= 1 && count != cart.stock) count!! + 1 else if (count == cart.stock) count else 1
+                                            count =
+                                                if (count!! >= 1 && count != cart.stock) count!! + 1 else if (count == cart.stock) count else 1
                                             addQuantity(count!!)
                                         },
                                     imageVector = Icons.Default.Add,

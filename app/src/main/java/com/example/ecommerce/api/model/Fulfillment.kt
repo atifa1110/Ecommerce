@@ -1,5 +1,9 @@
 package com.example.ecommerce.api.model
 
+import android.os.Parcelable
+import kotlinx.parcelize.Parcelize
+
+@Parcelize
 data class Fulfillment(
     val invoiceId : String,
     val status : Boolean,
@@ -7,4 +11,4 @@ data class Fulfillment(
     val time : String,
     val payment : String,
     val total : Int
-)
+) : Parcelable

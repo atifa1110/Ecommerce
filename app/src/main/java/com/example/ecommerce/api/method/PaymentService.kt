@@ -1,15 +1,18 @@
 package com.example.ecommerce.api.method
 
+import com.example.ecommerce.api.model.Rating
 import com.example.ecommerce.api.request.AuthRequest
 import com.example.ecommerce.api.request.FulfillmentRequest
 import com.example.ecommerce.api.response.FulfillmentResponse
 import com.example.ecommerce.api.response.PaymentResponse
+import com.example.ecommerce.api.response.RatingResponse
 import com.example.ecommerce.api.response.TransactionResponse
 import retrofit2.Response
 import retrofit2.http.Body
 import retrofit2.http.GET
 import retrofit2.http.Header
 import retrofit2.http.POST
+import retrofit2.http.Query
 
 interface PaymentService {
 
@@ -23,4 +26,9 @@ interface PaymentService {
 
     @GET("transaction")
     suspend fun transaction() : Response<TransactionResponse>
+
+    @POST("rating")
+    suspend fun rating(
+        @Body rating : Rating
+    ) : Response<RatingResponse>
 }

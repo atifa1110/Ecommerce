@@ -106,31 +106,30 @@ fun ReviewScreen(
 
     Scaffold(
         topBar = {
-            TopAppBar(modifier = Modifier.drawBehind {
-                val borderSize = 1.dp.toPx()
-                drawLine(
-                    color = LightGray,
-                    start = Offset(0f,size.height),
-                    end = Offset(size.width,size.height),
-                    strokeWidth = borderSize
-                )
-            },
-                title = {
-                    Text(
-                        stringResource(id = R.string.review),
-                        fontSize = 22.sp, color = textColor,
-                        fontWeight = FontWeight.Normal)
-                },
-                navigationIcon = {
-                    IconButton(onClick = { navController.popBackStack() }) {
-                        Icon(Icons.Default.ArrowBack,"back button")
+            Column {
+                TopAppBar(
+                    title = {
+                        Text(
+                            stringResource(id = R.string.review_buyer),
+                            fontSize = 22.sp, color = textColor,
+                            fontWeight = FontWeight.Normal
+                        )
+                    },
+                    navigationIcon = {
+                        IconButton(onClick = { navController.popBackStack() }) {
+                            Icon(Icons.Default.ArrowBack, "back button")
+                        }
                     }
-                }
-            )
+                )
+                Divider()
+            }
         },
     ) {
         if(isSuccess) {
-            Column(Modifier.fillMaxSize().padding(it)) {
+            Column(
+                Modifier
+                    .fillMaxSize()
+                    .padding(it)) {
                 LazyColumn(modifier = Modifier.fillMaxSize()) {
                     items(result) { index ->
                         CardReview(index)
@@ -142,8 +141,8 @@ fun ReviewScreen(
 
         if(isError) {
             ErrorPage(
-                title = "Empty",
-                message = "Your requested data is unavailable",
+                title = stringResource(id = R.string.empty),
+                message = stringResource(id = R.string.resource),
                 button = R.string.refresh,
                 onButtonClick = {
                     isLoading = true
@@ -153,10 +152,7 @@ fun ReviewScreen(
         }
 
         if(isLoading) {
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(vertical = 16.dp),
+            Column(modifier = Modifier.fillMaxSize().padding(it),
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.Center,
             ) {
@@ -169,7 +165,8 @@ fun ReviewScreen(
 @Composable
 fun CardReview(review: ReviewResponse.Review){
     Column (
-        Modifier.fillMaxWidth()
+        Modifier
+            .fillMaxWidth()
             .padding(16.dp)){
         Row (modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.Start,

@@ -38,8 +38,11 @@ import androidx.compose.material3.Divider
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.FilterChip
+import androidx.compose.material3.FilterChipDefaults
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SelectableChipColors
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
@@ -68,6 +71,7 @@ import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavHostController
+import androidx.navigation.compose.rememberNavController
 import coil.compose.AsyncImage
 import com.example.ecommerce.R
 import com.example.ecommerce.api.model.ProductDetail
@@ -77,12 +81,17 @@ import com.example.ecommerce.api.response.DetailResponse
 import com.example.ecommerce.component.ToastMessage
 import com.example.ecommerce.ui.theme.LightGray
 import com.example.ecommerce.ui.theme.Purple
+import com.example.ecommerce.ui.theme.PurplePink
+import com.example.ecommerce.ui.theme.onSurfaceVar
+import com.example.ecommerce.ui.theme.poppins
 import com.example.ecommerce.ui.theme.textColor
 import com.google.accompanist.pager.ExperimentalPagerApi
 import com.google.accompanist.pager.HorizontalPager
 import com.google.accompanist.pager.HorizontalPagerIndicator
 import com.google.accompanist.pager.rememberPagerState
 import kotlinx.coroutines.launch
+import java.text.NumberFormat
+import java.util.Locale
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalPagerApi::class)
 @Composable
@@ -97,13 +106,20 @@ fun DetailScreen(
     var isLoading by remember { mutableStateOf(false) }
     var isError by remember { mutableStateOf(false) }
     var result by remember { mutableStateOf(ProductDetail())}
-    var price by remember { mutableStateOf(0) }
     var totalPrice by remember { mutableStateOf(0) }
     val pagerState = rememberPagerState()
 
-    val data by detailViewModel.uiState.collectAsState()
     val isFavorite by detailViewModel.isFavorite.collectAsStateWithLifecycle()
-    Log.d("isFavorite", isFavorite.toString())
+
+    val uiState by detailViewModel.uiState.collectAsState()
+    val scope = rememberCoroutineScope()
+    val snackBarHostState = remember { SnackbarHostState() }
+
+    uiState.message?.let { message ->
+        scope.launch {
+            snackBarHostState.showSnackbar(message)
+        }
+    }
 
     LaunchedEffect(true){
         detailViewModel.getProductDetail(id)
@@ -134,81 +150,122 @@ fun DetailScreen(
         }
     }
 
-    val uiState by detailViewModel.uiState.collectAsState()
-    val scope = rememberCoroutineScope()
-    val snackbarHostState = remember { SnackbarHostState() }
-
-    uiState.message?.let { message ->
-        scope.launch {
-            snackbarHostState.showSnackbar(message)
-        }
-    }
-
     Scaffold(
         snackbarHost = {
-            SnackbarHost(hostState = snackbarHostState)
+            SnackbarHost(hostState = snackBarHostState)
         },
         topBar = {
-            TopAppBar(modifier = Modifier.drawBehind {
-                val borderSize = 1.dp.toPx()
-                drawLine(
-                    color = LightGray,
-                    start = Offset(0f,size.height),
-                    end = Offset(size.width,size.height),
-                    strokeWidth = borderSize
+            Column {
+                TopAppBar(
+                    title = {
+                        Text(
+                            stringResource(id = R.string.detail),
+                            style = MaterialTheme.typography.titleLarge
+                        )
+                    },
+                    navigationIcon = {
+                        IconButton(onClick = { navController.popBackStack() }) {
+                            Icon(Icons.Default.ArrowBack, "back_button")
+                        }
+                    }
                 )
-            },
-                title = {
-                    Text(
-                        stringResource(id = R.string.detail),
-                        fontSize = 22.sp, color = textColor,
-                        fontWeight = FontWeight.Normal)
-                },
-                navigationIcon = {
-                    IconButton(onClick = { navController.popBackStack() }) {
-                        Icon(Icons.Default.ArrowBack,"back_button")
+                Divider()
+            }
+        },
+        bottomBar = {
+            if(isSuccess) {
+                Divider()
+                Column(Modifier.padding(16.dp)) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.Center
+                    ) {
+                        Column(
+                            modifier = Modifier.weight(1f)
+                        ) {
+                            OutlinedButton(
+                                modifier = Modifier.fillMaxWidth(),
+                                onClick = { },
+                            ) {
+                                Text(
+                                    color = Purple,
+                                    text = stringResource(id = R.string.buy_now),
+                                    style = MaterialTheme.typography.labelLarge
+                                )
+                            }
+                        }
+
+                        Spacer(modifier = Modifier.width(16.dp))
+
+                        Column(modifier = Modifier.weight(1f)
+                        ) {
+                            Button(
+                                modifier = Modifier.fillMaxWidth(),
+                                onClick = {
+                                    detailViewModel.addProductsToCart(
+                                        result,
+                                        uiState.productVariant
+                                    )
+                                },
+                                colors = ButtonDefaults.buttonColors(Purple),
+                            ) {
+                                Text(
+                                    text = "+ "+stringResource(id = R.string.cart),
+                                    style = MaterialTheme.typography.labelLarge
+                                )
+                            }
+                        }
                     }
                 }
-            )
-        },
+            }
+        }
     ) {
         Column(modifier = Modifier.padding(it)) {
-            if (isSuccess)
-                Column(modifier = Modifier
-                    .fillMaxSize()
-                    .verticalScroll(rememberScrollState())
+            if (isSuccess) {
+                Column(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .verticalScroll(rememberScrollState())
                 ) {
                     val pages = result.image
 
-                    Box(modifier = Modifier
-                        .height(309.dp)
-                        .fillMaxWidth()
-                        .background(Color.White),
-                        contentAlignment = Alignment.BottomCenter) {
+                    Box(
+                        modifier = Modifier
+                            .height(309.dp)
+                            .fillMaxWidth()
+                            .background(Color.White),
+                        contentAlignment = Alignment.BottomCenter
+                    ) {
                         HorizontalPager(
                             modifier = Modifier,
                             count = 3, state = pagerState,
                             verticalAlignment = Alignment.CenterVertically
                         ) { position ->
-                            if(pages!!.isEmpty()) {
+                            if (pages!!.isEmpty()) {
                                 Image(
                                     modifier = Modifier.fillMaxSize(),
                                     painter = painterResource(id = R.drawable.detail),
-                                    contentDescription = "Empty Images")
-                            }else{
+                                    contentDescription = "Empty Images"
+                                )
+                            } else {
                                 AsyncImage(
                                     modifier = Modifier.fillMaxSize(),
                                     model = pages[position],
-                                    contentDescription = "Images")
+                                    contentDescription = "Images"
+                                )
                             }
                         }
-                        Column(Modifier.fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally
+                        Column(
+                            Modifier.fillMaxWidth(),
+                            horizontalAlignment = Alignment.CenterHorizontally
                         ) {
                             HorizontalPagerIndicator(
                                 modifier = Modifier.padding(bottom = 16.dp),
                                 pagerState = pagerState,
                                 activeColor = Purple,
-                                inactiveColor = LightGray)
+                                inactiveColor = LightGray
+                            )
                         }
                     }
 
@@ -224,9 +281,9 @@ fun DetailScreen(
                                     .weight(1f),
                                 horizontalAlignment = Alignment.Start
                             ) {
-                                totalPrice = result.productPrice?.plus(price)!!
+                                totalPrice = result.productPrice?.plus(uiState.productVariant.variantPrice)!!
                                 Text(
-                                    text = "Rp${totalPrice}", fontSize = 20.sp,
+                                    text = currency(totalPrice), fontSize = 20.sp,
                                     fontWeight = FontWeight.W600
                                 )
                             }
@@ -239,19 +296,18 @@ fun DetailScreen(
                                 Icon(imageVector = Icons.Default.Share, contentDescription = "Star")
                                 Spacer(modifier = Modifier.width(16.dp))
 
-                                Icon(modifier = Modifier.clickable {
-                                    //isFavorite = !isFavorite
-                                    if(isFavorite){
-                                        detailViewModel.setUnFavorite()
-                                        detailViewModel.deleteFavoriteById(id)
-                                    }else {
-                                        detailViewModel.addFavoriteToCart(
-                                            result,
-                                            uiState.productVariant
-                                        )
-                                    }
-                                },
-                                    tint = if(isFavorite) Color.Red else Color.DarkGray,
+                                Icon(
+                                    modifier = Modifier.clickable {
+                                        if (isFavorite) {
+                                            detailViewModel.setUnFavorite()
+                                            detailViewModel.deleteFavoriteById(id)
+                                        } else {
+                                            detailViewModel.addFavoriteToCart(
+                                                result, uiState.productVariant
+                                            )
+                                        }
+                                    },
+                                    tint = if (isFavorite) Color.Red else Color.DarkGray,
                                     imageVector = if (isFavorite) {
                                         Icons.Filled.Favorite
                                     } else {
@@ -278,7 +334,7 @@ fun DetailScreen(
                             horizontalArrangement = Arrangement.Start
                         ) {
                             Text(
-                                text = "Terjual ${result.sale}",
+                                text = stringResource(id = R.string.sold) + " ${result.sale}" ,
                                 fontSize = 12.sp,
                                 fontWeight = FontWeight.W400
                             )
@@ -311,7 +367,7 @@ fun DetailScreen(
                     Column(Modifier.padding(16.dp)) {
                         Text(
                             modifier = Modifier.fillMaxWidth(),
-                            text = "Pilih Varian",
+                            text = stringResource(id = R.string.choose_variant),
                             fontSize = 16.sp,
                             fontWeight = FontWeight.W500
                         )
@@ -321,19 +377,25 @@ fun DetailScreen(
                         var selectedPrice by remember { mutableStateOf(itemsList[0].variantPrice) }
 
                         LazyRow(modifier = Modifier.fillMaxWidth()) {
-                            items(itemsList) {item->
-                               detailViewModel.setProductDataVariant(selectedItem,selectedPrice)
-                               FilterChip(
+                            items(itemsList) { item ->
+                                detailViewModel.setProductDataVariant(selectedItem, selectedPrice)
+                                FilterChip(
                                     modifier = Modifier.padding(end = 6.dp),
                                     selected = (selectedItem == item.variantName),
                                     onClick = {
                                         selectedItem = item.variantName
                                         selectedPrice = item.variantPrice
-                                        detailViewModel.setProductDataVariant(selectedItem,selectedPrice)
+                                        detailViewModel.setProductDataVariant(
+                                            selectedItem,
+                                            selectedPrice
+                                        )
                                     },
                                     label = {
-                                        Text(text = item.variantName)
-                                    }
+                                        Text(text = item.variantName, style = MaterialTheme.typography.labelLarge)
+                                    },
+                                    colors = FilterChipDefaults.filterChipColors(
+                                        selectedContainerColor = PurplePink
+                                    )
                                 )
                             }
                         }
@@ -345,8 +407,9 @@ fun DetailScreen(
                         Text(
                             modifier = Modifier.fillMaxWidth(),
                             text = stringResource(id = R.string.description),
+                            fontFamily = poppins,
                             fontSize = 16.sp,
-                            fontWeight = FontWeight.W500
+                            fontWeight = FontWeight.W500,
                         )
 
                         Text(
@@ -361,29 +424,24 @@ fun DetailScreen(
 
                     Divider()
 
-                    Column(modifier = Modifier.padding(16.dp)) {
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
+                    Column(modifier = Modifier.padding(horizontal = 16.dp, vertical = 16.dp)) {
+                        Row(modifier = Modifier.fillMaxWidth(),
                             horizontalArrangement = Arrangement.Start,
                             verticalAlignment = Alignment.CenterVertically,
                         ) {
-                            Column(
+                            Row(
                                 Modifier
                                     .fillMaxWidth()
                                     .weight(1f),
-                                horizontalAlignment = Alignment.Start
+                                horizontalArrangement = Arrangement.Start
                             ) {
                                 Text(
-                                    text = "Ulasan Pembeli",
+                                    text = stringResource(id = R.string.buyer_review),
                                     fontSize = 16.sp,
                                     fontWeight = FontWeight.W500
                                 )
                             }
-                            Column(
-                                Modifier
-                                    .fillMaxWidth()
-                                    .weight(1f),
-                                horizontalAlignment = Alignment.End
+                            Row(horizontalArrangement = Arrangement.End
                             ) {
                                 TextButton(onClick = { onReviewClick(result.productId!!) }) {
                                     Text(
@@ -396,8 +454,7 @@ fun DetailScreen(
                         }
 
                         Row(modifier = Modifier.fillMaxWidth()) {
-                            Row(
-                                modifier = Modifier,
+                            Row(modifier = Modifier,
                                 horizontalArrangement = Arrangement.Center,
                                 verticalAlignment = Alignment.Bottom
                             ) {
@@ -419,84 +476,41 @@ fun DetailScreen(
 
                             Column(Modifier.fillMaxWidth()) {
                                 Text(
-                                    text = "${result.totalSatisfaction}% pembeli merasa puas",
+                                    text = "${result.totalSatisfaction}% "+stringResource(id = R.string.buyer_satisfied),
                                     fontSize = 12.sp,
                                     fontWeight = FontWeight.W600
                                 )
                                 Text(
-                                    text = "${result.totalRating} rating · ${result.totalReview} ulasan",
+                                    text = "${result.totalRating} "+ stringResource(id = R.string.rating) + " · " + "${result.totalReview} "+stringResource(id = R.string.review),
                                     fontSize = 12.sp,
                                     fontWeight = FontWeight.W400
                                 )
                             }
                         }
-
-                    }
-
-                    Divider()
-
-                    Column(Modifier.padding(16.dp)) {
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.Center
-                        ) {
-                            Column(
-                                modifier = Modifier.weight(1f)
-                            ) {
-                                OutlinedButton(
-                                    modifier = Modifier.fillMaxWidth(),
-                                    onClick = { },
-                                ) {
-                                    Text(
-                                        color = Purple,
-                                        text = stringResource(id = R.string.buy),
-                                        fontWeight = FontWeight.W500
-                                    )
-                                }
-                            }
-
-                            Spacer(modifier = Modifier.width(16.dp))
-
-                            Column(
-                                modifier = Modifier.weight(1f)
-                            ) {
-                                Button(
-                                    modifier = Modifier.fillMaxWidth(),
-                                    onClick = {
-                                        detailViewModel.addProductsToCart(result, data.productVariant)
-                                    },
-                                    colors = ButtonDefaults.buttonColors(Purple),
-                                ) {
-                                    Text(
-                                        text = "+ Keranjang",
-                                        fontWeight = FontWeight.W500
-                                    )
-                                }
-                            }
-                        }
                     }
                 }
+            }
 
-            if (isError)
+            if (isError) {
                 ErrorPage(
-                    title = "Empty",
-                    message = "Your requested data is unavailable",
+                    title = stringResource(id = R.string.empty),
+                    message = stringResource(id = R.string.resource),
                     button = R.string.refresh,
                     onButtonClick = { isLoading = true },
                     1f
                 )
+            }
 
-            if (isLoading)
-                Column(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .background(Color.White),
+            if (isLoading) {
+                Column(modifier = Modifier
+                    .fillMaxSize()
+                    .padding(it),
                     horizontalAlignment = Alignment.CenterHorizontally,
                     verticalArrangement = Arrangement.Center,
                 ) {
                     CircularProgressIndicator(color = Purple)
                 }
+            }
         }
 
     }
@@ -519,11 +533,11 @@ fun ErrorPage(
             contentDescription = "")
         Text(modifier = Modifier.padding(top=5.dp),text = title, fontSize = 32.sp,
             fontWeight = FontWeight.W500)
-        Text(modifier = Modifier.padding(top=5.dp),text = message,fontSize = 16.sp,
-            fontWeight = FontWeight.W400)
+        Text(text = message,fontSize = 16.sp, fontWeight = FontWeight.W400)
         Button(modifier = Modifier
-            .padding(top = 2.dp)
-            .alpha(alpha),onClick = { onButtonClick() },
+            .padding(top = 5.dp)
+            .alpha(alpha),
+            onClick = { onButtonClick() },
             colors = ButtonDefaults.buttonColors(Purple)
         ) {
             Text(
@@ -538,7 +552,9 @@ fun ErrorPage(
 @Preview(showBackground = true)
 fun DetailPreview(){
     Column (Modifier.background(Color.White)) {
-        //DetailScreen(id = "1",{rememberNavController().popBackStack()})
+        DetailScreen(rememberNavController(),id = "1"){
+            it
+        }
     }
 }
 
@@ -558,3 +574,8 @@ fun FavoriteButton(isFavorite : Boolean) {
         )
 }
 
+fun currency (price: Int) : String{
+    val localId = Locale("in","ID")
+    val currencyFormat = NumberFormat.getCurrencyInstance(localId)
+    return currencyFormat.format(price)
+}

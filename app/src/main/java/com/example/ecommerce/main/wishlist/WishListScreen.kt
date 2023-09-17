@@ -89,11 +89,14 @@ fun WishListScreen() {
             SnackbarHost(hostState = snackBarHostState)
         },
     ) {
-        Column(Modifier.padding(it).padding(16.dp)) {
+        Column(
+            Modifier
+                .padding(it)
+                .padding(16.dp)) {
             if (favorite.isEmpty()) {
                 ErrorPage(
-                    title = "Empty",
-                    message = "Your requested data is unavailable",
+                    title = stringResource(id = R.string.empty),
+                    message = stringResource(id = R.string.resource),
                     button = R.string.refresh,
                     onButtonClick = {},
                     alpha = 0F
@@ -101,8 +104,8 @@ fun WishListScreen() {
             }
 
             Row(modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(bottom = 10.dp)
+                .fillMaxWidth()
+                .padding(bottom = 10.dp)
             ) {
                 Row(
                     modifier = Modifier.weight(1f),

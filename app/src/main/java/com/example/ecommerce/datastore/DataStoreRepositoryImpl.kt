@@ -1,5 +1,7 @@
 package com.example.ecommerce.datastore
 
+import android.content.res.Configuration
+import android.content.res.Resources
 import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.booleanPreferencesKey
@@ -22,6 +24,23 @@ class DataStoreRepositoryImpl @Inject constructor(
         val ProfileKey = stringPreferencesKey(name = "PROFILE")
         val AccessTokenKey = stringPreferencesKey("ACCESSTOKEN")
         val RefreshTokenKey = stringPreferencesKey("REFRESHTOKEN")
+        val themeKey = booleanPreferencesKey("THEMEKEY")
+    }
+
+    private val systemTheme =
+        when (Resources.getSystem().configuration.uiMode and Configuration.UI_MODE_NIGHT_MASK) {
+            Configuration.UI_MODE_NIGHT_YES -> { true }
+            Configuration.UI_MODE_NIGHT_NO -> { false }
+            else -> { false }
+        }
+
+
+    val isDarkThemeEnabled: Flow<Boolean> = dataStore.data.map {
+        it[PreferencesKey.themeKey] ?: systemTheme
+    }
+
+    override suspend fun enableDarkTheme(enabled: Boolean) {
+        dataStore.edit { it[PreferencesKey.themeKey] = enabled }
     }
 
     override suspend fun saveOnBoardingState(complete: Boolean) {

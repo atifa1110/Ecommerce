@@ -23,6 +23,7 @@ import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CenterAlignedTopAppBar
+import androidx.compose.material3.Divider
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -53,9 +54,11 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.content.FileProvider
+import androidx.core.net.toFile
 import androidx.hilt.navigation.compose.hiltViewModel
 import coil.compose.rememberImagePainter
 import com.example.ecommerce.R
+import com.example.ecommerce.api.request.ProfileRequest
 import com.example.ecommerce.api.response.BaseResponse
 import com.example.ecommerce.auth.login.TextTermCondition
 import com.example.ecommerce.component.ProgressDialog
@@ -101,7 +104,6 @@ fun ProfileScreen(
     }
 
     val profileViewModel : ProfileViewModel = hiltViewModel()
-
     profileViewModel.profileResult.observe(lifecycleOwner){
         when (it) {
             is BaseResponse.Loading -> {
@@ -112,11 +114,11 @@ fun ProfileScreen(
                 isDialog = false
                 ToastMessage().showMsg(context,it.data!!.message)
                 onNavigateToHome()
-
             }
 
             is BaseResponse.Error -> {
                 isDialog = false
+                Log.d("ProfileScreen",it.msg.toString())
                 ToastMessage().showMsg(context,it.msg.toString())
             }
 
@@ -126,31 +128,21 @@ fun ProfileScreen(
 
     Scaffold(
         topBar = {
-            CenterAlignedTopAppBar(modifier = Modifier
-                .drawBehind {
-                    val borderSize = 1.dp.toPx()
-                    drawLine(
-                        color = LightGray,
-                        start = Offset(0f,size.height),
-                        end = Offset(size.width,size.height),
-                        strokeWidth = borderSize
-                    )
-                },
-                title = {
-                    Text(
-                        stringResource(id = R.string.profile),
-                        fontSize = 22.sp, color = textColor,
-                        fontWeight = FontWeight.Normal)
-                }
-            )
+            Column {
+                CenterAlignedTopAppBar(
+                    title = {
+                        Text(stringResource(id = R.string.profile),
+                            style = MaterialTheme.typography.titleLarge
+                        )
+                    }
+                )
+                Divider()
+            }
         }
     ) {
-        Column(modifier = Modifier
-            .padding(it)
-            .padding(horizontal = 16.dp),
+        Column(modifier = Modifier.padding(it).padding(horizontal = 16.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-
             //Circle Image
             Column(modifier = Modifier
                 .padding(24.dp)
@@ -162,8 +154,7 @@ fun ProfileScreen(
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 if (imageUri != null) {
-                    Image(modifier = Modifier
-                        .clip(CircleShape),
+                    Image(modifier = Modifier.clip(CircleShape),
                         contentScale = ContentScale.FillWidth,
                         painter = rememberImagePainter(imageUri),
                         contentDescription = null
@@ -189,17 +180,13 @@ fun ProfileScreen(
 
             //button done
             Button(onClick = {
-                profileViewModel.getProfileUser(userName.value,"http://192.168.190.125:8080/static/images/")
-            },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(vertical = 16.dp),
+                profileViewModel.getProfileUser(file,userName.value)
+            }, modifier = Modifier.fillMaxWidth().padding(vertical = 16.dp),
                 colors = ButtonDefaults.buttonColors(Purple),
-                enabled =  true
+                enabled =  userName.value.isNotEmpty()
             ) {
-                Text(
-                    text = stringResource(id = R.string.done),
-                    fontWeight = FontWeight.W500
+                Text(text = stringResource(id = R.string.done),
+                    style = MaterialTheme.typography.labelLarge
                 )
             }
 
@@ -208,18 +195,19 @@ fun ProfileScreen(
             //if dialog is open than will open alert dialog
             if(openDialog) {
                 AlertDialog(onDismissRequest = { openDialog = false }) {
-                    Column(modifier= Modifier
-                        .background(Color.White)
-                        .padding(8.dp)) {
-                        Text(modifier = Modifier.padding(top = 16.dp, bottom = 16.dp, start= 12.dp),
+                    Column(modifier= Modifier.background(Color.White).padding(8.dp)) {
+                        Text(modifier = Modifier.padding(top = 16.dp, bottom = 16.dp,
+                            start= 12.dp),
                             fontSize = 24.sp,
-                            text = "Pilih Gambar",
-                            fontWeight = FontWeight.W400)
+                            text = stringResource(id = R.string.choose_picture),
+                            fontWeight = FontWeight.W400
+                        )
 
                         TextButton(
                             onClick = {
                                 launcherCamera.launch(uri)
-                            openDialog = false }
+                                openDialog = false
+                            }
                         ) {
                             Text(stringResource(id = R.string.kamera),
                                 fontSize = 16.sp,

@@ -1,9 +1,11 @@
 package com.example.ecommerce.api.repository
 
 import com.example.ecommerce.api.method.PaymentService
+import com.example.ecommerce.api.model.Rating
 import com.example.ecommerce.api.request.FulfillmentRequest
 import com.example.ecommerce.api.response.FulfillmentResponse
 import com.example.ecommerce.api.response.PaymentResponse
+import com.example.ecommerce.api.response.RatingResponse
 import com.example.ecommerce.api.response.TransactionResponse
 import retrofit2.Response
 import javax.inject.Inject
@@ -21,6 +23,12 @@ class PaymentRepository @Inject constructor(
 
     suspend fun transaction(): Response<TransactionResponse> {
        return service.transaction()
+    }
+
+    suspend fun rating(
+        rating : Rating
+    ): Response<RatingResponse> {
+        return service.rating(rating)
     }
 
 

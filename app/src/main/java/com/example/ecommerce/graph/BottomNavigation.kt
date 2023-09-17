@@ -1,5 +1,6 @@
 package com.example.ecommerce.graph
 
+import android.util.Log
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.material.ExperimentalMaterialApi
 import androidx.compose.material.icons.Icons
@@ -19,17 +20,21 @@ import com.example.ecommerce.main.store.StoreScreen
 import com.example.ecommerce.main.transaction.TransactionScreen
 import com.example.ecommerce.main.wishlist.WishListScreen
 
+
 @OptIn(ExperimentalMaterialApi::class, ExperimentalMaterial3Api::class,
     ExperimentalLayoutApi::class
 )
 @Composable
-fun BottomNavigation (navController: NavHostController,
-                      onLogoutClick: () -> Unit,
-                      onDetailClick: (id : String) -> Unit
+fun BottomNavigation (
+    navController: NavHostController,
+    onLogoutClick: () -> Unit,
+    onDetailClick: (id : String) -> Unit,
+    onNavigateToStatus : (fulfillment : String) -> Unit
 ) {
     NavHost(navController = navController,
         route = Main.Home.route,
         startDestination = Bottom.Home.route){
+        Log.d("NavController",navController.toString())
         composable(Bottom.Home.route){
            HomeRoute(
                onLogoutClick = {
@@ -49,7 +54,11 @@ fun BottomNavigation (navController: NavHostController,
         }
 
         composable(Bottom.Transaction.route){
-            TransactionScreen()
+            TransactionScreen(
+                onNavigateToStatus ={ fulfillment ->
+                    onNavigateToStatus(fulfillment)
+                }
+            )
         }
     }
 }

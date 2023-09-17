@@ -103,29 +103,25 @@ fun PaymentScreen(
 
     Scaffold(
         topBar = {
-            TopAppBar(modifier = Modifier.drawBehind {
-                val borderSize = 2.dp.toPx()
-                drawLine(
-                    color = LightGray,
-                    start = Offset(0f,size.height),
-                    end = Offset(size.width,size.height),
-                    strokeWidth = borderSize
-                )
-            },
-                title = {
-                    Text(
-                        stringResource(id = R.string.choose_payment),
-                        fontSize = 22.sp, color = textColor,
-                        fontWeight = FontWeight.Normal)
-                },
-                navigationIcon = {
-                    IconButton(onClick = {
-                        onNavigateBack()
-                    }) {
-                        Icon(Icons.Default.ArrowBack,"back button")
+            Column {
+                TopAppBar(
+                    title = {
+                        Text(
+                            stringResource(id = R.string.choose_payment),
+                            fontSize = 22.sp, color = textColor,
+                            fontWeight = FontWeight.Normal
+                        )
+                    },
+                    navigationIcon = {
+                        IconButton(onClick = {
+                            onNavigateBack()
+                        }) {
+                            Icon(Icons.Default.ArrowBack, "back button")
+                        }
                     }
-                }
-            )
+                )
+                Divider()
+            }
         }
     ) {
         Column(modifier = Modifier
@@ -134,8 +130,8 @@ fun PaymentScreen(
         ) {
             if (isLoading)
                 Column(modifier = Modifier
-                        .fillMaxSize()
-                        .background(Color.White),
+                    .fillMaxSize()
+                    .background(Color.White),
                     horizontalAlignment = Alignment.CenterHorizontally,
                     verticalArrangement = Arrangement.Center,
                 ) {
@@ -156,7 +152,9 @@ fun PaymentScreen(
 @Composable
 fun PaymentComposable(payment: Payment, onItemClick: (payment: Item) -> Unit) {
     Column(modifier = Modifier) {
-        Column(modifier = Modifier.fillMaxWidth().padding(start = 16.dp,top=16.dp)) {
+        Column(modifier = Modifier
+            .fillMaxWidth()
+            .padding(start = 16.dp, top = 16.dp)) {
             Text(
                 text = payment.title,
                 fontSize = 16.sp,
@@ -183,8 +181,10 @@ fun PaymentComposable(payment: Payment, onItemClick: (payment: Item) -> Unit) {
 @Composable
 fun CardPayment(item: Item, onItemClick: (payment: Item) -> Unit){
     Column{
-        Card (modifier= Modifier.clickable {
-            onItemClick(item) }
+        Card (modifier= Modifier
+            .clickable {
+                onItemClick(item)
+            }
             .fillMaxWidth()
             .padding(start = 16.dp)) {
             Column(modifier = Modifier

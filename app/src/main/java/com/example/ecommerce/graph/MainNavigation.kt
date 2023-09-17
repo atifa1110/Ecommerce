@@ -7,15 +7,16 @@ import androidx.navigation.NavType
 import androidx.navigation.compose.composable
 import androidx.navigation.navArgument
 import androidx.navigation.navigation
+import com.example.ecommerce.api.model.Fulfillment
+import com.example.ecommerce.api.model.FulfillmentType
 import com.example.ecommerce.api.model.Item
-import com.example.ecommerce.api.model.Payment
-import com.example.ecommerce.api.model.PaymentType
 import com.example.ecommerce.api.model.ProductType
 import com.example.ecommerce.auth.profile.ProfileRoute
 import com.example.ecommerce.main.cart.CartScreen
 import com.example.ecommerce.main.checkout.CheckoutScreen
 import com.example.ecommerce.main.detail.DetailScreen
 import com.example.ecommerce.main.main.MainScreen
+import com.example.ecommerce.main.notification.NotificationScreen
 import com.example.ecommerce.main.payment.PaymentScreen
 import com.example.ecommerce.main.review.ReviewScreen
 import com.example.ecommerce.main.status.StatusScreen
@@ -78,8 +79,8 @@ fun NavGraphBuilder.mainNavGraph(
                 choosePayment = {
                     navController.navigate(Main.Payment.route)
                 },
-                productPayment = {
-                    navController.navigate(Main.Status.route)
+                productPayment = { fulfillment ->
+                    navController.navigate("Status/$fulfillment")
                 },
                 paymentItem = paymentItem
             )
@@ -100,8 +101,21 @@ fun NavGraphBuilder.mainNavGraph(
             )
         }
 
-        composable(route = Main.Status.route){
-            StatusScreen(navController)
+        composable(route = Main.Status.route,
+            arguments = listOf(navArgument("fulfillment") { type = FulfillmentType()})
+        ){
+            val fulfillmentItem = it.arguments?.getParcelable<Fulfillment>("fulfillment")
+            StatusScreen(
+                navController,
+                fulfillmentItem,
+                onNavigateToHome = {
+                    navController.navigate(Main.Home.route)
+                }
+            )
+        }
+
+        composable(route = Main.Notification.route){
+            NotificationScreen(navController = navController)
         }
     }
 }
@@ -114,5 +128,6 @@ sealed class Main(val route: String) {
     object Cart : Main("Cart")
     object Checkout : Main("Checkout/{listCheckout}")
     object Payment : Main("Payment")
-    object Status : Main("Status")
+    object Status : Main("Status/{fulfillment}")
+    object Notification : Main("Notification")
 }

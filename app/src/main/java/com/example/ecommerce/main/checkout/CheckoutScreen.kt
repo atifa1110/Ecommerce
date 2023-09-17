@@ -1,5 +1,6 @@
 package com.example.ecommerce.main.checkout
 
+import android.net.Uri
 import android.util.Log
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
@@ -35,13 +36,17 @@ import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Divider
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -63,15 +68,19 @@ import androidx.navigation.NavHostController
 import com.example.ecommerce.api.model.Item
 import coil.compose.AsyncImage
 import com.example.ecommerce.R
+import com.example.ecommerce.api.model.Fulfillment
 import com.example.ecommerce.api.request.FulfillmentRequest
 import com.example.ecommerce.api.response.BaseResponse
 import com.example.ecommerce.component.ToastMessage
+import com.example.ecommerce.main.detail.currency
 import com.example.ecommerce.room.cart.Cart
 import com.example.ecommerce.room.cart.CartItem
 import com.example.ecommerce.room.cart.ListCheckout
 import com.example.ecommerce.ui.theme.LightGray
 import com.example.ecommerce.ui.theme.Purple
 import com.example.ecommerce.ui.theme.textColor
+import com.google.gson.Gson
+import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -79,13 +88,14 @@ fun CheckoutScreen(
     navController: NavHostController,
     listCheckout: ListCheckout?,
     choosePayment: () -> Unit,
-    productPayment: () -> Unit,
+    productPayment: (fulfillment : String) -> Unit,
     paymentItem : Item?
 ){
     val lifecycleOwner = LocalLifecycleOwner.current
     val context = LocalContext.current
+    val scope = rememberCoroutineScope()
+    val snackBarHostState = remember { SnackbarHostState() }
     val checkoutViewModel : CheckoutViewModel = hiltViewModel()
-
     var isLoading by remember { mutableStateOf(false) }
     val checkoutItem : List<Cart> = listCheckout!!.listCheckout!!
     val cartItem : List<CartItem> = checkoutItem.map { CartItem(it.productId,it.productVariantName,it.quantity) };
@@ -100,12 +110,16 @@ fun CheckoutScreen(
             is BaseResponse.Success -> {
                 isLoading = false
                 ToastMessage().showMsg(context,it.data!!.message)
-                productPayment()
+                val checkoutResult = it.data.data
+                val jsonCheckout = Uri.encode(Gson().toJson(checkoutResult))
+                productPayment(jsonCheckout)
             }
 
             is BaseResponse.Error -> {
                 isLoading = false
-                ToastMessage().showMsg(context,it.msg.toString())
+                scope.launch {
+                    snackBarHostState.showSnackbar(it.msg.toString())
+                }
             }
 
             else -> {}
@@ -113,30 +127,28 @@ fun CheckoutScreen(
     }
 
     Scaffold(
+        snackbarHost = {
+            SnackbarHost(hostState = snackBarHostState)
+        },
         topBar = {
-            TopAppBar(modifier = Modifier.drawBehind {
-                val borderSize = 2.dp.toPx()
-                drawLine(
-                    color = LightGray,
-                    start = Offset(0f,size.height),
-                    end = Offset(size.width,size.height),
-                    strokeWidth = borderSize
-                )
-            },
-                title = {
-                    Text(
-                        stringResource(id = R.string.checkout),
-                        fontSize = 22.sp, color = textColor,
-                        fontWeight = FontWeight.Normal)
-                },
-                navigationIcon = {
-                    IconButton(onClick = {
-                        navController.popBackStack()
-                    }) {
-                        Icon(Icons.Default.ArrowBack,"back button")
+            Column {
+                TopAppBar(
+                    title = {
+                        Text(
+                            stringResource(id = R.string.checkout),
+                            style = MaterialTheme.typography.titleLarge
+                        )
+                    },
+                    navigationIcon = {
+                        IconButton(onClick = {
+                            navController.popBackStack()
+                        }) {
+                            Icon(Icons.Default.ArrowBack, "back button")
+                        }
                     }
-                }
-            )
+                )
+                Divider()
+            }
         }, bottomBar = {
             Divider()
             Row(
@@ -150,13 +162,13 @@ fun CheckoutScreen(
                     horizontalAlignment = Alignment.Start
                 ) {
                     Text(
-                        text = "Total Bayar",
+                        text = stringResource(id = R.string.total),
                         fontSize = 12.sp,
                         fontWeight = FontWeight.W400
                     )
 
                     Text(
-                        text = "Rp${uiState.total}",
+                        text = currency(uiState.total!!),
                         fontSize = 16.sp,
                         fontWeight = FontWeight.W600
                     )
@@ -174,7 +186,7 @@ fun CheckoutScreen(
                         enabled = paymentItem!=null
                     ) {
                         Text(
-                            text = "Bayar",
+                            text = stringResource(id = R.string.pay),
                             fontWeight = FontWeight.W500
                         )
                     }
@@ -188,8 +200,8 @@ fun CheckoutScreen(
         ) {
             if (isLoading)
                 Column(modifier = Modifier
-                        .fillMaxSize()
-                        .background(Color.White),
+                    .fillMaxSize()
+                    .background(Color.White),
                     horizontalAlignment = Alignment.CenterHorizontally,
                     verticalArrangement = Arrangement.Center,
                 ) {
@@ -264,7 +276,7 @@ fun CheckoutScreen(
 
                                 Spacer(modifier = Modifier.width(10.dp))
                                 Text(
-                                    text = if(paymentItem==null) "Pilih Pembayaran" else paymentItem.label!!,
+                                    text = if(paymentItem==null) stringResource(id = R.string.choose_payment) else paymentItem.label!!,
                                     fontSize = 14.sp,
                                     fontWeight = FontWeight.W500
                                 )
@@ -348,7 +360,7 @@ fun CardCheckout(
                         horizontalAlignment = Alignment.Start
                     ) {
                         Text(
-                            text = "Rp${cart.productPrice}",
+                            text = currency(cart.productPrice!!),
                             fontSize = 14.sp,
                             fontWeight = FontWeight.W500
                         )

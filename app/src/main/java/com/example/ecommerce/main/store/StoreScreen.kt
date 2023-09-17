@@ -72,11 +72,14 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
@@ -88,6 +91,7 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.asFlow
 import androidx.paging.LoadState
 import androidx.paging.compose.LazyPagingItems
 import androidx.paging.compose.collectAsLazyPagingItems
@@ -95,10 +99,17 @@ import androidx.paging.compose.itemKey
 import coil.compose.AsyncImage
 import com.example.ecommerce.R
 import com.example.ecommerce.api.model.Product
+import com.example.ecommerce.api.response.BaseResponse
 import com.example.ecommerce.component.ProgressDialog
+import com.example.ecommerce.component.ToastMessage
+import com.example.ecommerce.main.detail.currency
 import com.example.ecommerce.ui.theme.CardBorder
 import com.example.ecommerce.ui.theme.Purple
+import com.google.gson.Gson
+import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.launch
+import org.json.JSONObject
+import retrofit2.HttpException
 
 @ExperimentalMaterialApi
 @ExperimentalMaterial3Api
@@ -107,6 +118,8 @@ import kotlinx.coroutines.launch
 fun StoreScreen(
     onDetailClick: (id:String) -> Unit
 ) {
+    val context = LocalContext.current
+    val lifecycleOwner = LocalLifecycleOwner.current
     var storeViewModel : StoreViewModel = hiltViewModel()
     var search by rememberSaveable { mutableStateOf("") }
     var showDialog by remember { mutableStateOf(false) }
@@ -115,6 +128,21 @@ fun StoreScreen(
 
     var searchData = storeViewModel.searchData.collectAsState()
     storeViewModel.searchQuery(searchData.value)
+
+    storeViewModel.tokenResult.observe(lifecycleOwner){
+        when(it){
+            is BaseResponse.Success -> {
+                ToastMessage().showMsg(context,it.data!!.message)
+                Log.d("ToastMessage", it.data.message)
+            }
+
+            is BaseResponse.Error -> {
+                ToastMessage().showMsg(context,it.msg.toString())
+            }
+
+            else -> {}
+        }
+    }
 
     SearchDialog(
         openDialog = showDialog,
@@ -155,14 +183,42 @@ fun StoreScreen(
 
         when (val state = products.loadState.refresh) {
             is LoadState.Error -> {
-                StoreErrorPage(title = "Empty",
-                    message = "Error",
-                    button = R.string.refresh,
-                    onButtonClick = {
-                        products.refresh()
-                        storeViewModel.resetQuery()
+                var error = state.error
+                if(error is HttpException){
+                    when (error.code()) {
+                        404 -> {
+                            ErrorPage(title = stringResource(id = R.string.empty),
+                                message = stringResource(id = R.string.resource),
+                                button = R.string.refresh,
+                                onButtonClick = {
+                                    products.refresh()
+                                    storeViewModel.resetQuery()
+                                }, 1f
+                            )
+                        }
+                        500 -> {
+                            ErrorPage(title = error.code().toString(),
+                                message = stringResource(id = R.string.internal),
+                                button = R.string.refresh,
+                                onButtonClick = {
+                                    products.refresh()
+                                    storeViewModel.resetQuery()
+                                }, 1f
+                            )
+                        }
+                        401 -> {
+                            ErrorPage(title = stringResource(id = R.string.connection),
+                                message = stringResource(id = R.string.connection_unavailable),
+                                button = R.string.refresh,
+                                onButtonClick = {
+                                    //products.refresh()
+                                    //storeViewModel.resetQuery()
+                                    storeViewModel.refreshToken()
+                                }, alpha = 1f
+                            )
+                        }
                     }
-                )
+                }
             }
 
             is LoadState.Loading -> {
@@ -205,14 +261,16 @@ fun StoreContent(
     var showBottomSheet by remember { mutableStateOf(false) }
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
 
-    val dataArray = storeViewModel.dataArray.value ?: emptyList()
     val filter = storeViewModel.filter.value
     val selectedCategory = filter.brand ?: ""
     val selectedList = filter.sort ?: ""
     val lowest = if(filter.lowest==null) "" else "${filter.lowest}"
     val highest = if(filter.highest==null) "" else "${filter.highest}"
+    val dataArray : List<String> = listOf(selectedCategory, lowest, highest,selectedList)
 
-    Row(modifier = Modifier.fillMaxWidth().padding(top = 8.dp)
+    Row(modifier = Modifier
+        .fillMaxWidth()
+        .padding(top = 8.dp)
         ,verticalAlignment = Alignment.CenterVertically){
         val itemsCategory = listOf("Apple", "Asus", "Dell", "Lenovo")
         var selectedItemCategory by rememberSaveable { mutableStateOf(selectedCategory)}
@@ -294,8 +352,6 @@ fun StoreContent(
                                 selectedItemList = ""
                                 lowestPrice.value = ""
                                 highestPrice.value = ""
-                                val data = emptyList<String>()
-                                storeViewModel.setDataArray(data)
                                 storeViewModel.setSearchText("")
                                 storeViewModel.resetQuery()
                                 scope.launch {
@@ -352,8 +408,6 @@ fun StoreContent(
                     }
 
                     Button(onClick = {
-                        val data = listOf(selectedItemCategory, lowestPrice.value, highestPrice.value,selectedItemList)
-                        storeViewModel.setDataArray(data)
                         val brand = if(selectedItemCategory.isEmpty()) null else selectedItemCategory
                         val sort = if(selectedItemList.isEmpty()) null else selectedItemList
                         val lowest = if(lowestPrice.value.isEmpty()) null else lowestPrice.value.toInt()
@@ -465,24 +519,28 @@ fun StoreProductList(
 }
 
 @Composable
-fun StoreErrorPage(
+fun ErrorPage(
     title:String,
     message: String,
     button:Int,
-    onButtonClick: () -> Unit
+    onButtonClick: () -> Unit,
+    alpha : Float
 ){
-    Column(modifier = Modifier.fillMaxSize(),
+    Column(modifier = Modifier
+        .fillMaxSize()
+        .background(Color.White),
         verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally) {
         Image(modifier = Modifier.size(128.dp),painter = painterResource(id = R.drawable.smartphone) ,
             contentDescription = "")
         Text(modifier = Modifier.padding(top=5.dp),text = title, fontSize = 32.sp,
             fontWeight = FontWeight.W500)
-        Text(text = message,fontSize = 16.sp,
-            fontWeight = FontWeight.W400)
-        Button(onClick = { onButtonClick() },
-            colors = ButtonDefaults.buttonColors(Purple),
-            enabled = true
+        Text(text = message,fontSize = 16.sp, fontWeight = FontWeight.W400)
+        Button(modifier = Modifier
+            .padding(top = 5.dp)
+            .alpha(alpha),
+            onClick = { onButtonClick() },
+            colors = ButtonDefaults.buttonColors(Purple)
         ) {
             Text(
                 text = stringResource(id = button),
@@ -547,7 +605,7 @@ fun CardList(product: Product?, onClickCard:() ->Unit){
                         )
                         Spacer(modifier = Modifier.height(5.dp))
                         Text(
-                            text = "Rp${product.productPrice}",
+                            text = currency(product.productPrice),
                             fontWeight = FontWeight.W600,
                             fontSize = 14.sp
                         )
@@ -779,7 +837,7 @@ fun CardGrid(product: Product?){
                     )
                     Spacer(modifier = Modifier.height(5.dp))
                     Text(
-                        text = "Rp${product.productPrice}",
+                        text = currency(product.productPrice),
                         fontWeight = FontWeight.W600,
                         fontSize = 14.sp
                     )
