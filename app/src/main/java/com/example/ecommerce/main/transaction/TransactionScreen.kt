@@ -51,6 +51,7 @@ import com.example.ecommerce.api.model.Fulfillment
 import com.example.ecommerce.api.model.Transaction
 import com.example.ecommerce.api.response.BaseResponse
 import com.example.ecommerce.component.ToastMessage
+import com.example.ecommerce.main.detail.currency
 import com.example.ecommerce.room.cart.CartItem
 import com.example.ecommerce.ui.theme.LightPurple
 import com.example.ecommerce.ui.theme.Purple
@@ -258,12 +259,12 @@ fun CardTransaction(
                             horizontalAlignment = Alignment.Start
                         ) {
                             Text(
-                                text = "Total Belanja",
+                                text = stringResource(id = R.string.total_spend),
                                 fontSize = 10.sp,
                                 fontWeight = FontWeight.W400
                             )
                             Text(
-                                text = "Rp${transaction.total}",
+                                text = currency(transaction.total),
                                 fontSize = 12.sp,
                                 fontWeight = FontWeight.W600
                             )

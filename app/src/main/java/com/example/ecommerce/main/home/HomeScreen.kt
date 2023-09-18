@@ -53,7 +53,6 @@ fun HomeScreen(
     onLogoutClick: () -> Unit
 ) {
     val homeViewModel : HomeViewModel = hiltViewModel()
-    val context = LocalContext.current
 
     Column (modifier = Modifier.fillMaxSize(),
         horizontalAlignment = Alignment.CenterHorizontally,
@@ -80,8 +79,7 @@ fun HomeScreen(
                 onLogoutClick()
             },
             modifier = Modifier.padding(vertical = 16.dp),
-            colors = ButtonDefaults.buttonColors(Purple),
-            enabled =  true
+            colors = ButtonDefaults.buttonColors(Purple)
         ) {
             Text(
                 text = stringResource(id = R.string.logout),
@@ -92,7 +90,6 @@ fun HomeScreen(
         val default = AppCompatDelegate.getApplicationLocales()[0]?.language ?: "en"
         val defaultLanguage = default == "in"
         val checkedState = rememberSaveable{ mutableStateOf(defaultLanguage) }
-        Log.d("CheckState",checkedState.toString())
         Row (modifier = Modifier.fillMaxWidth(),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.Center){

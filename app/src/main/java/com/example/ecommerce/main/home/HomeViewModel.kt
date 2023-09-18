@@ -18,16 +18,6 @@ class HomeViewModel @Inject constructor(
     private val repository: DataStoreRepositoryImpl
 ): ViewModel() {
 
-    val isDarkThemeEnabled: StateFlow<Boolean> = repository.isDarkThemeEnabled.stateIn(
-        scope = viewModelScope,
-        started = SharingStarted.WhileSubscribed(1000L),
-        initialValue = false
-    )
-
-    fun enableDarkTheme(enabled: Boolean) = viewModelScope.launch {
-        repository.enableDarkTheme(enabled)
-    }
-
     fun saveLoginState(complete: Boolean) {
         viewModelScope.launch(Dispatchers.IO) {
             repository.saveHasLoginState(complete = complete)

@@ -13,6 +13,7 @@ import com.example.ecommerce.boarding.onBoardingRoute
 fun RootNavigationGraph(
     navController: NavHostController,
     startDestination: String,
+    startProfile : String
 ) {
     NavHost(navController = navController,
         route = Graph.Root.route,
@@ -29,7 +30,7 @@ fun RootNavigationGraph(
             )
         }
         authNavGraph(navController = navController)
-        mainNavGraph(navController = navController)
+        mainNavGraph(navController = navController,startProfile)
     }
 }
 

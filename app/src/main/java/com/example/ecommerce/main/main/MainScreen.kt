@@ -58,13 +58,13 @@ fun MainScreen(navController: NavHostController) {
     val favoriteSize = mainViewModel.favoriteSize.collectAsStateWithLifecycle(emptyList()).value.size
     val badgeFavorite = if(favoriteSize==0) 0 else favoriteSize
 
+    val profile = mainViewModel.getProfileName().collectAsStateWithLifecycle("")
     Scaffold(
         topBar = {
             Column {
                 TopAppBar(
                     title = {
-                        Text(
-                            stringResource(id = R.string.example_name),
+                        Text(text = profile.value,
                             style = MaterialTheme.typography.titleLarge
                         )
                     },

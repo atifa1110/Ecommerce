@@ -110,6 +110,7 @@ import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.launch
 import org.json.JSONObject
 import retrofit2.HttpException
+import java.net.SocketTimeoutException
 
 @ExperimentalMaterialApi
 @ExperimentalMaterial3Api
@@ -218,6 +219,14 @@ fun StoreScreen(
                             )
                         }
                     }
+                } else if(error is SocketTimeoutException){
+                    ErrorPage(title = stringResource(id = R.string.connection),
+                        message = stringResource(id = R.string.connection_unavailable),
+                        button = R.string.refresh,
+                        onButtonClick = {
+                            storeViewModel.refreshToken()
+                        }, alpha = 1f
+                    )
                 }
             }
 
@@ -526,9 +535,7 @@ fun ErrorPage(
     onButtonClick: () -> Unit,
     alpha : Float
 ){
-    Column(modifier = Modifier
-        .fillMaxSize()
-        .background(Color.White),
+    Column(modifier = Modifier.fillMaxSize(),
         verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally) {
         Image(modifier = Modifier.size(128.dp),painter = painterResource(id = R.drawable.smartphone) ,
@@ -553,15 +560,11 @@ fun ErrorPage(
 
 @Composable
 fun CardList(product: Product?, onClickCard:() ->Unit){
-    Column(
-        Modifier
-            .padding(vertical = 5.dp)
+    Column(modifier = Modifier.padding(vertical = 5.dp)
             .clickable {
                 onClickCard()
             }) {
-        Card(modifier = Modifier
-            .fillMaxWidth()
-            .clickable {
+        Card(modifier = Modifier.fillMaxWidth().clickable {
                 onClickCard()
             }, shape = RoundedCornerShape(8.dp),
             elevation = CardDefaults.cardElevation(3.dp)
@@ -584,6 +587,7 @@ fun CardList(product: Product?, onClickCard:() ->Unit){
                                     contentDescription = "image"
                                 )
                             }else {
+                                Log.d("ImageStore",product.image)
                                 AsyncImage(
                                     model = product.image,
                                     contentDescription = "Products image"

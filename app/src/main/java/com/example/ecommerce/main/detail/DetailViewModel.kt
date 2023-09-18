@@ -107,9 +107,6 @@ class DetailViewModel @Inject constructor(
         }
     }
 
-    private val _productLocal = MutableStateFlow(Cart(""))
-    val productLocal = _productLocal.asStateFlow()
-
     fun setProductDataVariant(variantName: String , variantPrice : Int){
         _uiState.update {
             it.copy(

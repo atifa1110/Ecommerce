@@ -24,9 +24,10 @@ import com.example.ecommerce.room.cart.ListCheckout
 
 @ExperimentalMaterial3Api
 fun NavGraphBuilder.mainNavGraph(
-    navController: NavHostController) {
+    navController: NavHostController,
+    startDestination : String) {
     navigation(route = Graph.Main.route,
-        startDestination = Main.Home.route
+        startDestination = startDestination
     ) {
         composable(route = Main.Profile.route) {
             ProfileRoute(
@@ -48,9 +49,16 @@ fun NavGraphBuilder.mainNavGraph(
             arguments = listOf(navArgument("id") {type = NavType.StringType})
         ) { backStackEntry ->
             val id = backStackEntry.arguments?.getString("id") ?: ""
-            DetailScreen(navController,id){ productId->
-                navController.navigate("Review/$productId")
-            }
+            DetailScreen(
+                navController,
+                id,
+                onReviewClick = { productId->
+                    navController.navigate("Review/$productId")
+                },
+                onCheckOut = { listCheck ->
+                    navController.navigate("Checkout/$listCheck")
+                }
+            )
         }
 
         composable(route = Main.Review.route,

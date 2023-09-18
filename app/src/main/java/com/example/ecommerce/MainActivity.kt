@@ -45,13 +45,9 @@ class MainActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        installSplashScreen().setKeepOnScreenCondition {
-            !mainViewModel.isLoading.value
-        }
+        installSplashScreen()
 
         setContent {
-            mainViewModel.getOnBoardingState()
-            val screen by mainViewModel.startDestination
             val boarding by mainViewModel.getBoardingState.collectAsState(false)
             val screenBoarding = if(boarding) Graph.Authentication.route else Graph.OnBoarding.route
 
@@ -63,8 +59,7 @@ class MainActivity : AppCompatActivity() {
 
             EcommerceTheme{
                 val navController = rememberNavController()
-                RootNavigationGraph(navController,screenLogin)
-                //ProfileScreen {}
+                RootNavigationGraph(navController,screenLogin,screenProfile)
             }
         }
     }

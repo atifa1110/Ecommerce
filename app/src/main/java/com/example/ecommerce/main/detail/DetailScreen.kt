@@ -1,5 +1,6 @@
 package com.example.ecommerce.main.detail
 
+import android.net.Uri
 import android.util.Log
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -79,6 +80,9 @@ import com.example.ecommerce.api.model.ProductVariant
 import com.example.ecommerce.api.response.BaseResponse
 import com.example.ecommerce.api.response.DetailResponse
 import com.example.ecommerce.component.ToastMessage
+import com.example.ecommerce.room.cart.Cart
+import com.example.ecommerce.room.cart.ListCheckout
+import com.example.ecommerce.room.cart.toEntity
 import com.example.ecommerce.ui.theme.LightGray
 import com.example.ecommerce.ui.theme.Purple
 import com.example.ecommerce.ui.theme.PurplePink
@@ -89,6 +93,7 @@ import com.google.accompanist.pager.ExperimentalPagerApi
 import com.google.accompanist.pager.HorizontalPager
 import com.google.accompanist.pager.HorizontalPagerIndicator
 import com.google.accompanist.pager.rememberPagerState
+import com.google.gson.Gson
 import kotlinx.coroutines.launch
 import java.text.NumberFormat
 import java.util.Locale
@@ -98,7 +103,8 @@ import java.util.Locale
 fun DetailScreen(
     navController : NavHostController,
     id:String,
-    onReviewClick:(id:String)-> Unit
+    onReviewClick:(id:String)-> Unit,
+    onCheckOut:(listCheck : String) -> Unit
 ) {
     val lifecycleOwner = LocalLifecycleOwner.current
     val detailViewModel: DetailViewModel = hiltViewModel()
@@ -114,6 +120,16 @@ fun DetailScreen(
     val uiState by detailViewModel.uiState.collectAsState()
     val scope = rememberCoroutineScope()
     val snackBarHostState = remember { SnackbarHostState() }
+
+//    if(result!=null){
+//        val carts = result.toEntity(uiState.productVariant)
+//        Log.d("allcarts",carts.toString())
+//    }
+//
+//    Log.d("DetailCarts",carts.toString())
+    val listCart : List<Cart> = ArrayList()
+    //listCart.
+//    val jsonCheckout = Uri.encode(Gson().toJson(ListCheckout(listCart)))
 
     uiState.message?.let { message ->
         scope.launch {
@@ -186,7 +202,9 @@ fun DetailScreen(
                         ) {
                             OutlinedButton(
                                 modifier = Modifier.fillMaxWidth(),
-                                onClick = { },
+                                onClick = {
+                                    //onCheckOut(jsonCheckout)
+                                },
                             ) {
                                 Text(
                                     color = Purple,
@@ -443,7 +461,11 @@ fun DetailScreen(
                             }
                             Row(horizontalArrangement = Arrangement.End
                             ) {
-                                TextButton(onClick = { onReviewClick(result.productId!!) }) {
+                                TextButton(
+                                    onClick = {
+                                        onReviewClick(result.productId!!)
+                                    }
+                                ) {
                                     Text(
                                         text = stringResource(id = R.string.see_all),
                                         fontSize = 12.sp,
@@ -525,8 +547,7 @@ fun ErrorPage(
     alpha : Float
 ){
     Column(modifier = Modifier
-        .fillMaxSize()
-        .background(Color.White),
+        .fillMaxSize(),
         verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally) {
         Image(modifier = Modifier.size(128.dp),painter = painterResource(id = R.drawable.smartphone) ,
@@ -552,9 +573,11 @@ fun ErrorPage(
 @Preview(showBackground = true)
 fun DetailPreview(){
     Column (Modifier.background(Color.White)) {
-        DetailScreen(rememberNavController(),id = "1"){
-            it
-        }
+        DetailScreen(rememberNavController(),
+            id = "1",
+            onReviewClick = {},
+            onCheckOut = {}
+        )
     }
 }
 

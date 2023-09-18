@@ -112,7 +112,7 @@ fun ProfileScreen(
 
             is BaseResponse.Success -> {
                 isDialog = false
-                ToastMessage().showMsg(context,it.data!!.message)
+                profileViewModel.saveProfileName(it.data!!.data.userName)
                 onNavigateToHome()
             }
 

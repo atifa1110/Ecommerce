@@ -59,11 +59,7 @@ class ProfileViewModel@Inject constructor(
         }
     }
 
-    fun getToken(): String {
-       return "Bearer ${repository.getAccessToken()}"
-    }
-
-    suspend fun saveProfileName(name: String){
+    fun saveProfileName(name: String){
         viewModelScope.launch(Dispatchers.IO) {
             repository.saveProfileName(name)
         }

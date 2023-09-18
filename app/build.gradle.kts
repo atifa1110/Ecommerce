@@ -4,6 +4,7 @@ plugins {
     id("com.google.dagger.hilt.android")
     kotlin("kapt")
     id("kotlin-parcelize")
+    id("com.google.gms.google-services")
 }
 
 android {
@@ -53,6 +54,9 @@ android {
     kapt {
         correctErrorTypes = true
     }
+    hilt {
+        enableAggregatingTask = true
+    }
 }
 
 dependencies {
@@ -66,6 +70,8 @@ dependencies {
     implementation("androidx.compose.ui:ui-tooling-preview")
     implementation("androidx.compose.material3:material3")
     implementation("androidx.appcompat:appcompat:1.6.1")
+    implementation("com.google.firebase:firebase-analytics-ktx:21.3.0")
+    implementation("com.google.firebase:firebase-messaging-ktx:23.2.1")
     testImplementation("junit:junit:4.13.2")
     androidTestImplementation("androidx.test.ext:junit:1.1.5")
     androidTestImplementation("androidx.test.espresso:espresso-core:3.5.1")
@@ -145,6 +151,5 @@ dependencies {
 
     // Saved state module for ViewModel
     implementation("androidx.lifecycle:lifecycle-viewmodel-savedstate:$lifecycle_version")
-
     implementation ("com.airbnb.android:lottie-compose:6.1.0")
 }

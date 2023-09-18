@@ -76,9 +76,9 @@ fun RegisterScreen(
 
             is BaseResponse.Success -> {
                 isDialog = false
-                showMessage.showMsg(context,it.data!!.message)
+                //showMessage.showMsg(context,it.data!!.message)
+                registerViewModel.saveAccessToken(it.data!!.data.accessToken)
                 onRegisterSubmitted()
-                registerViewModel.saveAccessToken(it.data.data.accessToken)
             }
 
             is BaseResponse.Error -> {
