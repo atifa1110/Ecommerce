@@ -10,6 +10,7 @@ import androidx.compose.material3.dynamicLightColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.SideEffect
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalView
@@ -42,29 +43,29 @@ private val DarkColorScheme = darkColorScheme(
 )
 
 private val LightColorScheme = lightColorScheme(
-    primary = primary,
-    onPrimary = onPrimary,
-    secondary = secondary,
-    onSecondary = onSecondary,
-    tertiary = tertiary,
-    onTertiary = onTertiary,
-    error = error,
-    onError = onError,
-    primaryContainer = primaryContainer,
-    onPrimaryContainer = onPrimaryContainer,
-    secondaryContainer = secondaryContainer,
-    onSecondaryContainer = onSecondaryContainer,
-    tertiaryContainer = tertiaryContainer,
-    onTertiaryContainer = onTertiaryContainer,
-    errorContainer = errorContainer,
-    onErrorContainer = onErrorContainer,
-    surface = surface,
-    onSurface = onSurface,
-    onSurfaceVariant = onSurfaceVar,
-    outline = outline,
-    outlineVariant = outlineVariant,
-    inverseOnSurface = inverseSurface,
-    inversePrimary = inversePrimary
+//    primary = primary,
+//    onPrimary = onPrimary,
+//    secondary = secondary,
+//    onSecondary = onSecondary,
+//    tertiary = tertiary,
+//    onTertiary = onTertiary,
+//    error = error,
+//    onError = onError,
+//    primaryContainer = primaryContainer,
+//    onPrimaryContainer = onPrimaryContainer,
+//    secondaryContainer = secondaryContainer,
+//    onSecondaryContainer = onSecondaryContainer,
+//    tertiaryContainer = tertiaryContainer,
+//    onTertiaryContainer = onTertiaryContainer,
+//    errorContainer = errorContainer,
+//    onErrorContainer = onErrorContainer,
+    surface = Color.White,
+//    onSurface = onSurface,
+//    onSurfaceVariant = onSurfaceVar,
+//    outline = outline,
+//    outlineVariant = outlineVariant,
+//    inverseOnSurface = inverseSurface,
+//    inversePrimary = inversePrimary
 
 
     /* Other default colors to override
@@ -82,7 +83,7 @@ private val LightColorScheme = lightColorScheme(
 fun EcommerceTheme(
     darkTheme: Boolean = isSystemInDarkTheme(),
     // Dynamic color is available on Android 12+
-    dynamicColor: Boolean = true,
+    dynamicColor: Boolean = false,
     content: @Composable () -> Unit
 ) {
     val colorScheme = when {

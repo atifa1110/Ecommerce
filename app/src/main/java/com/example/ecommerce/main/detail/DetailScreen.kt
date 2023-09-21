@@ -305,10 +305,7 @@ fun DetailScreen(
                                     fontWeight = FontWeight.W600
                                 )
                             }
-                            Row(
-                                Modifier
-                                    .fillMaxWidth()
-                                    .weight(1f),
+                            Row(Modifier.fillMaxWidth().weight(1f),
                                 horizontalArrangement = Arrangement.End
                             ) {
                                 Icon(imageVector = Icons.Default.Share, contentDescription = "Star")

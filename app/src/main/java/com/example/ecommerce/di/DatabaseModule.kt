@@ -5,6 +5,8 @@ import androidx.room.Room
 import com.example.ecommerce.room.cart.CartDao
 import com.example.ecommerce.room.cart.CartDatabase
 import com.example.ecommerce.room.favorite.FavoriteDao
+import com.example.ecommerce.room.notification.NotificationDao
+import com.example.ecommerce.room.notification.NotificationDatabase
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -39,4 +41,22 @@ object DatabaseModule {
             : FavoriteDao {
         return cartDatabase.FavoriteDao()
     }
+
+    @Provides
+    @Singleton
+    fun provideNotificationDatabase(@ApplicationContext context: Context)
+            : NotificationDatabase {
+        return Room.databaseBuilder(
+            context,
+            NotificationDatabase::class.java,
+            "NotificationDatabase"
+        ).fallbackToDestructiveMigration().build()
+    }
+
+    @Provides
+    fun provideNotificationDao(notificationDatabase: NotificationDatabase)
+            : NotificationDao{
+        return notificationDatabase.notificationDao()
+    }
 }
+

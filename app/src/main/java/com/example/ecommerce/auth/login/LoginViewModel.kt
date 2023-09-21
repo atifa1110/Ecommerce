@@ -9,10 +9,14 @@ import com.example.ecommerce.api.response.BaseResponse
 import com.example.ecommerce.api.response.LoginResponse
 import com.example.ecommerce.api.repository.AuthRepository
 import com.example.ecommerce.datastore.DataStoreRepository
+import com.google.firebase.messaging.FirebaseMessaging
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.tasks.await
 import org.json.JSONObject
 import javax.inject.Inject
 
@@ -58,6 +62,28 @@ class LoginViewModel@Inject constructor(
 
     fun getBoardingState() : Flow<Boolean> {
         return repository.getOnBoardingState()
+    }
+
+    private val _fcmToken = MutableStateFlow<String?>(null)
+    val fcmToken: StateFlow<String?> = _fcmToken
+
+    init{
+        refreshFcmToken()
+    }
+    private fun refreshFcmToken() {
+        viewModelScope.launch {
+            try {
+                val token = FirebaseMessaging.getInstance().token.await()
+                repository.saveTokenMessaging(token)
+                _fcmToken.value = token
+            } catch (e: Exception) {
+                _fcmToken.value = e.message
+            }
+        }
+    }
+
+    fun subscribeFcmTopic() : Boolean{
+        return FirebaseMessaging.getInstance().subscribeToTopic("promo").isSuccessful
     }
 
 }

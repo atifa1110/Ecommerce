@@ -5,6 +5,7 @@ import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.ecommerce.api.model.Fulfillment
+import com.example.ecommerce.api.model.Message
 import com.example.ecommerce.api.repository.PaymentRepository
 import com.example.ecommerce.api.request.FulfillmentRequest
 import com.example.ecommerce.api.response.BaseResponse
@@ -12,6 +13,8 @@ import com.example.ecommerce.api.response.FulfillmentResponse
 import com.example.ecommerce.api.response.LoginResponse
 import com.example.ecommerce.api.response.PaymentResponse
 import com.example.ecommerce.api.response.SearchResponse
+import com.example.ecommerce.datastore.DataStoreRepository
+import com.example.ecommerce.firebase.FirebaseMessagingRepository
 import com.example.ecommerce.main.cart.ShowCartUiState
 import com.example.ecommerce.room.cart.Cart
 import com.example.ecommerce.room.cart.CartRepository
@@ -23,13 +26,16 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import okhttp3.ResponseBody
 import org.json.JSONObject
 import javax.inject.Inject
 
 @HiltViewModel
 class CheckoutViewModel @Inject constructor(
     private val cartRepository: CartRepository,
-    private val paymentRepository: PaymentRepository
+    private val paymentRepository: PaymentRepository,
+    private val dataStoreRepository: DataStoreRepository,
+    private val firebaseMessagingRepository: FirebaseMessagingRepository
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(CheckOutUiState())
@@ -72,10 +78,13 @@ class CheckoutViewModel @Inject constructor(
                     _checkOutResult.value = BaseResponse.Error(message)
                 }
             } catch (ex: Exception) {
-                _checkOutResult.value = BaseResponse.Error(ex.message)
+                _checkOutResult.value = BaseResponse.Error(ex.message.toString())
             }
         }
     }
+
+    val getMessagingToken = dataStoreRepository.getTokenMessaging()
+
 }
 
 data class CheckOutUiState(

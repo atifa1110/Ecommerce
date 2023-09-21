@@ -64,6 +64,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.ecommerce.R
 import com.example.ecommerce.api.request.AuthRequest
 import com.example.ecommerce.api.response.BaseResponse
@@ -101,6 +102,8 @@ fun LoginScreen(
     val password = rememberSaveable { mutableStateOf("") }
     val passwordError = rememberSaveable { mutableStateOf(false) }
 
+    val fcmToken = loginViewModel.fcmToken.collectAsStateWithLifecycle().value
+    Log.d("fcmToken",fcmToken.toString())
     loginViewModel.loginResult.observe(lifecycleOwner){
         when (it) {
             is BaseResponse.Loading -> {
@@ -111,6 +114,8 @@ fun LoginScreen(
                 isLoading = false
                 loginViewModel.saveAccessToken(it.data!!.data.accessToken)
                 loginViewModel.saveLoginState(true)
+                loginViewModel.subscribeFcmTopic()
+                Log.d("SubscribeFcmTopic",loginViewModel.subscribeFcmTopic().toString())
                 onNavigateToHome()
             }
 
@@ -157,7 +162,10 @@ fun LoginScreen(
 
             Button(
                 onClick = {
-                    loginViewModel.loginUser(Constant.API_KEY, AuthRequest(email.value,password.value,"asdf-qwer-zxcv"))
+                        loginViewModel.loginUser(
+                            Constant.API_KEY,
+                            AuthRequest(email.value, password.value, fcmToken!!)
+                        )
                 },
                 modifier = Modifier
                     .fillMaxWidth()
@@ -178,7 +186,8 @@ fun LoginScreen(
                     keyboardController?.hide()
                     onRegisterClick()
                 },
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier
+                    .fillMaxWidth()
                     .padding(vertical = 16.dp)
             ) {
                 Text(

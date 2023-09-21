@@ -58,6 +58,9 @@ fun MainScreen(navController: NavHostController) {
     val favoriteSize = mainViewModel.favoriteSize.collectAsStateWithLifecycle(emptyList()).value.size
     val badgeFavorite = if(favoriteSize==0) 0 else favoriteSize
 
+    val notificationSize = mainViewModel.notificationSize.collectAsStateWithLifecycle(emptyList()).value.size
+    val badgeNotification = if(notificationSize==0) 0 else notificationSize
+
     val profile = mainViewModel.getProfileName().collectAsStateWithLifecycle("")
     Scaffold(
         topBar = {
@@ -75,7 +78,24 @@ fun MainScreen(navController: NavHostController) {
                     },
                     actions = {
                         IconButton(onClick = { navController.navigate(Main.Notification.route) }) {
-                            Icon(Icons.Filled.Notifications, contentDescription = null)
+                            if(notificationSize>0){
+                                BadgedBox(
+                                    badge = {
+                                        Badge {
+                                            Text(
+                                                text = badgeNotification.toString(),
+                                                color = Color.White
+                                            )
+                                        }
+                                    }) {
+                                    Icon(
+                                        Icons.Filled.Notifications,
+                                        contentDescription = "Notifications"
+                                    )
+                                }
+                            }else {
+                                Icon(Icons.Filled.Notifications, contentDescription = null)
+                            }
                         }
                         IconButton(onClick = { navController.navigate(Main.Cart.route) }) {
                             if (cartSize > 0) {

@@ -35,6 +35,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.ecommerce.R
 import com.example.ecommerce.api.request.AuthRequest
 import com.example.ecommerce.api.response.BaseResponse
@@ -68,6 +69,9 @@ fun RegisterScreen(
 
     val showMessage = ToastMessage()
     val registerViewModel : RegisterViewModel = hiltViewModel()
+    val fcmToken = registerViewModel.fcmToken.collectAsStateWithLifecycle().value
+    Log.d("fcmToken",fcmToken.toString())
+
     registerViewModel.registerResult.observe(lifecycleOwner) {
         when (it) {
             is BaseResponse.Loading -> {
@@ -122,7 +126,7 @@ fun RegisterScreen(
 
             Button(
                 onClick = {
-                   registerViewModel.registerUser(Constant.API_KEY, AuthRequest(email.value, password.value,Constant.FIREBASE_TOKEN))
+                   registerViewModel.registerUser(Constant.API_KEY, AuthRequest(email.value, password.value,fcmToken!!))
                 },
                 modifier = Modifier
                     .fillMaxWidth()

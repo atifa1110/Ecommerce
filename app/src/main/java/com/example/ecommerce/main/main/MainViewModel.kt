@@ -11,6 +11,7 @@ import com.example.ecommerce.datastore.DataStoreRepositoryImpl
 import com.example.ecommerce.graph.Graph
 import com.example.ecommerce.room.cart.CartRepository
 import com.example.ecommerce.room.favorite.FavoriteRepository
+import com.example.ecommerce.room.notification.NotificationRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
@@ -22,30 +23,13 @@ import kotlinx.coroutines.flow.Flow
 class MainViewModel @Inject constructor(
     private val repository: DataStoreRepositoryImpl,
     private val cartRepository: CartRepository,
-    private val favoriteRepository: FavoriteRepository
+    private val favoriteRepository: FavoriteRepository,
+    private val notificationRepository: NotificationRepository
 ) : ViewModel() {
-
-    private val _isLoading: MutableState<Boolean> = mutableStateOf(true)
-    val isLoading: State<Boolean> = _isLoading
-
-    private val _startDestination: MutableState<String> = mutableStateOf(Graph.Authentication.route)
-    val startDestination: State<String> = _startDestination
-
-    fun getOnBoardingState() {
-        viewModelScope.launch {
-            repository.getOnBoardingState().collect { completed ->
-                if (completed) {
-                    _startDestination.value = Graph.Authentication.route
-                } else {
-                    _startDestination.value = Graph.OnBoarding.route
-                }
-            }
-            _isLoading.value = false
-        }
-    }
 
     val cartSize = cartRepository.getAllCarts()
     val favoriteSize = favoriteRepository.getAllFavorite()
+    val notificationSize = notificationRepository.getNotification()
 
     val getBoardingState = repository.getOnBoardingState()
 

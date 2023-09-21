@@ -24,23 +24,7 @@ class DataStoreRepositoryImpl @Inject constructor(
         val ProfileKey = stringPreferencesKey(name = "PROFILE")
         val AccessTokenKey = stringPreferencesKey("ACCESSTOKEN")
         val RefreshTokenKey = stringPreferencesKey("REFRESHTOKEN")
-        val themeKey = booleanPreferencesKey("THEMEKEY")
-    }
-
-    private val systemTheme =
-        when (Resources.getSystem().configuration.uiMode and Configuration.UI_MODE_NIGHT_MASK) {
-            Configuration.UI_MODE_NIGHT_YES -> { true }
-            Configuration.UI_MODE_NIGHT_NO -> { false }
-            else -> { false }
-        }
-
-
-    val isDarkThemeEnabled: Flow<Boolean> = dataStore.data.map {
-        it[PreferencesKey.themeKey] ?: systemTheme
-    }
-
-    override suspend fun enableDarkTheme(enabled: Boolean) {
-        dataStore.edit { it[PreferencesKey.themeKey] = enabled }
+        val MessagingTokenKey = stringPreferencesKey("MESSAGINGTOKEN")
     }
 
     override suspend fun saveOnBoardingState(complete: Boolean) {
@@ -129,6 +113,28 @@ class DataStoreRepositoryImpl @Inject constructor(
             .map { preferences ->
                 val accessToken = preferences[PreferencesKey.AccessTokenKey] ?: ""
                 accessToken
+            }
+    }
+
+    override suspend fun saveTokenMessaging(token: String) {
+        dataStore
+            .edit { preferences ->
+                preferences[PreferencesKey.MessagingTokenKey] = token
+            }
+    }
+
+    override fun getTokenMessaging(): Flow<String> {
+        return dataStore.data
+            .catch { exception ->
+                if (exception is IOException) {
+                    emit(emptyPreferences())
+                } else {
+                    throw exception
+                }
+            }
+            .map { preferences ->
+                val messagingToken = preferences[PreferencesKey.MessagingTokenKey] ?: ""
+                messagingToken
             }
     }
 }

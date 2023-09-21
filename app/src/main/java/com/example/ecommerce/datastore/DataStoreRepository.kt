@@ -4,7 +4,6 @@ import kotlinx.coroutines.flow.Flow
 
 interface DataStoreRepository {
 
-    suspend fun enableDarkTheme(enabled: Boolean)
     suspend fun saveOnBoardingState (complete:Boolean)
     fun getOnBoardingState() : Flow<Boolean>
 
@@ -17,4 +16,6 @@ interface DataStoreRepository {
     suspend fun saveAccessToken (token:String)
     fun getAccessToken() : Flow<String>
 
+    suspend fun saveTokenMessaging(token: String)
+    fun getTokenMessaging() : Flow<String>
 }

@@ -69,6 +69,9 @@ import com.example.ecommerce.api.model.Item
 import coil.compose.AsyncImage
 import com.example.ecommerce.R
 import com.example.ecommerce.api.model.Fulfillment
+import com.example.ecommerce.api.model.Message
+import com.example.ecommerce.api.model.Notification
+import com.example.ecommerce.api.model.NotificationData
 import com.example.ecommerce.api.request.FulfillmentRequest
 import com.example.ecommerce.api.response.BaseResponse
 import com.example.ecommerce.component.ToastMessage
@@ -101,6 +104,8 @@ fun CheckoutScreen(
     val cartItem : List<CartItem> = checkoutItem.map { CartItem(it.productId,it.productVariantName,it.quantity) };
     val uiState by checkoutViewModel.uiState.collectAsStateWithLifecycle()
 
+    val messageToken = checkoutViewModel.getMessagingToken.collectAsStateWithLifecycle("").value
+    Log.d("GetMessagingToken",messageToken)
     checkoutViewModel.checkOutResult.observe(lifecycleOwner){
         when (it) {
             is BaseResponse.Loading -> {

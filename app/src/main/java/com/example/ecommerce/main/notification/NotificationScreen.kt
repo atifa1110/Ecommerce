@@ -1,5 +1,6 @@
 package com.example.ecommerce.main.notification
 
+import android.util.Log
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -14,6 +15,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.IconButton
 import androidx.compose.material.LocalTextStyle
@@ -42,10 +44,15 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavHostController
+import androidx.navigation.compose.rememberNavController
 import coil.compose.AsyncImage
 import com.example.ecommerce.R
 import com.example.ecommerce.api.request.FulfillmentRequest
+import com.example.ecommerce.main.detail.ErrorPage
+import com.example.ecommerce.room.notification.Notification
 import com.example.ecommerce.ui.theme.LightGray
 import com.example.ecommerce.ui.theme.Purple
 import com.example.ecommerce.ui.theme.textColor
@@ -55,6 +62,10 @@ import com.example.ecommerce.ui.theme.textColor
 fun NotificationScreen(
     navController : NavHostController
 ) {
+    val notificationViewModel: NotificationViewModel = hiltViewModel()
+    val uiState = notificationViewModel.uiState.collectAsStateWithLifecycle()
+    val notificationList = uiState.value.notificationList.collectAsStateWithLifecycle(emptyList()).value
+    val message = uiState.value.message
     Scaffold(
         topBar = {
             Column{
@@ -78,10 +89,25 @@ fun NotificationScreen(
         }
     ) {
         Column(modifier = Modifier.padding(it)) {
-
-            LazyColumn(modifier = Modifier.fillMaxSize()){
-                repeat(3){
-                    item{ CardNotification() }
+            if(notificationList.isEmpty()){
+                ErrorPage(
+                    title = stringResource(id = R.string.empty),
+                    message = stringResource(id = R.string.resource),
+                    button = R.string.refresh,
+                    onButtonClick = { /*TODO*/ },
+                    alpha = 0f
+                )
+            }else {
+                LazyColumn(modifier = Modifier.fillMaxSize()) {
+                    items(notificationList) { notification ->
+                        CardNotification(
+                            notification = notification,
+                            setNotificationRead = { id,read ->
+                                notificationViewModel.updateReadNotification(id,read)
+                            },
+                            message
+                        )
+                    }
                 }
             }
         }
@@ -89,11 +115,16 @@ fun NotificationScreen(
 }
 
 @Composable
-@Preview(showBackground = true)
-fun CardNotification(){
-        Row (modifier = Modifier
-            .fillMaxWidth()
-            .padding(top = 16.dp, start = 16.dp)){
+fun CardNotification(
+    notification: Notification,
+    setNotificationRead: (id:Int,read:Boolean) -> Unit,
+    message : String
+){
+        Row (modifier = Modifier.fillMaxWidth().background(
+                if(notification.isRead) Color.White else Color(0xFFEADDFF))
+            .clickable {
+            notification.id?.let { setNotificationRead(it,true) }
+        }.padding(top = 16.dp, start = 16.dp)){
             Card(
                 modifier = Modifier.size(36.dp),
                 shape = RoundedCornerShape(8.dp)
@@ -115,7 +146,7 @@ fun CardNotification(){
                 Column (modifier= Modifier.padding(end = 16.dp)){
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Text(
-                            text = stringResource(id = R.string.info),
+                            text = notification.type,
                             fontSize = 12.sp,
                             fontWeight = FontWeight.W400
                         )
@@ -125,7 +156,7 @@ fun CardNotification(){
                             horizontalArrangement = Arrangement.End
                         ) {
                             Text(
-                                text = "12 Jun 2023, 11:45",
+                                text = "${notification.date}, ${notification.time}",
                                 fontSize = 12.sp,
                                 fontWeight = FontWeight.W400
                             )
@@ -133,20 +164,25 @@ fun CardNotification(){
                     }
 
                     Text(
-                        text = stringResource(id = R.string.transaction_done),
+                        text = notification.title,
                         fontSize = 14.sp,
                         fontWeight = FontWeight.W600
                     )
 
                     Text(
                         modifier = Modifier.fillMaxWidth(),
-                        text = stringResource(id = R.string.dummy_notification),
+                        text = notification.body,
                         fontSize = 12.sp,
                         fontWeight = FontWeight.W400
                     )
                 }
-                Divider(modifier = Modifier.padding(vertical = 10.dp))
+                Divider(modifier = Modifier.padding(top = 10.dp))
             }
         }
 }
 
+@Composable
+@Preview(showBackground = true)
+fun notificationPreview(){
+    NotificationScreen(navController = rememberNavController())
+}
