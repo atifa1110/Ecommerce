@@ -39,9 +39,12 @@ class MyFirebaseMessagingService : FirebaseMessagingService(
     }
 
     override fun onMessageReceived(remoteMessage: RemoteMessage) {
-        val body = remoteMessage.notification?.body.toString()
-        val title = remoteMessage.notification?.title.toString()
-        val image = remoteMessage.notification?.imageUrl.toString()
+//        val body = remoteMessage.notification?.body.toString()
+//        val title = remoteMessage.notification?.title.toString()
+//        val image = remoteMessage.notification?.imageUrl.toString()
+        val body = remoteMessage.data["body"] ?: ""
+        val title = remoteMessage.data["title"] ?: ""
+        val image = remoteMessage.data["image"] ?: ""
         val type = remoteMessage.data["type"] ?: ""
         val date = remoteMessage.data["date"] ?: ""
         val time = remoteMessage.data["time"] ?: ""

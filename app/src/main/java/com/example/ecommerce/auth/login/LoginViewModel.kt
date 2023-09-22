@@ -8,7 +8,10 @@ import com.example.ecommerce.api.request.AuthRequest
 import com.example.ecommerce.api.response.BaseResponse
 import com.example.ecommerce.api.response.LoginResponse
 import com.example.ecommerce.api.repository.AuthRepository
+import com.example.ecommerce.api.response.FirebaseResponse
 import com.example.ecommerce.datastore.DataStoreRepository
+import com.example.ecommerce.firebase.FirebaseMessagingRepository
+import com.example.ecommerce.util.Constant
 import com.google.firebase.messaging.FirebaseMessaging
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
@@ -24,7 +27,8 @@ import javax.inject.Inject
 @HiltViewModel
 class LoginViewModel@Inject constructor(
     private val loginRepository: AuthRepository,
-    private val repository: DataStoreRepository
+    private val repository: DataStoreRepository,
+    private val firebaseMessagingRepository: FirebaseMessagingRepository
 ):ViewModel() {
 
     private val _loginResult: MutableLiveData<BaseResponse<LoginResponse>> = MutableLiveData()
@@ -60,16 +64,33 @@ class LoginViewModel@Inject constructor(
         }
     }
 
-    fun getBoardingState() : Flow<Boolean> {
-        return repository.getOnBoardingState()
-    }
-
     private val _fcmToken = MutableStateFlow<String?>(null)
     val fcmToken: StateFlow<String?> = _fcmToken
 
     init{
         refreshFcmToken()
     }
+
+    private val _tokenResult: MutableLiveData<BaseResponse<FirebaseResponse>> = MutableLiveData()
+    val tokenResult: LiveData<BaseResponse<FirebaseResponse>> get() = _tokenResult
+
+    fun token(){
+        viewModelScope.launch {
+            try {
+                val response = firebaseMessagingRepository.firebaseToken(Constant.AUTH_TOKEN)
+                if (response.code() == 200 && response.isSuccessful) {
+                    _tokenResult.value = BaseResponse.Success(response.body())
+                }else{
+                    val jsonObj= JSONObject(response.errorBody()!!.string())
+                    val message = jsonObj.getString("message")
+                    _tokenResult.value = BaseResponse.Error(message)
+                }
+            }catch (error:Exception){
+                _tokenResult.value = BaseResponse.Error(error.message.toString())
+            }
+        }
+    }
+
     private fun refreshFcmToken() {
         viewModelScope.launch {
             try {

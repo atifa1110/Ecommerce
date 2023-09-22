@@ -102,7 +102,7 @@ fun LoginScreen(
     val password = rememberSaveable { mutableStateOf("") }
     val passwordError = rememberSaveable { mutableStateOf(false) }
 
-    val fcmToken = loginViewModel.fcmToken.collectAsStateWithLifecycle().value
+    val fcmToken = loginViewModel.fcmToken.collectAsStateWithLifecycle().value ?: ""
     Log.d("fcmToken",fcmToken.toString())
     loginViewModel.loginResult.observe(lifecycleOwner){
         when (it) {
@@ -115,7 +115,7 @@ fun LoginScreen(
                 loginViewModel.saveAccessToken(it.data!!.data.accessToken)
                 loginViewModel.saveLoginState(true)
                 loginViewModel.subscribeFcmTopic()
-                Log.d("SubscribeFcmTopic",loginViewModel.subscribeFcmTopic().toString())
+                loginViewModel.token()
                 onNavigateToHome()
             }
 
@@ -164,7 +164,7 @@ fun LoginScreen(
                 onClick = {
                         loginViewModel.loginUser(
                             Constant.API_KEY,
-                            AuthRequest(email.value, password.value, fcmToken!!)
+                            AuthRequest(email.value, password.value, fcmToken)
                         )
                 },
                 modifier = Modifier

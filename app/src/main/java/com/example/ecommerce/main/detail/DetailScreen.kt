@@ -204,6 +204,12 @@ fun DetailScreen(
                                 modifier = Modifier.fillMaxWidth(),
                                 onClick = {
                                     //onCheckOut(jsonCheckout)
+                                    val carts = result.toEntity(uiState.productVariant)
+                                    Log.d("CartDetail",carts.toString())
+                                    val listCart = listOf<Cart>(carts)
+                                    val jsonCheckout = Uri.encode(Gson().toJson(ListCheckout(listCart)))
+                                    Log.d("CartDetailList",listCart.toString())
+                                    onCheckOut(jsonCheckout)
                                 },
                             ) {
                                 Text(

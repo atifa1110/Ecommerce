@@ -67,6 +67,10 @@ import com.example.ecommerce.main.checkout.CheckoutViewModel
 import com.example.ecommerce.ui.theme.LightGray
 import com.example.ecommerce.ui.theme.Purple
 import com.example.ecommerce.ui.theme.textColor
+import com.google.firebase.ktx.Firebase
+import com.google.firebase.remoteconfig.FirebaseRemoteConfig
+import com.google.firebase.remoteconfig.ktx.remoteConfig
+import com.google.firebase.remoteconfig.ktx.remoteConfigSettings
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -181,12 +185,15 @@ fun PaymentComposable(payment: Payment, onItemClick: (payment: Item) -> Unit) {
 @Composable
 fun CardPayment(item: Item, onItemClick: (payment: Item) -> Unit){
     Column{
-        Card (modifier= Modifier
+        Card (modifier= if(item.status== false) Modifier
             .clickable {
                 onItemClick(item)
             }
             .fillMaxWidth()
-            .padding(start = 16.dp)) {
+            .padding(start = 16.dp) else
+            Modifier.fillMaxWidth()
+                .padding(start = 16.dp)
+        ) {
             Column(modifier = Modifier
                 .fillMaxWidth()
                 .background(Color.White)) {

@@ -1,6 +1,7 @@
 package com.example.ecommerce.api.method
 
 import com.example.ecommerce.api.model.Message
+import com.example.ecommerce.api.response.FirebaseResponse
 import com.example.ecommerce.util.Constant
 import okhttp3.ResponseBody
 import retrofit2.Response
@@ -15,4 +16,9 @@ interface FirebaseMessagingApi {
     suspend fun postNotification(
         @Body message: Message
     ): Response<ResponseBody>
+
+    @POST("firebase")
+    suspend fun firebaseToken(
+        @Body token : String
+    ) : Response<FirebaseResponse>
 }
