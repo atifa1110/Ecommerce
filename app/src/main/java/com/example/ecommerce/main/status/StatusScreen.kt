@@ -34,20 +34,15 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.SnackbarHost
-import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.drawBehind
-import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalFocusManager
@@ -60,16 +55,11 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
-import androidx.navigation.NavHostController
-import androidx.navigation.compose.rememberNavController
+import com.example.core.api.model.Fulfillment
+import com.example.core.api.model.Rating
+import com.example.core.api.response.BaseResponse
 import com.example.ecommerce.R
-import com.example.ecommerce.api.model.Fulfillment
-import com.example.ecommerce.api.model.Rating
-import com.example.ecommerce.api.response.BaseResponse
-import com.example.ecommerce.api.response.ReviewResponse
-import com.example.ecommerce.component.ToastMessage
 import com.example.ecommerce.main.detail.currency
-import com.example.ecommerce.ui.theme.LightGray
 import com.example.ecommerce.ui.theme.LightPurple
 import com.example.ecommerce.ui.theme.Purple
 import com.example.ecommerce.ui.theme.textColor
@@ -77,13 +67,12 @@ import com.example.ecommerce.ui.theme.textColor
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun StatusScreen(
-    navController : NavHostController,
     fulfillment: Fulfillment?,
-    onNavigateToHome : () -> Unit
-){
+    onNavigateToHome: () -> Unit
+) {
     val lifecycleOwner = LocalLifecycleOwner.current
     val context = LocalContext.current
-    val statusViewModel : StatusViewModel = hiltViewModel()
+    val statusViewModel: StatusViewModel = hiltViewModel()
     var isLoading by remember { mutableStateOf(false) }
     val ratingState = remember { mutableStateOf(0) }
     val inputReview = remember { mutableStateOf("") }
@@ -91,8 +80,8 @@ fun StatusScreen(
 
     Log.d("FulfillmentItem", fulfillment.toString())
 
-    statusViewModel.ratingResult.observe(lifecycleOwner){
-        when(it){
+    statusViewModel.ratingResult.observe(lifecycleOwner) {
+        when (it) {
             is BaseResponse.Loading -> {
                 isLoading = true
             }
@@ -105,7 +94,7 @@ fun StatusScreen(
 
             is BaseResponse.Error -> {
                 isLoading = false
-                ToastMessage().showMsg(context,it.msg.toString())
+                // ToastMessage().showMsg(context,it.msg.toString())
             }
 
             else -> {}
@@ -118,7 +107,8 @@ fun StatusScreen(
                     title = {
                         Text(
                             stringResource(id = R.string.status),
-                            fontSize = 22.sp, color = textColor,
+                            fontSize = 22.sp,
+                            color = textColor,
                             fontWeight = FontWeight.Normal
                         )
                     },
@@ -132,9 +122,11 @@ fun StatusScreen(
                 )
                 Divider()
             }
-        }, bottomBar = {
+        },
+        bottomBar = {
             Divider()
-            Row(modifier = Modifier.padding(16.dp),
+            Row(
+                modifier = Modifier.padding(16.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Column(
@@ -143,10 +135,17 @@ fun StatusScreen(
                         .weight(1f),
                     horizontalAlignment = Alignment.Start
                 ) {
-
-                    Button(modifier = Modifier.fillMaxWidth(),
+                    Button(
+                        modifier = Modifier.fillMaxWidth(),
                         onClick = {
-                            statusViewModel.ratingStatus(Rating(fulfillment!!.invoiceId,ratingState.value,inputReview.value))
+                            statusViewModel.ratingStatus(
+                                Rating(
+                                    fulfillment!!.invoiceId,
+                                    ratingState.value,
+                                    inputReview.value
+                                )
+                            )
+                            statusViewModel.buttonAnalytics("Done Button")
                         },
                         colors = ButtonDefaults.buttonColors(Purple)
                     ) {
@@ -159,14 +158,16 @@ fun StatusScreen(
             }
         }
     ) {
-        Column(modifier = Modifier
-            .fillMaxSize()
-            .padding(it)
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(it)
         ) {
-            if(isLoading){
-                Column(modifier = Modifier
-                    .fillMaxSize()
-                    .background(Color.White),
+            if (isLoading) {
+                Column(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .background(Color.White),
                     horizontalAlignment = Alignment.CenterHorizontally,
                     verticalArrangement = Arrangement.Center,
                 ) {
@@ -176,14 +177,20 @@ fun StatusScreen(
 
             Column(modifier = Modifier.padding(16.dp)) {
                 Box(modifier = Modifier.fillMaxWidth()) {
-                    Card(modifier = Modifier.padding(top=30.dp),
+                    Card(
+                        modifier = Modifier.padding(top = 30.dp),
                         shape = RoundedCornerShape(8.dp),
-                        elevation = CardDefaults.cardElevation(3.dp)) {
-                        Column(modifier = Modifier
-                            .background(Color.White)
-                            .padding(top = 40.dp, start = 16.dp, end = 16.dp, bottom = 16.dp)) {
-                            Column(modifier=Modifier.fillMaxWidth(),
-                                horizontalAlignment = Alignment.CenterHorizontally) {
+                        elevation = CardDefaults.cardElevation(3.dp)
+                    ) {
+                        Column(
+                            modifier = Modifier
+                                .background(Color.White)
+                                .padding(top = 40.dp, start = 16.dp, end = 16.dp, bottom = 16.dp)
+                        ) {
+                            Column(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalAlignment = Alignment.CenterHorizontally
+                            ) {
                                 Text(
                                     text = stringResource(id = R.string.payment_success),
                                     color = Purple,
@@ -192,10 +199,12 @@ fun StatusScreen(
                                 )
                             }
 
-                            Column(modifier= Modifier
-                                .fillMaxWidth()
-                                .padding(top = 10.dp),
-                                horizontalAlignment = Alignment.CenterHorizontally) {
+                            Column(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(top = 10.dp),
+                                horizontalAlignment = Alignment.CenterHorizontally
+                            ) {
                                 RatingBar(
                                     maxRating = 5,
                                     rating = ratingState,
@@ -218,8 +227,9 @@ fun StatusScreen(
                             TextField(input = inputReview)
                         }
                     }
-                    Box(modifier = Modifier
-                        .fillMaxWidth(),
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth(),
                         contentAlignment = Alignment.Center
                     ) {
                         Card(shape = CircleShape) {
@@ -228,7 +238,8 @@ fun StatusScreen(
                                     .background(LightPurple)
                                     .padding(16.dp)
                             ) {
-                                Icon(tint = Purple,
+                                Icon(
+                                    tint = Purple,
                                     imageVector = Icons.Default.Check,
                                     contentDescription = "Check"
                                 )
@@ -249,19 +260,33 @@ fun StatusScreen(
                 Spacer(modifier = Modifier.height(16.dp))
 
                 Row {
-                    Text(text = stringResource(id = R.string.transaction_id) , fontSize = 12.sp, fontWeight = FontWeight.W400)
-                    Row(modifier = Modifier.weight(1f),
+                    Text(
+                        text = stringResource(id = R.string.transaction_id),
+                        fontSize = 12.sp,
+                        fontWeight = FontWeight.W400
+                    )
+                    Row(
+                        modifier = Modifier.weight(1f),
                         horizontalArrangement = Arrangement.End
-                        ) {
-                        Text(text = fulfillment!!.invoiceId, fontSize = 12.sp, fontWeight = FontWeight.W600)
+                    ) {
+                        Text(
+                            text = fulfillment!!.invoiceId,
+                            fontSize = 12.sp,
+                            fontWeight = FontWeight.W600
+                        )
                     }
                 }
 
                 Spacer(modifier = Modifier.height(10.dp))
 
                 Row {
-                    Text(text = stringResource(id = R.string.status) , fontSize = 12.sp, fontWeight = FontWeight.W400)
-                    Row(modifier = Modifier.weight(1f),
+                    Text(
+                        text = stringResource(id = R.string.status),
+                        fontSize = 12.sp,
+                        fontWeight = FontWeight.W400
+                    )
+                    Row(
+                        modifier = Modifier.weight(1f),
                         horizontalArrangement = Arrangement.End
                     ) {
                         Text(text = "Berhasil", fontSize = 12.sp, fontWeight = FontWeight.W600)
@@ -271,44 +296,80 @@ fun StatusScreen(
                 Spacer(modifier = Modifier.height(10.dp))
 
                 Row {
-                    Text(text = stringResource(id = R.string.date) , fontSize = 12.sp, fontWeight = FontWeight.W400)
-                    Row(modifier = Modifier.weight(1f),
+                    Text(
+                        text = stringResource(id = R.string.date),
+                        fontSize = 12.sp,
+                        fontWeight = FontWeight.W400
+                    )
+                    Row(
+                        modifier = Modifier.weight(1f),
                         horizontalArrangement = Arrangement.End
                     ) {
-                        Text(text = fulfillment!!.date, fontSize = 12.sp, fontWeight = FontWeight.W600)
+                        Text(
+                            text = fulfillment!!.date,
+                            fontSize = 12.sp,
+                            fontWeight = FontWeight.W600
+                        )
                     }
                 }
 
                 Spacer(modifier = Modifier.height(10.dp))
 
                 Row {
-                    Text(text = stringResource(id = R.string.time) , fontSize = 12.sp, fontWeight = FontWeight.W400)
-                    Row(modifier = Modifier.weight(1f),
+                    Text(
+                        text = stringResource(id = R.string.time),
+                        fontSize = 12.sp,
+                        fontWeight = FontWeight.W400
+                    )
+                    Row(
+                        modifier = Modifier.weight(1f),
                         horizontalArrangement = Arrangement.End
                     ) {
-                        Text(text = fulfillment!!.time, fontSize = 12.sp, fontWeight = FontWeight.W600)
+                        Text(
+                            text = fulfillment!!.time,
+                            fontSize = 12.sp,
+                            fontWeight = FontWeight.W600
+                        )
                     }
                 }
 
                 Spacer(modifier = Modifier.height(10.dp))
 
                 Row {
-                    Text(text = stringResource(id = R.string.payment_method), fontSize = 12.sp, fontWeight = FontWeight.W400)
-                    Row(modifier = Modifier.weight(1f),
+                    Text(
+                        text = stringResource(id = R.string.payment_method),
+                        fontSize = 12.sp,
+                        fontWeight = FontWeight.W400
+                    )
+                    Row(
+                        modifier = Modifier.weight(1f),
                         horizontalArrangement = Arrangement.End
                     ) {
-                        Text(text = fulfillment!!.payment, fontSize = 12.sp, fontWeight = FontWeight.W600)
+                        Text(
+                            text = fulfillment!!.payment,
+                            fontSize = 12.sp,
+                            fontWeight = FontWeight.W600
+                        )
                     }
                 }
 
                 Spacer(modifier = Modifier.height(10.dp))
 
                 Row {
-                    Text(text = stringResource(id = R.string.total_payment) , fontSize = 12.sp, fontWeight = FontWeight.W400)
-                    Row(modifier = Modifier.weight(1f),
+                    Text(
+                        text = stringResource(id = R.string.total_payment),
+                        fontSize = 12.sp,
+                        fontWeight = FontWeight.W400
+                    )
+                    Row(
+                        modifier = Modifier.weight(1f),
                         horizontalArrangement = Arrangement.End
                     ) {
-                        Text(text = currency(fulfillment!!.total), fontSize = 12.sp, fontWeight = FontWeight.W600)
+                        Text(
+                            text = currency(fulfillment!!.total),
+                            fontSize = 12.sp,
+                            fontWeight = FontWeight.W600
+                        )
                     }
                 }
             }
@@ -348,7 +409,7 @@ fun RatingBar(
 
 @Composable
 fun TextField(
-    input : MutableState<String>,
+    input: MutableState<String>,
     imeAction: ImeAction = ImeAction.Done,
 ) {
     val localFocusManager = LocalFocusManager.current
@@ -373,6 +434,6 @@ fun TextField(
 
 @Composable
 @Preview(showBackground = true)
-fun StatusScreenPreview(){
-    StatusScreen(rememberNavController(),null,{})
+fun StatusScreenPreview() {
+    StatusScreen(null, {})
 }

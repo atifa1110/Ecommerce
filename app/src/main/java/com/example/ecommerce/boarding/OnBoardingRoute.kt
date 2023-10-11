@@ -15,19 +15,16 @@ fun onBoardingRoute(
 ) {
     val onBoardingViewModel: OnBoardingViewModel = hiltViewModel()
 
-    onBoardingScreen (
-        //set navigation to register and save boarding state to complete
-        onJoinClick = {
-            onBoardingViewModel.saveOnBoardingState(complete = true)
+    onBoardingScreen(
+        // set navigation to register and save boarding state to complete
+        onNavigateToRegister = {
             onNavigateToRegister()
-        },
-        //set navigation to login and save boarding state to complete
-        onSkipClick = {
             onBoardingViewModel.saveOnBoardingState(complete = true)
-            onNavigateToLogin()
         },
+        // set navigation to login and save boarding state to complete
         onNavigateToLogin = {
             onNavigateToLogin()
+            onBoardingViewModel.saveOnBoardingState(complete = true)
         }
     )
 }

@@ -1,7 +1,6 @@
 package com.example.ecommerce.main.cart
 
 import android.net.Uri
-import android.util.Log
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -36,24 +35,18 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
-import androidx.compose.ui.draw.drawBehind
-import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
@@ -62,27 +55,22 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import androidx.navigation.NavHostController
-import androidx.navigation.compose.rememberNavController
 import coil.compose.AsyncImage
+import com.example.core.room.cart.Cart
+import com.example.core.room.cart.ListCheckout
 import com.example.ecommerce.R
-import com.example.ecommerce.api.model.Item
 import com.example.ecommerce.main.detail.ErrorPage
 import com.example.ecommerce.main.detail.currency
-import com.example.ecommerce.room.cart.Cart
-import com.example.ecommerce.room.cart.ListCheckout
-import com.example.ecommerce.ui.theme.LightGray
 import com.example.ecommerce.ui.theme.Purple
-import com.example.ecommerce.ui.theme.textColor
 import com.google.gson.Gson
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun CartScreen(
-    navController: NavHostController,
-    onCheckOut:(listCheck : String) -> Unit
-){
-    val cardViewModel : CartViewModel = hiltViewModel()
+    onNavigateBack: () -> Unit,
+    onCheckOut: (listCheck: String) -> Unit
+) {
+    val cardViewModel: CartViewModel = hiltViewModel()
 
     val uiState by cardViewModel.uiState.collectAsStateWithLifecycle()
     val cart = uiState.cartList.collectAsStateWithLifecycle(emptyList()).value
@@ -90,8 +78,10 @@ fun CartScreen(
 
     val cartSelected = uiState.cartSelected.collectAsStateWithLifecycle(emptyList()).value
     val jsonCheckout = Uri.encode(Gson().toJson(ListCheckout(cartSelected)))
+
     cardViewModel.checkSelected(cart.size)
     cardViewModel.getCheckedSelected()
+    cardViewModel.viewCartAnalytics(cart)
 
     val buttonVisible by cardViewModel.buttonVisible.collectAsStateWithLifecycle()
 
@@ -100,13 +90,14 @@ fun CartScreen(
             Column {
                 TopAppBar(
                     title = {
-                        Text(stringResource(id = R.string.cart),
+                        Text(
+                            stringResource(id = R.string.cart),
                             style = MaterialTheme.typography.titleLarge
                         )
                     },
                     navigationIcon = {
                         IconButton(onClick = {
-                            navController.popBackStack()
+                            onNavigateBack()
                             cardViewModel.selectedAllCart(false)
                         }) {
                             Icon(Icons.Default.ArrowBack, "back button")
@@ -115,8 +106,9 @@ fun CartScreen(
                 )
                 Divider()
             }
-        }, bottomBar = {
-            if(cart.isNotEmpty()) {
+        },
+        bottomBar = {
+            if (cart.isNotEmpty()) {
                 Divider()
                 Row(
                     modifier = Modifier.padding(16.dp),
@@ -150,6 +142,7 @@ fun CartScreen(
                             modifier = Modifier,
                             onClick = {
                                 onCheckOut(jsonCheckout)
+                                cardViewModel.buttonAnalytics("Buy Button")
                             },
                             colors = ButtonDefaults.buttonColors(Purple),
                             enabled = buttonVisible
@@ -165,10 +158,11 @@ fun CartScreen(
         }
     ) {
         Column(modifier = Modifier.fillMaxSize()) {
-            if(cart.isEmpty()){
-                Column(modifier = Modifier
-                    .background(Color.White)
-                    .fillMaxSize()) {
+            if (cart.isEmpty()) {
+                Column(
+                    modifier = Modifier
+                        .fillMaxSize()
+                ) {
                     ErrorPage(
                         title = stringResource(id = R.string.empty),
                         message = stringResource(id = R.string.resource),
@@ -179,19 +173,23 @@ fun CartScreen(
                 }
             }
 
-            Column(modifier = Modifier
-                .fillMaxSize()
-                .padding(it)) {
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(it)
+            ) {
                 val checkedState by cardViewModel.selectedAll.collectAsStateWithLifecycle()
 
                 Row(modifier = Modifier.padding(start = 5.dp, end = 8.dp)) {
-                    Row(modifier = Modifier
-                        .fillMaxWidth()
-                        .weight(1f),
-                        horizontalArrangement = Arrangement.Start
-                        ,verticalAlignment = Alignment.CenterVertically
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .weight(1f),
+                        horizontalArrangement = Arrangement.Start,
+                        verticalAlignment = Alignment.CenterVertically
                     ) {
-                        Checkbox(checked = checkedState,
+                        Checkbox(
+                            checked = checkedState,
                             onCheckedChange = {
                                 cardViewModel.selectedAllCart(it)
                             },
@@ -202,8 +200,11 @@ fun CartScreen(
 
                     Column(horizontalAlignment = Alignment.End) {
                         TextButton(
-                            modifier = Modifier.alpha(if(buttonVisible) 1f else 0f),
-                            onClick = {cardViewModel.deletedCartBySelected()}) {
+                            modifier = Modifier.alpha(if (buttonVisible) 1f else 0f),
+                            onClick = {
+                                cardViewModel.deletedCartBySelected()
+                            }
+                        ) {
                             Text(
                                 text = stringResource(id = R.string.erase),
                                 fontSize = 14.sp,
@@ -215,9 +216,11 @@ fun CartScreen(
 
                 Divider()
 
-                LazyColumn(modifier = Modifier
-                    .fillMaxSize()
-                    .background(Color.White)) {
+                LazyColumn(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .background(Color.White)
+                ) {
                     items(cart) { item ->
                         CardCart(
                             cart = item,
@@ -226,9 +229,10 @@ fun CartScreen(
                             },
                             onDeleteCart = {
                                 cardViewModel.deleteCartById(item.productId)
+                                cardViewModel.removeCartAnalytics(item.productId)
                             },
                             addQuantity = {
-                                cardViewModel.addQuantity(item,it)
+                                cardViewModel.addQuantity(item, it)
                             }
                         )
                     }
@@ -240,17 +244,18 @@ fun CartScreen(
 
 @Composable
 fun CardCart(
-    cart : Cart,
+    cart: Cart,
     onDeleteCart: () -> Unit,
-    onChecked: (checked : Boolean) -> Unit,
+    onChecked: (checked: Boolean) -> Unit,
     addQuantity: (quantity: Int) -> Unit
-){
-    var count by remember { mutableStateOf(cart.quantity)}
+) {
+    var count by remember { mutableStateOf(cart.quantity) }
 
-    Column(modifier = Modifier){
-        Row(modifier = Modifier
-            .padding(top = 16.dp, start = 5.dp, end = 16.dp)
-            .fillMaxWidth(),
+    Column(modifier = Modifier) {
+        Row(
+            modifier = Modifier
+                .padding(top = 16.dp, start = 5.dp, end = 16.dp)
+                .fillMaxWidth(),
             verticalAlignment = Alignment.CenterVertically
         ) {
             Checkbox(
@@ -278,7 +283,8 @@ fun CardCart(
                     } else {
                         AsyncImage(
                             modifier = Modifier.fillMaxSize(),
-                            model = cart.image, contentDescription = "Cart Image"
+                            model = cart.image,
+                            contentDescription = "Cart Image"
                         )
                     }
                 }
@@ -299,8 +305,8 @@ fun CardCart(
                     fontWeight = FontWeight.W400
                 )
                 Text(
-                    text = if(cart.stock!! > 9) "Stok ${cart.stock}" else "Sisa ${cart.stock}",
-                    color = if(cart.stock > 9) Color.Black else Color.Red,
+                    text = if (cart.stock!! > 9) "Stok ${cart.stock}" else "Sisa ${cart.stock}",
+                    color = if (cart.stock!! > 9) Color.Black else Color.Red,
                     fontSize = 10.sp,
                     fontWeight = FontWeight.W400
                 )
@@ -314,8 +320,10 @@ fun CardCart(
                             .weight(1f),
                         horizontalAlignment = Alignment.Start
                     ) {
+                        val variantPrice =
+                            cart.productPrice?.plus(cart.productVariantPrice ?: 0) ?: 0
                         Text(
-                            text = currency(cart.productPrice!!),
+                            text = currency(variantPrice),
                             fontSize = 14.sp,
                             fontWeight = FontWeight.W500
                         )
@@ -363,7 +371,8 @@ fun CardCart(
                                 )
                                 Spacer(modifier = Modifier.width(10.dp))
                                 Text(
-                                    text = count.toString(), fontSize = 12.sp,
+                                    text = count.toString(),
+                                    fontSize = 12.sp,
                                     fontWeight = FontWeight.W500
                                 )
                                 Spacer(modifier = Modifier.width(10.dp))
@@ -389,16 +398,11 @@ fun CardCart(
 
 @Composable
 @Preview(showBackground = true)
-fun CartScreenPreview(){
-    val controller = rememberNavController()
-    //CartScreen(controller,{})
-}
-
-@Composable
-@Preview(showBackground = true)
 fun CardCartPreview() {
-    Column (modifier = Modifier
-        .fillMaxSize()
-        .background(Color.White)){
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(Color.White)
+    ) {
     }
 }

@@ -1,23 +1,15 @@
 package com.example.ecommerce.main.main
 
-import androidx.compose.runtime.MutableState
-import androidx.compose.runtime.State
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
-import androidx.lifecycle.viewModelScope
-import com.example.ecommerce.datastore.DataStoreRepository
-import com.example.ecommerce.datastore.DataStoreRepositoryImpl
-import com.example.ecommerce.graph.Graph
+import com.example.core.datastore.DataStoreRepositoryImpl
+import com.example.core.room.notification.NotificationRepository
 import com.example.ecommerce.room.cart.CartRepository
 import com.example.ecommerce.room.favorite.FavoriteRepository
-import com.example.ecommerce.room.notification.NotificationRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
-import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.launch
-import javax.inject.Inject
 import kotlinx.coroutines.flow.Flow
-
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.runBlocking
+import javax.inject.Inject
 
 @HiltViewModel
 class MainViewModel @Inject constructor(
@@ -32,13 +24,41 @@ class MainViewModel @Inject constructor(
     val notificationSize = notificationRepository.getNotification()
 
     val getBoardingState = repository.getOnBoardingState()
+    val getLoginState: Flow<Boolean> = repository.getLoginState()
 
-    fun getLoginState() : Flow<Boolean>  {
-        return repository.getLoginState()
+    fun getLoginState(): Boolean {
+        var isLogin = false
+        runBlocking {
+            isLogin = try {
+                repository.getLoginState().first()
+            } catch (ex: Exception) {
+                false
+            }
+        }
+        return isLogin
     }
 
-    fun getProfileName(): Flow<String> {
-        return repository.getProfileName()
+    fun getBoardingState(): Boolean {
+        var isBoarding = false
+        runBlocking {
+            isBoarding = try {
+                repository.getOnBoardingState().first()
+            } catch (ex: Exception) {
+                false
+            }
+        }
+        return isBoarding
     }
 
+    fun getProfileName(): String {
+        var isProfile = ""
+        runBlocking {
+            isProfile = try {
+                repository.getProfileName().first()
+            } catch (ex: Exception) {
+                "Error"
+            }
+        }
+        return isProfile
+    }
 }

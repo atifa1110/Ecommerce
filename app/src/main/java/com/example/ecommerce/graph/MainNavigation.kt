@@ -1,16 +1,18 @@
 package com.example.ecommerce.graph
 
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.windowsizeclass.WindowSizeClass
 import androidx.navigation.NavGraphBuilder
 import androidx.navigation.NavHostController
 import androidx.navigation.NavType
 import androidx.navigation.compose.composable
 import androidx.navigation.navArgument
 import androidx.navigation.navigation
-import com.example.ecommerce.api.model.Fulfillment
-import com.example.ecommerce.api.model.FulfillmentType
-import com.example.ecommerce.api.model.Item
-import com.example.ecommerce.api.model.ProductType
+import com.example.core.api.model.Fulfillment
+import com.example.core.api.model.FulfillmentType
+import com.example.core.api.model.Item
+import com.example.core.api.model.ProductType
+import com.example.core.room.cart.ListCheckout
 import com.example.ecommerce.auth.profile.ProfileRoute
 import com.example.ecommerce.main.cart.CartScreen
 import com.example.ecommerce.main.checkout.CheckoutScreen
@@ -20,19 +22,22 @@ import com.example.ecommerce.main.notification.NotificationScreen
 import com.example.ecommerce.main.payment.PaymentScreen
 import com.example.ecommerce.main.review.ReviewScreen
 import com.example.ecommerce.main.status.StatusScreen
-import com.example.ecommerce.room.cart.ListCheckout
+import com.example.screen.ModularScreen
 
 @ExperimentalMaterial3Api
 fun NavGraphBuilder.mainNavGraph(
     navController: NavHostController,
-    startDestination : String) {
-    navigation(route = Graph.Main.route,
-        startDestination = startDestination
+    isProfile: String,
+    windowSizeClass: WindowSizeClass
+) {
+    navigation(
+        route = Graph.Main.route,
+        startDestination = if (isProfile.isNotEmpty()) Main.Home.route else Main.Profile.route
     ) {
         composable(route = Main.Profile.route) {
             ProfileRoute(
-                onNavigateToHome= {
-                    navController.navigate(Main.Home.route){
+                onNavigateToHome = {
+                    navController.navigate(Main.Home.route) {
                         popUpTo(navController.graph.startDestinationId) {
                             inclusive = true
                         }
@@ -42,18 +47,69 @@ fun NavGraphBuilder.mainNavGraph(
         }
 
         composable(route = Main.Home.route) {
-            MainScreen(navController)
+            MainScreen(
+                onLogoutClick = {
+                    navController.navigate(Graph.Authentication.route) {
+                        popUpTo(Graph.Main.route) {
+                            inclusive = true
+                        }
+                    }
+                },
+                onDetailClick = { id ->
+                    navController.navigate("Detail/$id")
+                },
+                onNavigateToStatus = { transaction ->
+                    navController.navigate("Status/$transaction")
+                },
+                onNavigateToCart = {
+                    navController.navigate(Main.Cart.route)
+                },
+                onNavigateToNotification = {
+                    navController.navigate(Main.Notification.route)
+                },
+                onNavigateToModular = {
+                    navController.navigate(Main.Modular.route)
+                },
+                windowSizeClass
+            )
         }
 
-        composable(route = Main.Detail.route,
-            arguments = listOf(navArgument("id") {type = NavType.StringType})
+        composable(
+            route = Main.Detail.route,
+            arguments = listOf(navArgument("id") { type = NavType.StringType })
         ) { backStackEntry ->
             val id = backStackEntry.arguments?.getString("id") ?: ""
             DetailScreen(
-                navController,
                 id,
-                onReviewClick = { productId->
+                onReviewClick = { productId ->
                     navController.navigate("Review/$productId")
+                },
+                onCheckOut = { listCheck ->
+                    navController.navigate("Checkout/$listCheck")
+                },
+                onNavigateBack = {
+                    navController.popBackStack()
+                }
+            )
+        }
+
+        composable(
+            route = Main.Review.route,
+            arguments = listOf(navArgument("id") { type = NavType.StringType })
+        ) { backStackEntry ->
+            val id = backStackEntry.arguments?.getString("id") ?: ""
+            ReviewScreen(
+                id,
+                onNavigateBack = {
+                    navController.popBackStack()
+                }
+            )
+        }
+
+        composable(route = Main.Cart.route) {
+            CartScreen(
+                onNavigateBack = {
+                    navController.popBackStack()
                 },
                 onCheckOut = { listCheck ->
                     navController.navigate("Checkout/$listCheck")
@@ -61,40 +117,30 @@ fun NavGraphBuilder.mainNavGraph(
             )
         }
 
-        composable(route = Main.Review.route,
-            arguments = listOf(navArgument("id") {type = NavType.StringType})
-        ){ backStackEntry ->
-            val id = backStackEntry.arguments?.getString("id") ?: ""
-            ReviewScreen(navController,id)
-        }
-
-        composable(route = Main.Cart.route){
-            CartScreen(navController){ listCheck ->
-                navController.navigate("Checkout/$listCheck")
-            }
-        }
-
-        composable(route = Main.Checkout.route,
+        composable(
+            route = Main.Checkout.route,
             arguments = listOf(
-                navArgument("listCheckout") { type = ProductType()}
+                navArgument("listCheckout") { type = ProductType() }
             ),
-        ){ backStackEntry ->
+        ) { backStackEntry ->
             val checkoutItem = backStackEntry.arguments?.getParcelable<ListCheckout>("listCheckout")
             val paymentItem = backStackEntry.savedStateHandle.get<Item>("payment")
             CheckoutScreen(
-                navController,
+                onNavigateBack = {
+                    navController.popBackStack()
+                },
                 checkoutItem,
                 choosePayment = {
                     navController.navigate(Main.Payment.route)
                 },
-                productPayment = { fulfillment ->
+                onClickToPayment = { fulfillment ->
                     navController.navigate("Status/$fulfillment")
                 },
                 paymentItem = paymentItem
             )
         }
 
-        composable(route = Main.Payment.route){
+        composable(route = Main.Payment.route) {
             PaymentScreen(
                 onNavigateBack = {
                     navController.navigateUp()
@@ -109,21 +155,35 @@ fun NavGraphBuilder.mainNavGraph(
             )
         }
 
-        composable(route = Main.Status.route,
-            arguments = listOf(navArgument("fulfillment") { type = FulfillmentType()})
-        ){
+        composable(
+            route = Main.Status.route,
+            arguments = listOf(navArgument("fulfillment") { type = FulfillmentType() })
+        ) {
             val fulfillmentItem = it.arguments?.getParcelable<Fulfillment>("fulfillment")
             StatusScreen(
-                navController,
                 fulfillmentItem,
                 onNavigateToHome = {
-                    navController.navigate(Main.Home.route)
+                    navController.navigate(Bottom.Home.route) {
+                        popUpTo(Main.Home.route)
+                    }
                 }
             )
         }
 
-        composable(route = Main.Notification.route){
-            NotificationScreen(navController = navController)
+        composable(route = Main.Notification.route) {
+            NotificationScreen(
+                onNavigateBack = {
+                    navController.popBackStack()
+                }
+            )
+        }
+
+        composable(route = Main.Modular.route) {
+            ModularScreen(
+                onNavigateBack = {
+                    navController.popBackStack()
+                }
+            )
         }
     }
 }
@@ -138,4 +198,5 @@ sealed class Main(val route: String) {
     object Payment : Main("Payment")
     object Status : Main("Status/{fulfillment}")
     object Notification : Main("Notification")
+    object Modular : Main("Modular")
 }

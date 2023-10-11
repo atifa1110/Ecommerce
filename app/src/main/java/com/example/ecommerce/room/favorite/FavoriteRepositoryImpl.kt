@@ -1,18 +1,15 @@
 package com.example.ecommerce.room.favorite
 
-import android.util.Log
-import com.example.ecommerce.api.model.ProductDetail
-import com.example.ecommerce.api.model.ProductVariant
-import com.example.ecommerce.api.response.DetailResponse
-import com.example.ecommerce.room.cart.Cart
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
+import com.example.core.api.model.ProductDetail
+import com.example.core.api.model.ProductVariant
+import com.example.core.room.favorite.Favorite
+import com.example.core.room.favorite.FavoriteLocalDataSource
+import com.example.core.room.favorite.toEntity
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.launch
 
 class FavoriteRepositoryImpl(
     private val localDataSource: FavoriteLocalDataSource
-): FavoriteRepository {
+) : FavoriteRepository {
     override suspend fun addProductsToFavorite(
         productDetail: ProductDetail,
         productVariant: ProductVariant
@@ -21,15 +18,14 @@ class FavoriteRepositoryImpl(
     }
 
     override suspend fun deleteFavoriteById(id: String) {
-       localDataSource.deleteFavoriteById(id)
+        localDataSource.deleteFavoriteById(id)
     }
 
     override fun getAllFavorite(): Flow<List<Favorite>> {
-       return localDataSource.getAllFavorite()
+        return localDataSource.getAllFavorite()
     }
 
-    override fun getFavoriteById(id: String) : List<Favorite>{
+    override fun getFavoriteById(id: String): List<Favorite> {
         return localDataSource.getFavoriteById(id)
     }
-
 }

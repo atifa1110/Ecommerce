@@ -1,16 +1,15 @@
 package com.example.ecommerce.auth.profile
 
-
 import android.content.Context
 import android.net.Uri
 import android.util.Log
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -38,14 +37,14 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.drawBehind
-import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalLifecycleOwner
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
@@ -54,27 +53,25 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.content.FileProvider
-import androidx.core.net.toFile
 import androidx.hilt.navigation.compose.hiltViewModel
-import coil.compose.rememberImagePainter
+import coil.compose.AsyncImage
+import com.example.core.api.response.BaseResponse
 import com.example.ecommerce.R
-import com.example.ecommerce.api.request.ProfileRequest
-import com.example.ecommerce.api.response.BaseResponse
 import com.example.ecommerce.auth.login.TextTermCondition
 import com.example.ecommerce.component.ProgressDialog
 import com.example.ecommerce.component.ToastMessage
-import com.example.ecommerce.ui.theme.LightGray
 import com.example.ecommerce.ui.theme.Purple
-import com.example.ecommerce.ui.theme.textColor
 import java.io.File
 import java.util.Objects
-@OptIn(ExperimentalMaterial3Api::class)
+
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalComposeUiApi::class)
 @Composable
 fun ProfileScreen(
-    onNavigateToHome : () -> Unit
-){
+    onNavigateToHome: () -> Unit
+) {
     val context = LocalContext.current
     val lifecycleOwner = LocalLifecycleOwner.current
+    val keyboardController = LocalSoftwareKeyboardController.current
     var isDialog by remember { mutableStateOf(false) }
 
     if (isDialog) ProgressDialog().ProgressDialog()
@@ -84,27 +81,31 @@ fun ProfileScreen(
 
     var imageUri by remember { mutableStateOf<Uri?>(null) }
 
-    val launcherImage = rememberLauncherForActivityResult(contract =
-    ActivityResultContracts.GetContent()) { uri: Uri? ->
+    val launcherImage = rememberLauncherForActivityResult(
+        contract =
+        ActivityResultContracts.GetContent()
+    ) { uri: Uri? ->
         imageUri = uri
     }
 
     val file = context.createImageFile()
     val uri = FileProvider.getUriForFile(
         Objects.requireNonNull(context),
-        context.packageName + ".provider", file
+        context.packageName + ".provider",
+        file
     )
 
     var capturedImageUri by remember { mutableStateOf<Uri?>(Uri.EMPTY) }
 
     val launcherCamera = rememberLauncherForActivityResult(
-        ActivityResultContracts.TakePicture()) {
+        ActivityResultContracts.TakePicture()
+    ) {
         capturedImageUri = uri
         Log.d("CapturedImage", capturedImageUri.toString())
     }
 
-    val profileViewModel : ProfileViewModel = hiltViewModel()
-    profileViewModel.profileResult.observe(lifecycleOwner){
+    val profileViewModel: ProfileViewModel = hiltViewModel()
+    profileViewModel.profileResult.observe(lifecycleOwner) {
         when (it) {
             is BaseResponse.Loading -> {
                 isDialog = true
@@ -118,8 +119,7 @@ fun ProfileScreen(
 
             is BaseResponse.Error -> {
                 isDialog = false
-                Log.d("ProfileScreen",it.msg.toString())
-                ToastMessage().showMsg(context,it.msg.toString())
+                ToastMessage().showMsg(context, it.msg.toString())
             }
 
             else -> {}
@@ -131,7 +131,8 @@ fun ProfileScreen(
             Column {
                 CenterAlignedTopAppBar(
                     title = {
-                        Text(stringResource(id = R.string.profile),
+                        Text(
+                            stringResource(id = R.string.profile),
                             style = MaterialTheme.typography.titleLarge
                         )
                     }
@@ -140,33 +141,42 @@ fun ProfileScreen(
             }
         }
     ) {
-        Column(modifier = Modifier.padding(it).padding(horizontal = 16.dp),
+        Column(
+            modifier = Modifier
+                .padding(it)
+                .padding(horizontal = 16.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            //Circle Image
-            Column(modifier = Modifier
-                .padding(24.dp)
-                .clickable { openDialog = true }
-                .size(128.dp)
-                .clip(CircleShape)
-                .background(Purple),
+            // Circle Image
+            Column(
+                modifier = Modifier
+                    .padding(24.dp)
+                    .clickable { openDialog = true }
+                    .size(128.dp)
+                    .clip(CircleShape)
+                    .background(Purple),
                 verticalArrangement = Arrangement.Center,
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 if (imageUri != null) {
-                    Image(modifier = Modifier.clip(CircleShape),
+                    AsyncImage(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .clip(CircleShape),
                         contentScale = ContentScale.FillWidth,
-                        painter = rememberImagePainter(imageUri),
-                        contentDescription = null
+                        model = imageUri,
+                        contentDescription = "Image Uri"
                     )
                 } else if (capturedImageUri?.path?.isNotEmpty() == true) {
-                    Image(modifier = Modifier
-                                    .clip(CircleShape),
+                    AsyncImage(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .clip(CircleShape),
                         contentScale = ContentScale.FillWidth,
-                        painter = rememberImagePainter(capturedImageUri),
-                        contentDescription = null
+                        model = capturedImageUri,
+                        contentDescription = "Captured Image Uri"
                     )
-                }else{
+                } else {
                     Icon(
                         imageVector = Icons.Default.PermIdentity,
                         tint = Color.White,
@@ -175,29 +185,44 @@ fun ProfileScreen(
                 }
             }
 
-            //text field name
+            // text field name
             TextField(label = R.string.name, input = userName)
 
-            //button done
-            Button(onClick = {
-                profileViewModel.getProfileUser(file,userName.value)
-            }, modifier = Modifier.fillMaxWidth().padding(vertical = 16.dp),
+            // button done
+            Button(
+                onClick = {
+                    keyboardController?.hide()
+                    profileViewModel.getProfileUser(file, userName.value)
+                    profileViewModel.buttonAnalytics("Profile Button")
+                },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(vertical = 16.dp),
                 colors = ButtonDefaults.buttonColors(Purple),
-                enabled =  userName.value.isNotEmpty()
+                enabled = userName.value.isNotEmpty()
             ) {
-                Text(text = stringResource(id = R.string.done),
+                Text(
+                    text = stringResource(id = R.string.done),
                     style = MaterialTheme.typography.labelLarge
                 )
             }
 
             TextTermCondition(false)
 
-            //if dialog is open than will open alert dialog
-            if(openDialog) {
+            // if dialog is open than will open alert dialog
+            if (openDialog) {
                 AlertDialog(onDismissRequest = { openDialog = false }) {
-                    Column(modifier= Modifier.background(Color.White).padding(8.dp)) {
-                        Text(modifier = Modifier.padding(top = 16.dp, bottom = 16.dp,
-                            start= 12.dp),
+                    Column(
+                        modifier = Modifier
+                            .background(Color.White)
+                            .padding(8.dp)
+                    ) {
+                        Text(
+                            modifier = Modifier.padding(
+                                top = 16.dp,
+                                bottom = 16.dp,
+                                start = 12.dp
+                            ),
                             fontSize = 24.sp,
                             text = stringResource(id = R.string.choose_picture),
                             fontWeight = FontWeight.W400
@@ -209,18 +234,24 @@ fun ProfileScreen(
                                 openDialog = false
                             }
                         ) {
-                            Text(stringResource(id = R.string.kamera),
+                            Text(
+                                stringResource(id = R.string.kamera),
                                 fontSize = 16.sp,
-                                fontWeight = FontWeight.W400)
+                                fontWeight = FontWeight.W400
+                            )
                         }
 
-                        TextButton(onClick = {
-                            launcherImage.launch("image/*")
-                            openDialog = false }
+                        TextButton(
+                            onClick = {
+                                launcherImage.launch("image/*")
+                                openDialog = false
+                            }
                         ) {
-                            Text(stringResource(id = R.string.galeri),
+                            Text(
+                                stringResource(id = R.string.galeri),
                                 fontSize = 16.sp,
-                                fontWeight = FontWeight.W400)
+                                fontWeight = FontWeight.W400
+                            )
                         }
                     }
                 }
@@ -230,7 +261,7 @@ fun ProfileScreen(
 }
 
 fun Context.createImageFile(): File {
-    //create an image file name
+    // create an image file name
     val imageFileName = "profile-${System.currentTimeMillis()}"
     return File.createTempFile(
         imageFileName, /* prefix */
@@ -238,10 +269,11 @@ fun Context.createImageFile(): File {
         externalCacheDir /* directory */
     )
 }
+
 @Composable
 fun TextField(
-    label : Int,
-    input : MutableState<String>,
+    label: Int,
+    input: MutableState<String>,
     imeAction: ImeAction = ImeAction.Done,
     onImeAction: () -> Unit = {}
 ) {
@@ -272,6 +304,5 @@ fun TextField(
 
 @Composable
 @Preview(showBackground = true)
-fun ProfilePreview(){
-
+fun ProfilePreview() {
 }

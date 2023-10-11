@@ -8,7 +8,7 @@
     <string name="email">Email</string>
     <string name="hide_password">Hide Password</string>
     <string name="show_password">Show Password</string>
-    <string name="password" >Password</string>
+    <string name="password">Password</string>
     <string name="gabung">Join Now</string>
     <string name="skip">Skip</string>
     <string name="next">Next</string>
@@ -94,4 +94,8 @@
     <string name="notification_permission_settings">The notification permission is important for this app. Please navigate to your device settings and enable notifications for Make it So.</string>
 
     <string name="ok">ok</string>
+    <string name="review2">Review</string>
+    <string name="purchased_items">Purchased items</string>
+    <string name="item">Items</string>
+    <string name="cartplus">+ Cart</string>
 </resources>

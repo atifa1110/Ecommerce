@@ -1,26 +1,26 @@
 package com.example.ecommerce.main.cart
 
-import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.ecommerce.room.cart.Cart
+import com.example.core.room.cart.Cart
+import com.example.ecommerce.firebase.AnalyticsRepository
 import com.example.ecommerce.room.cart.CartRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.emptyFlow
-import kotlinx.coroutines.flow.sample
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 @HiltViewModel
 class CartViewModel @Inject constructor(
-    private val cartRepository: CartRepository
+    private val cartRepository: CartRepository,
+    private val analyticsRepository: AnalyticsRepository
 ) : ViewModel() {
 
     val list = cartRepository.getAllCarts()
@@ -39,22 +39,21 @@ class CartViewModel @Inject constructor(
         getAllSelected()
     }
 
-    fun getCheckedSelected(){
+    fun getCheckedSelected() {
         viewModelScope.launch(Dispatchers.IO) {
             val result = cartRepository.checkSelected()
             _buttonVisible.value = result
         }
     }
 
-    fun checkSelected(size : Int){
+    fun checkSelected(size: Int) {
         viewModelScope.launch(Dispatchers.IO) {
-           val result = cartRepository.getAllSelectedList()
-            Log.d("CartRepository",result.toString())
+            val result = cartRepository.getAllSelected().first()
             _selectedAll.value = size == result.size
         }
     }
 
-    private fun getAllSelected(){
+    private fun getAllSelected() {
         viewModelScope.launch {
             val result = cartRepository.getAllSelected()
             _uiState.update {
@@ -63,17 +62,16 @@ class CartViewModel @Inject constructor(
         }
     }
 
-    private fun getAllCart(){
+    private fun getAllCart() {
         viewModelScope.launch {
-            try{
+            try {
                 _uiState.value = ShowCartUiState(isLoading = true)
                 val result = cartRepository.getAllCarts()
 
                 _uiState.update {
                     it.copy(cartList = result, isError = false)
                 }
-
-            }catch (error : Exception){
+            } catch (error: Exception) {
                 _uiState.update {
                     it.copy(
                         isError = true,
@@ -105,7 +103,7 @@ class CartViewModel @Inject constructor(
         }
     }
 
-    fun deletedCartBySelected(){
+    fun deletedCartBySelected() {
         viewModelScope.launch {
             cartRepository.deletedBySelected()
         }
@@ -113,18 +111,18 @@ class CartViewModel @Inject constructor(
 
     fun selectedCart(cart: Cart, checked: Boolean) {
         viewModelScope.launch {
-            cartRepository.selected(cart.productId, checked)
+            cartRepository.updateChecked(cart.productId, checked)
         }
     }
 
-    fun selectedAllCart(checked: Boolean){
+    fun selectedAllCart(checked: Boolean) {
         viewModelScope.launch {
             _selectedAll.value = checked
-            cartRepository.selectedAll(checked)
+            cartRepository.updateCheckedAll(checked)
         }
     }
 
-    fun getTotal(){
+    fun getTotal() {
         viewModelScope.launch {
             val result = cartRepository.getTotal()
             _uiState.update {
@@ -135,20 +133,36 @@ class CartViewModel @Inject constructor(
         }
     }
 
-    fun addQuantity(cart: Cart, quantity: Int){
+    fun addQuantity(cart: Cart, quantity: Int) {
         viewModelScope.launch {
-            cartRepository.updateAddQuantity(cart,quantity)
+            cartRepository.updateQuantity(cart, quantity)
+        }
+    }
+
+    fun removeCartAnalytics(productId: String) {
+        viewModelScope.launch(Dispatchers.IO) {
+            analyticsRepository.removeFromCart(productId)
+        }
+    }
+
+    fun viewCartAnalytics(cart: List<Cart>) {
+        viewModelScope.launch(Dispatchers.IO) {
+            analyticsRepository.viewCart(cart)
+        }
+    }
+
+    fun buttonAnalytics(buttonName: String) {
+        viewModelScope.launch(Dispatchers.IO) {
+            analyticsRepository.buttonClick(buttonName)
         }
     }
 }
 
 data class ShowCartUiState(
-    val cartList : Flow<List<Cart>> = emptyFlow(),
-    val cartSelected : Flow<List<Cart>> = emptyFlow(),
-    val isError : Boolean = false,
+    val cartList: Flow<List<Cart>> = emptyFlow(),
+    val cartSelected: Flow<List<Cart>> = emptyFlow(),
+    val isError: Boolean = false,
     val isLoading: Boolean = false,
-    val message : String? = null,
-    val total : Int? = 0
+    val message: String? = null,
+    val total: Int? = 0
 )
-
-

@@ -1,7 +1,6 @@
 package com.example.ecommerce.main.review
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -14,9 +13,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.IconButton
 import androidx.compose.material.Surface
 import androidx.compose.material.icons.Icons
@@ -39,10 +36,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.drawBehind
-import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
@@ -50,36 +44,32 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
-import androidx.navigation.NavHostController
 import coil.compose.AsyncImage
+import com.example.core.api.response.BaseResponse
+import com.example.core.api.response.ReviewResponse
 import com.example.ecommerce.R
-import com.example.ecommerce.api.response.BaseResponse
-import com.example.ecommerce.api.response.DetailResponse
-import com.example.ecommerce.api.response.ReviewResponse
-import com.example.ecommerce.main.detail.DetailViewModel
 import com.example.ecommerce.main.detail.ErrorPage
-import com.example.ecommerce.ui.theme.LightGray
 import com.example.ecommerce.ui.theme.PurplePink
 import com.example.ecommerce.ui.theme.textColor
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ReviewScreen(
-    navController: NavHostController,
-    id : String
+    id: String,
+    onNavigateBack: () -> Unit
 ) {
     val lifecycleOwner = LocalLifecycleOwner.current
-    val reviewViewModel : ReviewViewModel = hiltViewModel()
+    val reviewViewModel: ReviewViewModel = hiltViewModel()
     var isSuccess by remember { mutableStateOf(false) }
     var isLoading by remember { mutableStateOf(false) }
     var isError by remember { mutableStateOf(false) }
-    var result by remember { mutableStateOf( emptyList<ReviewResponse.Review>()) }
+    var result by remember { mutableStateOf(emptyList<ReviewResponse.Review>()) }
 
-    LaunchedEffect(key1 = true){
+    LaunchedEffect(key1 = true) {
         reviewViewModel.getProductReview(id)
     }
 
-    reviewViewModel.reviewResult.observe(lifecycleOwner){
+    reviewViewModel.reviewResult.observe(lifecycleOwner) {
         when (it) {
             is BaseResponse.Loading -> {
                 isLoading = true
@@ -111,12 +101,13 @@ fun ReviewScreen(
                     title = {
                         Text(
                             stringResource(id = R.string.review_buyer),
-                            fontSize = 22.sp, color = textColor,
+                            fontSize = 22.sp,
+                            color = textColor,
                             fontWeight = FontWeight.Normal
                         )
                     },
                     navigationIcon = {
-                        IconButton(onClick = { navController.popBackStack() }) {
+                        IconButton(onClick = { onNavigateBack() }) {
                             Icon(Icons.Default.ArrowBack, "back button")
                         }
                     }
@@ -125,11 +116,12 @@ fun ReviewScreen(
             }
         },
     ) {
-        if(isSuccess) {
+        if (isSuccess) {
             Column(
                 Modifier
                     .fillMaxSize()
-                    .padding(it)) {
+                    .padding(it)
+            ) {
                 LazyColumn(modifier = Modifier.fillMaxSize()) {
                     items(result) { index ->
                         CardReview(index)
@@ -138,8 +130,7 @@ fun ReviewScreen(
             }
         }
 
-
-        if(isError) {
+        if (isError) {
             ErrorPage(
                 title = stringResource(id = R.string.empty),
                 message = stringResource(id = R.string.resource),
@@ -151,8 +142,11 @@ fun ReviewScreen(
             )
         }
 
-        if(isLoading) {
-            Column(modifier = Modifier.fillMaxSize().padding(it),
+        if (isLoading) {
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(it),
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.Center,
             ) {
@@ -163,15 +157,17 @@ fun ReviewScreen(
 }
 
 @Composable
-fun CardReview(review: ReviewResponse.Review){
-    Column (
+fun CardReview(review: ReviewResponse.Review) {
+    Column(
         Modifier
             .fillMaxWidth()
-            .padding(16.dp)){
-        Row (modifier = Modifier.fillMaxWidth(),
+            .padding(16.dp)
+    ) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.Start,
             verticalAlignment = Alignment.CenterVertically
-            ){
+        ) {
             Column(
                 modifier = Modifier
                     .size(36.dp)
@@ -180,13 +176,14 @@ fun CardReview(review: ReviewResponse.Review){
                 verticalArrangement = Arrangement.Center,
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                if(review.userImage!!.isEmpty()) {
+                if (review.userImage!!.isEmpty()) {
                     Text(text = "A", fontSize = 16.sp, fontWeight = FontWeight.W500)
-                }else{
+                } else {
                     AsyncImage(
                         modifier = Modifier.size(36.dp),
                         model = review.userImage,
-                        contentDescription = "user image")
+                        contentDescription = "user image"
+                    )
                 }
             }
 
@@ -197,8 +194,10 @@ fun CardReview(review: ReviewResponse.Review){
 
                 val ratingState = remember { mutableStateOf(review.userRating) }
 
-                RatingBar(maxRating = 5,
-                    rating = ratingState)
+                RatingBar(
+                    maxRating = 5,
+                    rating = ratingState
+                )
             }
         }
 
@@ -223,7 +222,8 @@ fun RatingBar(
             val isFilled = i <= rating.value!!
             val iconColor = if (isFilled) activeColor else inactiveColor
 
-            Icon(imageVector = Icons.Default.Star,
+            Icon(
+                imageVector = Icons.Default.Star,
                 contentDescription = "Rating Product",
                 tint = iconColor,
                 modifier = Modifier.size(12.dp)
@@ -232,10 +232,9 @@ fun RatingBar(
     }
 }
 
-
 @Composable
 @Preview(showBackground = true)
-fun CardPreview(){
+fun CardPreview() {
     Surface {
         CardReview(ReviewResponse.Review())
     }

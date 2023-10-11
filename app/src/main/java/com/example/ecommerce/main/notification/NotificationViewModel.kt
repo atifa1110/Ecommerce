@@ -2,11 +2,8 @@ package com.example.ecommerce.main.notification
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.ecommerce.api.response.BaseResponse
-import com.example.ecommerce.main.cart.ShowCartUiState
-import com.example.ecommerce.room.cart.Cart
-import com.example.ecommerce.room.notification.Notification
-import com.example.ecommerce.room.notification.NotificationRepository
+import com.example.core.room.notification.Notification
+import com.example.core.room.notification.NotificationRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -28,17 +25,17 @@ class NotificationViewModel @Inject constructor(
     init {
         getAllNotification()
     }
-    private fun getAllNotification(){
+
+    private fun getAllNotification() {
         viewModelScope.launch {
-            try{
+            try {
                 _uiState.value = ShowNotificationUiState(isLoading = true)
                 val result = notificationRepository.getNotification()
 
                 _uiState.update {
                     it.copy(notificationList = result, isError = false)
                 }
-
-            }catch (error : Exception){
+            } catch (error: Exception) {
                 _uiState.update {
                     it.copy(
                         isError = true,
@@ -49,20 +46,16 @@ class NotificationViewModel @Inject constructor(
         }
     }
 
-    fun updateReadNotification(id:Int, read:Boolean){
+    fun updateReadNotification(id: Int, read: Boolean) {
         viewModelScope.launch {
             try {
-                val result = notificationRepository.updateReadNotification(id, read)
+                notificationRepository.updateReadNotification(id, read)
                 _uiState.update {
-                    it.copy(
-                        message = "Berhasil"
-                    )
+                    it.copy(message = "Berhasil")
                 }
-            }catch (error: Exception){
+            } catch (error: Exception) {
                 _uiState.update {
-                    it.copy(
-                        message = error.message.toString()
-                    )
+                    it.copy(message = error.message.toString())
                 }
             }
         }
@@ -70,9 +63,9 @@ class NotificationViewModel @Inject constructor(
 }
 
 data class ShowNotificationUiState(
-    val notificationList : Flow<List<Notification>> = emptyFlow(),
-    val isError : Boolean = false,
+    val notificationList: Flow<List<Notification>> = emptyFlow(),
+    val isError: Boolean = false,
     val isLoading: Boolean = false,
     val isSuccess: Boolean = false,
-    val message : String = ""
+    val message: String = ""
 )

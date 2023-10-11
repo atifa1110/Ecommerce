@@ -1,19 +1,18 @@
 package com.example.ecommerce.main.detail
 
-import android.util.Log
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.ecommerce.api.model.ProductDetail
-import com.example.ecommerce.api.model.ProductVariant
+import com.example.core.api.model.ProductDetail
+import com.example.core.api.model.ProductVariant
+import com.example.core.api.response.BaseResponse
+import com.example.core.api.response.DetailResponse
+import com.example.core.room.cart.Cart
 import com.example.ecommerce.api.repository.ProductRepository
-import com.example.ecommerce.api.response.BaseResponse
-import com.example.ecommerce.api.response.DetailResponse
-import com.example.ecommerce.room.cart.Cart
+import com.example.ecommerce.firebase.AnalyticsRepository
 import com.example.ecommerce.room.cart.CartRepository
 import com.example.ecommerce.room.favorite.FavoriteRepository
-import com.example.ecommerce.util.Constant
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -28,21 +27,22 @@ import javax.inject.Inject
 class DetailViewModel @Inject constructor(
     private val productRepository: ProductRepository,
     private val cartRepository: CartRepository,
-    private val favoriteRepository: FavoriteRepository
+    private val favoriteRepository: FavoriteRepository,
+    private val analyticsRepository: AnalyticsRepository
 ) : ViewModel() {
 
     private val _detailResult: MutableLiveData<BaseResponse<DetailResponse>> = MutableLiveData()
     val detailResult: LiveData<BaseResponse<DetailResponse>> get() = _detailResult
 
-    fun getProductDetail(id:String){
+    fun getProductDetail(id: String) {
         _detailResult.value = BaseResponse.Loading()
         viewModelScope.launch {
             try {
                 val response = productRepository.getProductDetail(id)
                 if (response.code() == 200 && response.isSuccessful) {
                     _detailResult.value = BaseResponse.Success(response.body())
-                } else{
-                    val jsonObj= JSONObject(response.errorBody()!!.string())
+                } else {
+                    val jsonObj = JSONObject(response.errorBody()!!.string())
                     val message = jsonObj.getString("message")
                     _detailResult.value = BaseResponse.Error(message)
                 }
@@ -56,22 +56,22 @@ class DetailViewModel @Inject constructor(
     val uiState: StateFlow<AddProductsUiState> = _uiState.asStateFlow()
 
     private val _isFavorite = MutableStateFlow(false)
-    val isFavorite : StateFlow<Boolean> = _isFavorite.asStateFlow()
+    val isFavorite: StateFlow<Boolean> = _isFavorite.asStateFlow()
 
-    fun getFavoriteById(id:String){
+    fun getFavoriteById(id: String) {
         viewModelScope.launch(Dispatchers.IO) {
-            val result  = favoriteRepository.getFavoriteById(id)
-            if(result.isNotEmpty()){
+            val result = favoriteRepository.getFavoriteById(id)
+            if (result.isNotEmpty()) {
                 _isFavorite.value = true
             }
         }
     }
 
-    fun setUnFavorite(){
+    fun setUnFavorite() {
         _isFavorite.value = false
     }
 
-    fun deleteFavoriteById(id:String){
+    fun deleteFavoriteById(id: String) {
         viewModelScope.launch(Dispatchers.IO) {
             favoriteRepository.deleteFavoriteById(id)
             _uiState.update {
@@ -84,7 +84,7 @@ class DetailViewModel @Inject constructor(
 
     fun addProductsToCart(productDetail: ProductDetail, productVariant: ProductVariant) {
         viewModelScope.launch {
-            cartRepository.addProductsToCart(productDetail,productVariant)
+            cartRepository.addProductsToCart(productDetail, productVariant)
             _uiState.update {
                 it.copy(
                     isSaved = true,
@@ -96,7 +96,7 @@ class DetailViewModel @Inject constructor(
 
     fun addFavoriteToCart(productDetail: ProductDetail, productVariant: ProductVariant) {
         viewModelScope.launch {
-            favoriteRepository.addProductsToFavorite(productDetail,productVariant)
+            favoriteRepository.addProductsToFavorite(productDetail, productVariant)
             _uiState.update {
                 it.copy(
                     isSaved = true,
@@ -107,20 +107,44 @@ class DetailViewModel @Inject constructor(
         }
     }
 
-    fun setProductDataVariant(variantName: String , variantPrice : Int){
+    fun setProductDataVariant(variantName: String, variantPrice: Int) {
         _uiState.update {
             it.copy(
-                productVariant = ProductVariant(variantName,variantPrice)
+                productVariant = ProductVariant(variantName, variantPrice)
             )
+        }
+    }
+
+    fun detailProductAnalytics(productDetail: ProductDetail) {
+        viewModelScope.launch(Dispatchers.IO) {
+            analyticsRepository.viewItem(productDetail)
+        }
+    }
+
+    fun addToCartAnalytics(productDetail: ProductDetail) {
+        viewModelScope.launch(Dispatchers.IO) {
+            analyticsRepository.addToCart(productDetail.productId)
+        }
+    }
+
+    fun addToWishlistAnalytics(productDetail: ProductDetail) {
+        viewModelScope.launch(Dispatchers.IO) {
+            analyticsRepository.addToWishlist(productDetail.productId)
+        }
+    }
+
+    fun buttonAnalytics(buttonName: String) {
+        viewModelScope.launch(Dispatchers.IO) {
+            analyticsRepository.buttonClick(buttonName)
         }
     }
 }
 
 data class AddProductsUiState(
     val cartLocal: Cart = Cart(""),
-    val productVariant: ProductVariant = ProductVariant("",0),
+    val productVariant: ProductVariant = ProductVariant("", 0),
     val isCompleted: Boolean = false,
     val isLoading: Boolean = false,
     val isSaved: Boolean = false,
-    val message : String? = null
+    val message: String? = null
 )

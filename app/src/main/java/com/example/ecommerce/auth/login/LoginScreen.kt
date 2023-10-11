@@ -2,9 +2,7 @@ package com.example.ecommerce.auth.login
 
 import android.util.Log
 import android.util.Patterns
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -12,9 +10,10 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.OutlinedTextField
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Visibility
@@ -31,9 +30,7 @@ import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -42,8 +39,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.drawBehind
-import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalFocusManager
@@ -62,29 +57,22 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.example.core.api.request.AuthRequest
+import com.example.core.api.response.BaseResponse
+import com.example.core.util.Constant
 import com.example.ecommerce.R
-import com.example.ecommerce.api.request.AuthRequest
-import com.example.ecommerce.api.response.BaseResponse
 import com.example.ecommerce.component.ProgressDialog
 import com.example.ecommerce.component.ToastMessage
-import com.example.ecommerce.graph.Graph
-import com.example.ecommerce.main.main.MainViewModel
 import com.example.ecommerce.ui.theme.Purple
-import com.example.ecommerce.ui.theme.textColor
-import com.example.ecommerce.util.Constant
-import kotlinx.coroutines.flow.collect
 
-@OptIn(ExperimentalComposeUiApi::class)
-@ExperimentalMaterial3Api
+@OptIn(ExperimentalComposeUiApi::class, ExperimentalMaterial3Api::class)
 @Composable
 fun LoginScreen(
     onNavigateToHome: () -> Unit,
-    onLoginSubmitted: () -> Unit,
-    onRegisterClick: () -> Unit,
     onNavigateToBoarding: () -> Unit,
+    onRegisterClick: () -> Unit,
 ) {
     val loginViewModel: LoginViewModel = hiltViewModel()
     val context = LocalContext.current
@@ -103,8 +91,9 @@ fun LoginScreen(
     val passwordError = rememberSaveable { mutableStateOf(false) }
 
     val fcmToken = loginViewModel.fcmToken.collectAsStateWithLifecycle().value ?: ""
-    Log.d("fcmToken",fcmToken.toString())
-    loginViewModel.loginResult.observe(lifecycleOwner){
+    Log.d("FcmToken", fcmToken)
+
+    loginViewModel.loginResult.observe(lifecycleOwner) {
         when (it) {
             is BaseResponse.Loading -> {
                 isLoading = true
@@ -112,7 +101,7 @@ fun LoginScreen(
 
             is BaseResponse.Success -> {
                 isLoading = false
-                loginViewModel.saveAccessToken(it.data!!.data.accessToken)
+                loginViewModel.saveAccessToken(it.data?.data?.accessToken ?: "")
                 loginViewModel.saveLoginState(true)
                 loginViewModel.subscribeFcmTopic()
                 loginViewModel.token()
@@ -121,7 +110,7 @@ fun LoginScreen(
 
             is BaseResponse.Error -> {
                 isLoading = false
-                ToastMessage().showMsg(context,it.msg.toString())
+                ToastMessage().showMsg(context, it.msg.toString())
             }
 
             else -> {}
@@ -143,35 +132,43 @@ fun LoginScreen(
             }
         }
     ) {
-        Column(modifier = Modifier
-            .fillMaxSize()
-            .padding(it)
-            .padding(horizontal = 16.dp),
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(it)
+                .padding(horizontal = 16.dp)
+                .verticalScroll(rememberScrollState()),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Spacer(modifier = Modifier.height(20.dp))
 
-            EmailComponent(input = email,
-                inputError = emailError)
+            EmailComponent(
+                input = email,
+                inputError = emailError
+            )
 
             Spacer(modifier = Modifier.height(16.dp))
 
             PasswordComponent(
                 password = password,
-                passwordError = passwordError)
+                passwordError = passwordError
+            )
 
             Button(
                 onClick = {
-                        loginViewModel.loginUser(
-                            Constant.API_KEY,
-                            AuthRequest(email.value, password.value, fcmToken)
-                        )
+                    keyboardController?.hide()
+                    loginViewModel.loginUser(
+                        Constant.API_KEY,
+                        AuthRequest(email.value, password.value, fcmToken)
+                    )
+                    loginViewModel.loginAnalytics(email.value)
+                    loginViewModel.buttonAnalytics("Login Button")
                 },
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(vertical = 16.dp),
                 colors = ButtonDefaults.buttonColors(Purple),
-                enabled =  !emailError.value && !passwordError.value && email.value.isNotEmpty() && password.value.isNotEmpty()
+                enabled = !emailError.value && !passwordError.value && email.value.isNotEmpty() && password.value.isNotEmpty()
             ) {
                 Text(
                     text = stringResource(id = R.string.login),
@@ -183,8 +180,8 @@ fun LoginScreen(
 
             OutlinedButton(
                 onClick = {
-                    keyboardController?.hide()
                     onRegisterClick()
+                    loginViewModel.buttonAnalytics("Register Button")
                 },
                 modifier = Modifier
                     .fillMaxWidth()
@@ -203,24 +200,35 @@ fun LoginScreen(
 }
 
 @Composable
-fun DividerButton(tryingToLogin: Boolean = true){
-    Row(verticalAlignment = Alignment.CenterVertically,
+fun DividerButton(tryingToLogin: Boolean = true) {
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.Center
     ) {
-        Row (modifier = Modifier.weight(1f),
-            horizontalArrangement = Arrangement.Start){
+        Row(
+            modifier = Modifier.weight(1f),
+            horizontalArrangement = Arrangement.Start
+        ) {
             Divider()
         }
 
         Text(
             modifier = Modifier.padding(horizontal = 10.dp),
-            text = if(tryingToLogin)stringResource(id = R.string.daftar_dengan) else stringResource(id = R.string.masuk_dengan),
+            text = if (tryingToLogin) {
+                stringResource(id = R.string.daftar_dengan)
+            } else {
+                stringResource(
+                    id = R.string.masuk_dengan
+                )
+            },
             fontSize = MaterialTheme.typography.bodySmall.fontSize,
             fontWeight = FontWeight.Normal
         )
 
-        Row (modifier = Modifier.weight(1f),
-            horizontalArrangement = Arrangement.End){
+        Row(
+            modifier = Modifier.weight(1f),
+            horizontalArrangement = Arrangement.End
+        ) {
             Divider()
         }
     }
@@ -228,24 +236,29 @@ fun DividerButton(tryingToLogin: Boolean = true){
 
 @Composable
 fun TextTermCondition(tryingToLogin: Boolean = true) {
-    val initialText = if (tryingToLogin) stringResource(id = R.string.by_entering_login)+" " else stringResource(id = R.string.by_entering_register)+" "
-    val syarat = stringResource(id = R.string.term_condition) +" "
-    val serta = stringResource(id = R.string.and) +" "
-    val kebijakan = stringResource(id = R.string.privacy_policy) +" "
-    val toko = stringResource(id = R.string.toko_phincon)
+    val initialText =
+        if (tryingToLogin) {
+            stringResource(id = R.string.by_entering_login) + " "
+        } else stringResource(
+            id = R.string.by_entering_register
+        ) + " "
+    val terms = stringResource(id = R.string.term_condition) + " "
+    val and = stringResource(id = R.string.and) + " "
+    val policy = stringResource(id = R.string.privacy_policy) + " "
+    val store = stringResource(id = R.string.toko_phincon)
 
     val annotatedString = buildAnnotatedString {
         append(initialText)
         withStyle(style = SpanStyle(color = Purple)) {
-            pushStringAnnotation(tag = syarat, annotation = syarat)
-            append(syarat)
+            pushStringAnnotation(tag = terms, annotation = terms)
+            append(terms)
         }
-        append(serta)
-        withStyle(style = SpanStyle(color = Purple)){
-            pushStringAnnotation(tag = syarat, annotation = syarat)
-            append(kebijakan)
+        append(and)
+        withStyle(style = SpanStyle(color = Purple)) {
+            pushStringAnnotation(tag = terms, annotation = terms)
+            append(policy)
         }
-        append(toko)
+        append(store)
     }
 
     Text(
@@ -262,12 +275,14 @@ fun TextTermCondition(tryingToLogin: Boolean = true) {
 }
 
 @Composable
-fun EmailComponent(input : MutableState<String>,
-                   inputError : MutableState<Boolean>,
+fun EmailComponent(
+    input: MutableState<String>,
+    inputError: MutableState<Boolean>,
 ) {
-    //val localFocusManager = LocalFocusManager.current
-    OutlinedTextField(modifier = Modifier
-        .fillMaxWidth(),
+    // val localFocusManager = LocalFocusManager.current
+    OutlinedTextField(
+        modifier = Modifier
+            .fillMaxWidth(),
         label = {
             Text(
                 text = stringResource(id = R.string.email),
@@ -276,7 +291,8 @@ fun EmailComponent(input : MutableState<String>,
         },
         keyboardOptions = KeyboardOptions(
             keyboardType = KeyboardType.Email,
-            imeAction = ImeAction.Next),
+            imeAction = ImeAction.Next
+        ),
         singleLine = true,
         maxLines = 1,
         value = input.value,
@@ -287,25 +303,30 @@ fun EmailComponent(input : MutableState<String>,
         isError = inputError.value
     )
 
-    if(inputError.value){
-        TextFieldError(textError = R.string.email_invalid,
-            color = MaterialTheme.colorScheme.error)
-    }else {
-        TextFieldErrorEmail(textError = if(input.value.isEmpty()) "Contoh: test@gmail.com" else "Contoh: ${input.value}",
+    if (inputError.value) {
+        TextFieldError(
+            textError = R.string.email_invalid,
+            color = MaterialTheme.colorScheme.error
+        )
+    } else {
+        TextFieldErrorEmail(
+            textError = if (input.value.isEmpty()) "Contoh: test@gmail.com" else "Contoh: ${input.value}",
             color = Color.Gray
         )
     }
 }
 
 @Composable
-fun PasswordComponent(password : MutableState<String>,
-                      passwordError : MutableState<Boolean>
+fun PasswordComponent(
+    password: MutableState<String>,
+    passwordError: MutableState<Boolean>
 ) {
     val localFocusManager = LocalFocusManager.current
     val passwordVisible = remember { mutableStateOf(false) }
 
-    OutlinedTextField(modifier = Modifier
-        .fillMaxWidth(),
+    OutlinedTextField(
+        modifier = Modifier
+            .fillMaxWidth(),
         label = {
             Text(
                 text = stringResource(id = R.string.password),
@@ -324,7 +345,7 @@ fun PasswordComponent(password : MutableState<String>,
         value = password.value,
         onValueChange = {
             password.value = it
-            passwordError.value = it.isNotEmpty() && it.length <=7
+            passwordError.value = it.isNotEmpty() && it.length <= 7
         },
         trailingIcon = {
             val iconImage = if (passwordVisible.value) {
@@ -347,15 +368,17 @@ fun PasswordComponent(password : MutableState<String>,
                     contentDescription = description
                 )
             }
-
         },
         visualTransformation = if (passwordVisible.value) VisualTransformation.None else PasswordVisualTransformation(),
         isError = passwordError.value
     )
 
-    if(passwordError.value){
-        TextFieldError(textError = R.string.password_invalid, color = MaterialTheme.colorScheme.error)
-    }else {
+    if (passwordError.value) {
+        TextFieldError(
+            textError = R.string.password_invalid,
+            color = MaterialTheme.colorScheme.error
+        )
+    } else {
         TextFieldError(textError = R.string.password_min, color = Color.Gray)
     }
 }
@@ -388,9 +411,7 @@ fun TextFieldErrorEmail(textError: String, color: Color) {
 @Preview(showBackground = true)
 @Composable
 fun LoginPreview() {
-    Column(modifier = Modifier.fillMaxSize()){
-        LoginScreen(onNavigateToHome = {}, onLoginSubmitted = {},
-            onRegisterClick = {}, onNavigateToBoarding = {}
-        )
+    Column(modifier = Modifier.fillMaxSize()) {
+        LoginScreen(onNavigateToHome = { /*TODO*/ }, onNavigateToBoarding = { /*TODO*/ }) {}
     }
 }

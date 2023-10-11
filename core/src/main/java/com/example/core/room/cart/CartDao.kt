@@ -1,0 +1,43 @@
+package com.example.core.room.cart
+
+import androidx.room.Dao
+import androidx.room.Insert
+import androidx.room.OnConflictStrategy
+import androidx.room.Query
+import kotlinx.coroutines.flow.Flow
+
+@Dao
+interface CartDao {
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun addToCart(cart: com.example.core.room.cart.Cart)
+
+    @Query("SELECT * FROM cart WHERE productId = :id")
+    fun findById(id: String): com.example.core.room.cart.Cart
+
+    @Query("SELECT * FROM cart Where selected = 1")
+    fun getSelected(): Flow<List<com.example.core.room.cart.Cart>>
+
+    @Query("SELECT SUM((productPrice+productVariantPrice) * quantity) FROM cart WHERE selected = 1")
+    suspend fun getTotal(): Int
+
+    @Query("SELECT * FROM cart")
+    fun getAllCart(): Flow<List<com.example.core.room.cart.Cart>>
+
+    @Query("DELETE FROM cart WHERE productId = :id")
+    suspend fun deleteById(id: String)
+
+    @Query("DELETE FROM cart")
+    suspend fun deleteAllCart()
+
+    @Query("DELETE FROM cart WHERE selected = 1")
+    suspend fun deleteBySelected()
+
+    @Query("UPDATE cart SET quantity = :quantity WHERE productId = :id")
+    suspend fun updateQuantity(id: String, quantity: Int?)
+
+    @Query("UPDATE cart SET selected = :selected WHERE productId = :id")
+    suspend fun updateChecked(id: String, selected: Boolean)
+
+    @Query("UPDATE cart SET selected = :selected")
+    suspend fun updateCheckedAll(selected: Boolean)
+}

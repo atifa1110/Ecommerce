@@ -9,7 +9,7 @@
     <string name="email">Email</string>
     <string name="hide_password">Sembunyikan Password</string>
     <string name="show_password">Tunjukkan Password</string>
-    <string name="password" >Password</string>
+    <string name="password">Password</string>
     <string name="gabung">Gabung Sekarang</string>
     <string name="skip">Lewati</string>
     <string name="next">Selanjutnya</string>
@@ -95,4 +95,8 @@
     <string name="notification_permission_settings">The notification permission is important for this app. Please navigate to your device settings and enable notifications for Make it So.</string>
 
     <string name="ok">ok</string>
+    <string name="review2">Ulas</string>
+    <string name="purchased_items">Barang yang dibeli</string>
+    <string name="item">Barang</string>
+    <string name="cartplus">+ Keranjang</string>
 </resources>

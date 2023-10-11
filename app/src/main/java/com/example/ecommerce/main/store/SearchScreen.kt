@@ -1,49 +1,32 @@
 package com.example.ecommerce.main.store
 
 import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.core.tween
-import androidx.compose.animation.expandVertically
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.shrinkVertically
 import androidx.compose.animation.slideInVertically
-import androidx.compose.animation.slideOut
 import androidx.compose.animation.slideOutVertically
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.focusable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowForward
-import androidx.compose.material.icons.filled.Cancel
-import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.outlined.Cancel
-import androidx.compose.material3.Card
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.ListItem
-import androidx.compose.material3.ListItemColors
 import androidx.compose.material3.ListItemDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
@@ -60,37 +43,36 @@ import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.compose.ui.window.Dialog
 import androidx.hilt.navigation.compose.hiltViewModel
-import androidx.navigation.NavController
-import coil.compose.AsyncImagePainter.State.Empty.painter
-import com.example.ecommerce.api.response.BaseResponse
-import com.example.ecommerce.graph.Bottom
-import com.example.ecommerce.graph.Graph
-import com.example.ecommerce.graph.Main
+import com.example.core.api.response.BaseResponse
 
 @OptIn(ExperimentalComposeUiApi::class)
 @Composable
-fun SearchScreen(onCloseDialog: () -> Unit = {},
-                 searchData:String) {
+fun SearchScreen(
+    onCloseDialog: () -> Unit = {},
+    searchData: String
+) {
     val lifecycleOwner = LocalLifecycleOwner.current
-    val storeViewModel : StoreViewModel = hiltViewModel()
-    var isLoading by rememberSaveable { mutableStateOf(false)}
+    val storeViewModel: StoreViewModel = hiltViewModel()
+    var isLoading by rememberSaveable { mutableStateOf(false) }
 
-    if (isLoading)
-        Column(Modifier.fillMaxWidth().height(250.dp),
+    if (isLoading) {
+        Column(
+            Modifier
+                .fillMaxWidth()
+                .height(250.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center
         ) {
             CircularProgressIndicator()
         }
+    }
 
     val searchText = remember { mutableStateOf(searchData) }
     var searchResults by remember { mutableStateOf(emptyList<String>()) }
@@ -104,15 +86,18 @@ fun SearchScreen(onCloseDialog: () -> Unit = {},
         }
     }
 
-    storeViewModel.searchResult.observe(lifecycleOwner){
+    storeViewModel.searchResult.observe(lifecycleOwner) {
         when (it) {
             is BaseResponse.Loading -> {
                 isLoading = true
             }
+
             is BaseResponse.Success -> {
                 isLoading = false
-                searchResults = it.data!!.data
+                searchResults = it.data?.data ?: emptyList()
+                storeViewModel.searchAnalytics(searchText.value)
             }
+
             else -> {}
         }
     }
@@ -130,7 +115,10 @@ fun SearchScreen(onCloseDialog: () -> Unit = {},
         enter = slideInVertically(animationSpec = tween(durationMillis = 1000)),
         exit = slideOutVertically(animationSpec = tween(durationMillis = 1000))
     ) {
-        Column(modifier = Modifier.fillMaxSize().background(Color.White)
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(Color.White)
                 .padding(start = 2.dp)
         ) {
             CustomSearchBar(
@@ -160,7 +148,8 @@ fun SearchScreen(onCloseDialog: () -> Unit = {},
                     },
                     headlineContent = {
                         Text(
-                            text = item, fontSize = 12.sp,
+                            text = item,
+                            fontSize = 12.sp,
                             fontWeight = FontWeight.W400
                         )
                     },
@@ -191,11 +180,18 @@ fun CustomSearchBar(
     storeViewModel: StoreViewModel,
     hint: String = "Search",
     onSearch: (String) -> Unit,
-    searchText:MutableState<String>,
+    searchText: MutableState<String>,
     onCloseDialog: () -> Unit
 ) {
-    Box(modifier = Modifier.fillMaxWidth().padding(top = 16.dp,
-        start = 16.dp, end = 16.dp)) {
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(
+                top = 16.dp,
+                start = 16.dp,
+                end = 16.dp
+            )
+    ) {
         OutlinedTextField(
             modifier = modifier,
             placeholder = {
@@ -230,10 +226,10 @@ fun CustomSearchBar(
             trailingIcon = {
                 Icon(
                     modifier = Modifier.clickable {
-                        if(searchText.value.isNotEmpty()) {
+                        if (searchText.value.isNotEmpty()) {
                             searchText.value = ""
                             storeViewModel.setSearchText("")
-                        }else{
+                        } else {
                             onCloseDialog()
                         }
                     },

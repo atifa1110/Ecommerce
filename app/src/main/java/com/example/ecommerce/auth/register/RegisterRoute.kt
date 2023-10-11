@@ -6,12 +6,11 @@ import androidx.compose.runtime.Composable
 @ExperimentalMaterial3Api
 @Composable
 fun RegisterRoute(
-    onNavigateToProfile: () -> Unit,
+    onNavigateToHome: () -> Unit,
     onNavigateToLogin: () -> Unit
 ) {
-
     RegisterScreen(
-        onRegisterSubmitted = onNavigateToProfile,
+        onRegisterSubmitted = onNavigateToHome,
         onLoginClick = onNavigateToLogin
     )
 }

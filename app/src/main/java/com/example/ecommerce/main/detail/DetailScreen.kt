@@ -1,7 +1,7 @@
 package com.example.ecommerce.main.detail
 
+import android.content.Intent
 import android.net.Uri
-import android.util.Log
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -21,7 +21,6 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.IconButton
-import androidx.compose.material.ScaffoldState
 import androidx.compose.material.SnackbarHost
 import androidx.compose.material.SnackbarHostState
 import androidx.compose.material.icons.Icons
@@ -30,20 +29,18 @@ import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.FavoriteBorder
 import androidx.compose.material.icons.filled.Share
 import androidx.compose.material.icons.filled.Star
-import androidx.compose.material.rememberScaffoldState
 import androidx.compose.material3.AssistChip
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Divider
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.Icon
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.FilterChipDefaults
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.SelectableChipColors
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
@@ -58,8 +55,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
-import androidx.compose.ui.draw.drawBehind
-import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalLifecycleOwner
@@ -71,24 +66,17 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import androidx.navigation.NavHostController
-import androidx.navigation.compose.rememberNavController
 import coil.compose.AsyncImage
+import com.example.core.api.model.ProductDetail
+import com.example.core.api.model.ProductVariant
+import com.example.core.api.response.BaseResponse
+import com.example.core.room.cart.ListCheckout
+import com.example.core.room.cart.toEntity
 import com.example.ecommerce.R
-import com.example.ecommerce.api.model.ProductDetail
-import com.example.ecommerce.api.model.ProductVariant
-import com.example.ecommerce.api.response.BaseResponse
-import com.example.ecommerce.api.response.DetailResponse
-import com.example.ecommerce.component.ToastMessage
-import com.example.ecommerce.room.cart.Cart
-import com.example.ecommerce.room.cart.ListCheckout
-import com.example.ecommerce.room.cart.toEntity
 import com.example.ecommerce.ui.theme.LightGray
 import com.example.ecommerce.ui.theme.Purple
 import com.example.ecommerce.ui.theme.PurplePink
-import com.example.ecommerce.ui.theme.onSurfaceVar
 import com.example.ecommerce.ui.theme.poppins
-import com.example.ecommerce.ui.theme.textColor
 import com.google.accompanist.pager.ExperimentalPagerApi
 import com.google.accompanist.pager.HorizontalPager
 import com.google.accompanist.pager.HorizontalPagerIndicator
@@ -101,17 +89,18 @@ import java.util.Locale
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalPagerApi::class)
 @Composable
 fun DetailScreen(
-    navController : NavHostController,
-    id:String,
-    onReviewClick:(id:String)-> Unit,
-    onCheckOut:(listCheck : String) -> Unit
+    id: String,
+    onReviewClick: (id: String) -> Unit,
+    onCheckOut: (listCheck: String) -> Unit,
+    onNavigateBack: () -> Unit
 ) {
     val lifecycleOwner = LocalLifecycleOwner.current
+    val context = LocalContext.current
     val detailViewModel: DetailViewModel = hiltViewModel()
     var isSuccess by remember { mutableStateOf(false) }
     var isLoading by remember { mutableStateOf(false) }
     var isError by remember { mutableStateOf(false) }
-    var result by remember { mutableStateOf(ProductDetail())}
+    var result by remember { mutableStateOf(ProductDetail()) }
     var totalPrice by remember { mutableStateOf(0) }
     val pagerState = rememberPagerState()
 
@@ -121,28 +110,18 @@ fun DetailScreen(
     val scope = rememberCoroutineScope()
     val snackBarHostState = remember { SnackbarHostState() }
 
-//    if(result!=null){
-//        val carts = result.toEntity(uiState.productVariant)
-//        Log.d("allcarts",carts.toString())
-//    }
-//
-//    Log.d("DetailCarts",carts.toString())
-    val listCart : List<Cart> = ArrayList()
-    //listCart.
-//    val jsonCheckout = Uri.encode(Gson().toJson(ListCheckout(listCart)))
-
     uiState.message?.let { message ->
         scope.launch {
             snackBarHostState.showSnackbar(message)
         }
     }
 
-    LaunchedEffect(true){
+    LaunchedEffect(true) {
         detailViewModel.getProductDetail(id)
         detailViewModel.getFavoriteById(id)
     }
 
-    detailViewModel.detailResult.observe(lifecycleOwner){
+    detailViewModel.detailResult.observe(lifecycleOwner) {
         when (it) {
             is BaseResponse.Loading -> {
                 isLoading = true
@@ -154,6 +133,7 @@ fun DetailScreen(
                 isError = false
                 isSuccess = true
                 result = it.data!!.data
+                detailViewModel.detailProductAnalytics(result)
             }
 
             is BaseResponse.Error -> {
@@ -180,7 +160,7 @@ fun DetailScreen(
                         )
                     },
                     navigationIcon = {
-                        IconButton(onClick = { navController.popBackStack() }) {
+                        IconButton(onClick = { onNavigateBack() }) {
                             Icon(Icons.Default.ArrowBack, "back_button")
                         }
                     }
@@ -189,7 +169,7 @@ fun DetailScreen(
             }
         },
         bottomBar = {
-            if(isSuccess) {
+            if (isSuccess) {
                 Divider()
                 Column(Modifier.padding(16.dp)) {
                     Row(
@@ -203,13 +183,12 @@ fun DetailScreen(
                             OutlinedButton(
                                 modifier = Modifier.fillMaxWidth(),
                                 onClick = {
-                                    //onCheckOut(jsonCheckout)
                                     val carts = result.toEntity(uiState.productVariant)
-                                    Log.d("CartDetail",carts.toString())
-                                    val listCart = listOf<Cart>(carts)
-                                    val jsonCheckout = Uri.encode(Gson().toJson(ListCheckout(listCart)))
-                                    Log.d("CartDetailList",listCart.toString())
+                                    val listCart = listOf(carts)
+                                    val jsonCheckout =
+                                        Uri.encode(Gson().toJson(ListCheckout(listCart)))
                                     onCheckOut(jsonCheckout)
+                                    detailViewModel.buttonAnalytics("Buy Button")
                                 },
                             ) {
                                 Text(
@@ -222,7 +201,8 @@ fun DetailScreen(
 
                         Spacer(modifier = Modifier.width(16.dp))
 
-                        Column(modifier = Modifier.weight(1f)
+                        Column(
+                            modifier = Modifier.weight(1f)
                         ) {
                             Button(
                                 modifier = Modifier.fillMaxWidth(),
@@ -231,11 +211,13 @@ fun DetailScreen(
                                         result,
                                         uiState.productVariant
                                     )
+                                    detailViewModel.addToCartAnalytics(result)
+                                    detailViewModel.buttonAnalytics("Cart Button")
                                 },
                                 colors = ButtonDefaults.buttonColors(Purple),
                             ) {
                                 Text(
-                                    text = "+ "+stringResource(id = R.string.cart),
+                                    text = "+ " + stringResource(id = R.string.cart),
                                     style = MaterialTheme.typography.labelLarge
                                 )
                             }
@@ -263,10 +245,11 @@ fun DetailScreen(
                     ) {
                         HorizontalPager(
                             modifier = Modifier,
-                            count = 3, state = pagerState,
+                            count = pages?.size!!,
+                            state = pagerState,
                             verticalAlignment = Alignment.CenterVertically
                         ) { position ->
-                            if (pages!!.isEmpty()) {
+                            if (pages.isEmpty()) {
                                 Image(
                                     modifier = Modifier.fillMaxSize(),
                                     painter = painterResource(id = R.drawable.detail),
@@ -305,16 +288,39 @@ fun DetailScreen(
                                     .weight(1f),
                                 horizontalAlignment = Alignment.Start
                             ) {
-                                totalPrice = result.productPrice?.plus(uiState.productVariant.variantPrice)!!
+                                totalPrice =
+                                    result.productPrice?.plus(uiState.productVariant.variantPrice)!!
                                 Text(
-                                    text = currency(totalPrice), fontSize = 20.sp,
+                                    text = currency(totalPrice),
+                                    fontSize = 20.sp,
                                     fontWeight = FontWeight.W600
                                 )
                             }
-                            Row(Modifier.fillMaxWidth().weight(1f),
+                            Row(
+                                Modifier
+                                    .fillMaxWidth()
+                                    .weight(1f),
                                 horizontalArrangement = Arrangement.End
                             ) {
-                                Icon(imageVector = Icons.Default.Share, contentDescription = "Star")
+                                Icon(
+                                    modifier = Modifier.clickable {
+                                        val sendIntent: Intent = Intent().apply {
+                                            action = Intent.ACTION_SEND
+                                            putExtra("Product Name", result.productName)
+                                            putExtra("Product Price", result.productPrice)
+                                            putExtra(
+                                                Intent.EXTRA_TEXT,
+                                                "http://172.17.20.151:5000/products/${result.productId}"
+                                            )
+                                            flags = Intent.FLAG_GRANT_READ_URI_PERMISSION
+                                            type = "text/plain"
+                                        }
+                                        val shareIntent = Intent.createChooser(sendIntent, null)
+                                        context.startActivity(shareIntent)
+                                    },
+                                    imageVector = Icons.Default.Share,
+                                    contentDescription = "Star"
+                                )
                                 Spacer(modifier = Modifier.width(16.dp))
 
                                 Icon(
@@ -324,8 +330,10 @@ fun DetailScreen(
                                             detailViewModel.deleteFavoriteById(id)
                                         } else {
                                             detailViewModel.addFavoriteToCart(
-                                                result, uiState.productVariant
+                                                result,
+                                                uiState.productVariant
                                             )
+                                            detailViewModel.addToWishlistAnalytics(result)
                                         }
                                     },
                                     tint = if (isFavorite) Color.Red else Color.DarkGray,
@@ -355,7 +363,7 @@ fun DetailScreen(
                             horizontalArrangement = Arrangement.Start
                         ) {
                             Text(
-                                text = stringResource(id = R.string.sold) + " ${result.sale}" ,
+                                text = stringResource(id = R.string.sold) + " ${result.sale}",
                                 fontSize = 12.sp,
                                 fontWeight = FontWeight.W400
                             )
@@ -412,7 +420,10 @@ fun DetailScreen(
                                         )
                                     },
                                     label = {
-                                        Text(text = item.variantName, style = MaterialTheme.typography.labelLarge)
+                                        Text(
+                                            text = item.variantName,
+                                            style = MaterialTheme.typography.labelLarge
+                                        )
                                     },
                                     colors = FilterChipDefaults.filterChipColors(
                                         selectedContainerColor = PurplePink
@@ -446,7 +457,8 @@ fun DetailScreen(
                     Divider()
 
                     Column(modifier = Modifier.padding(horizontal = 16.dp, vertical = 16.dp)) {
-                        Row(modifier = Modifier.fillMaxWidth(),
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
                             horizontalArrangement = Arrangement.Start,
                             verticalAlignment = Alignment.CenterVertically,
                         ) {
@@ -462,7 +474,8 @@ fun DetailScreen(
                                     fontWeight = FontWeight.W500
                                 )
                             }
-                            Row(horizontalArrangement = Arrangement.End
+                            Row(
+                                horizontalArrangement = Arrangement.End
                             ) {
                                 TextButton(
                                     onClick = {
@@ -479,7 +492,8 @@ fun DetailScreen(
                         }
 
                         Row(modifier = Modifier.fillMaxWidth()) {
-                            Row(modifier = Modifier,
+                            Row(
+                                modifier = Modifier,
                                 horizontalArrangement = Arrangement.Center,
                                 verticalAlignment = Alignment.Bottom
                             ) {
@@ -495,18 +509,21 @@ fun DetailScreen(
                                     fontSize = 10.sp,
                                     fontWeight = FontWeight.W400
                                 )
-
                             }
                             Spacer(modifier = Modifier.width(16.dp))
 
                             Column(Modifier.fillMaxWidth()) {
                                 Text(
-                                    text = "${result.totalSatisfaction}% "+stringResource(id = R.string.buyer_satisfied),
+                                    text = "${result.totalSatisfaction}% " + stringResource(
+                                        id = R.string.buyer_satisfied
+                                    ),
                                     fontSize = 12.sp,
                                     fontWeight = FontWeight.W600
                                 )
                                 Text(
-                                    text = "${result.totalRating} "+ stringResource(id = R.string.rating) + " · " + "${result.totalReview} "+stringResource(id = R.string.review),
+                                    text = "${result.totalRating} " + stringResource(id = R.string.rating) + " · " + "${result.totalReview} " + stringResource(
+                                        id = R.string.review
+                                    ),
                                     fontSize = 12.sp,
                                     fontWeight = FontWeight.W400
                                 )
@@ -527,9 +544,10 @@ fun DetailScreen(
             }
 
             if (isLoading) {
-                Column(modifier = Modifier
-                    .fillMaxSize()
-                    .padding(it),
+                Column(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(it),
                     horizontalAlignment = Alignment.CenterHorizontally,
                     verticalArrangement = Arrangement.Center,
                 ) {
@@ -537,30 +555,39 @@ fun DetailScreen(
                 }
             }
         }
-
     }
 }
 
 @Composable
 fun ErrorPage(
-    title:String,
+    title: String,
     message: String,
-    button:Int,
+    button: Int,
     onButtonClick: () -> Unit,
-    alpha : Float
-){
-    Column(modifier = Modifier
-        .fillMaxSize(),
+    alpha: Float
+) {
+    Column(
+        modifier = Modifier
+            .fillMaxSize(),
         verticalArrangement = Arrangement.Center,
-        horizontalAlignment = Alignment.CenterHorizontally) {
-        Image(modifier = Modifier.size(128.dp),painter = painterResource(id = R.drawable.smartphone) ,
-            contentDescription = "")
-        Text(modifier = Modifier.padding(top=5.dp),text = title, fontSize = 32.sp,
-            fontWeight = FontWeight.W500)
-        Text(text = message,fontSize = 16.sp, fontWeight = FontWeight.W400)
-        Button(modifier = Modifier
-            .padding(top = 5.dp)
-            .alpha(alpha),
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        Image(
+            modifier = Modifier.size(128.dp),
+            painter = painterResource(id = R.drawable.smartphone),
+            contentDescription = ""
+        )
+        Text(
+            modifier = Modifier.padding(top = 5.dp),
+            text = title,
+            fontSize = 32.sp,
+            fontWeight = FontWeight.W500
+        )
+        Text(text = message, fontSize = 16.sp, fontWeight = FontWeight.W400)
+        Button(
+            modifier = Modifier
+                .padding(top = 5.dp)
+                .alpha(alpha),
             onClick = { onButtonClick() },
             colors = ButtonDefaults.buttonColors(Purple)
         ) {
@@ -574,34 +601,35 @@ fun ErrorPage(
 
 @Composable
 @Preview(showBackground = true)
-fun DetailPreview(){
-    Column (Modifier.background(Color.White)) {
-        DetailScreen(rememberNavController(),
+fun DetailPreview() {
+    Column(Modifier.background(Color.White)) {
+        DetailScreen(
             id = "1",
             onReviewClick = {},
-            onCheckOut = {}
+            onCheckOut = {},
+            onNavigateBack = {}
         )
     }
 }
 
-@Composable
-fun FavoriteButton(isFavorite : Boolean) {
-        var isFavorite by remember { mutableStateOf(false) }
-        Icon(modifier = Modifier.clickable {
-                isFavorite = !isFavorite
-            },
-            tint = if(isFavorite) Color.Red else Color.DarkGray,
-            imageVector = if (isFavorite) {
-                Icons.Filled.Favorite
-            } else {
-                Icons.Default.FavoriteBorder
-            },
-            contentDescription = null
-        )
-}
+// @Composable
+// fun FavoriteButton(isFavorite : Boolean) {
+//        var isFavorite by remember { mutableStateOf(false) }
+//        Icon(modifier = Modifier.clickable {
+//                isFavorite = !isFavorite
+//            },
+//            tint = if(isFavorite) Color.Red else Color.DarkGray,
+//            imageVector = if (isFavorite) {
+//                Icons.Filled.Favorite
+//            } else {
+//                Icons.Default.FavoriteBorder
+//            },
+//            contentDescription = null
+//        )
+// }
 
-fun currency (price: Int) : String{
-    val localId = Locale("in","ID")
+fun currency(price: Int): String {
+    val localId = Locale("in", "ID")
     val currencyFormat = NumberFormat.getCurrencyInstance(localId)
     return currencyFormat.format(price)
 }

@@ -35,51 +35,50 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import coil.compose.AsyncImage
-import com.example.ecommerce.main.detail.ErrorPage
+import com.example.core.api.model.Fulfillment
+import com.example.core.api.model.Transaction
+import com.example.core.api.response.BaseResponse
 import com.example.ecommerce.R
-import com.example.ecommerce.api.model.Fulfillment
-import com.example.ecommerce.api.model.Transaction
-import com.example.ecommerce.api.response.BaseResponse
-import com.example.ecommerce.component.ToastMessage
+import com.example.ecommerce.main.detail.ErrorPage
 import com.example.ecommerce.main.detail.currency
-import com.example.ecommerce.room.cart.CartItem
 import com.example.ecommerce.ui.theme.LightPurple
 import com.example.ecommerce.ui.theme.Purple
 import com.google.gson.Gson
 
 @Composable
 fun TransactionScreen(
-    onNavigateToStatus : (transaction : String) -> Unit
+    onNavigateToStatus: (transaction: String) -> Unit
 ) {
     val lifecycleOwner = LocalLifecycleOwner.current
-    val context = LocalContext.current
-    val transactionViewModel : TransactionViewModel = hiltViewModel()
+    val transactionViewModel: TransactionViewModel = hiltViewModel()
     var isLoading by remember { mutableStateOf(false) }
-    var listTransaction : List<Transaction> = emptyList()
+    var isError by remember { mutableStateOf(false) }
+    var listTransaction: List<Transaction> = emptyList()
 
-    transactionViewModel.transactionResult.observe(lifecycleOwner){
+    transactionViewModel.transactionResult.observe(lifecycleOwner) {
         when (it) {
             is BaseResponse.Loading -> {
                 isLoading = true
+                isError = false
             }
 
             is BaseResponse.Success -> {
                 isLoading = false
+                isError = false
                 listTransaction = it.data!!.data
             }
 
             is BaseResponse.Error -> {
                 isLoading = false
+                isError = true
             }
 
             else -> {}
@@ -87,16 +86,18 @@ fun TransactionScreen(
     }
 
     Column(modifier = Modifier.fillMaxSize()) {
-        if (isLoading)
-            Column(modifier = Modifier
-                .fillMaxSize(),
+        if (isLoading) {
+            Column(
+                modifier = Modifier
+                    .fillMaxSize(),
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.Center,
             ) {
                 CircularProgressIndicator(color = Purple)
             }
+        }
 
-        if(listTransaction.isEmpty()) {
+        if (isError) {
             ErrorPage(
                 title = stringResource(id = R.string.empty),
                 message = stringResource(id = R.string.resource),
@@ -106,31 +107,36 @@ fun TransactionScreen(
             )
         }
 
-            LazyColumn(modifier = Modifier
+        LazyColumn(
+            modifier = Modifier
                 .fillMaxSize()
-                .padding(vertical = 10.dp)) {
-                items(listTransaction) { item ->
-                    CardTransaction(
-                        item,
-                        onNavigateToStatus
-                   )
-                }
+                .padding(vertical = 10.dp)
+        ) {
+            items(listTransaction) { item ->
+                CardTransaction(
+                    item,
+                    onNavigateToStatus,
+                    transactionViewModel
+                )
             }
-
+        }
     }
 }
 
 @Composable
 fun CardTransaction(
     transaction: Transaction,
-    onNavigateToStatus : (transaction : String) -> Unit
+    onNavigateToStatus: (transaction: String) -> Unit,
+    transactionViewModel: TransactionViewModel
 ) {
     Log.d("TransactionData", transaction.toString())
-    Column (Modifier.padding(top=8.dp, start = 16.dp,end=16.dp)){
-        Card(modifier = Modifier.fillMaxWidth(),
-            shape = RoundedCornerShape(8.dp)) {
+    Column(Modifier.padding(top = 8.dp, start = 16.dp, end = 16.dp)) {
+        Card(
+            modifier = Modifier.fillMaxWidth(),
+            shape = RoundedCornerShape(8.dp)
+        ) {
             Column(modifier = Modifier.fillMaxWidth()) {
-                //Column Belanja
+                // Column Belanja
                 Column(
                     modifier = Modifier.padding(
                         top = 10.dp,
@@ -148,7 +154,6 @@ fun CardTransaction(
                             modifier = Modifier.weight(1f),
                             horizontalArrangement = Arrangement.Start
                         ) {
-
                             Icon(
                                 modifier = Modifier.size(28.dp),
                                 imageVector = Icons.Outlined.ShoppingBag,
@@ -169,7 +174,6 @@ fun CardTransaction(
                                     fontWeight = FontWeight.W400
                                 )
                             }
-
                         }
 
                         Column(
@@ -189,7 +193,7 @@ fun CardTransaction(
                                     contentAlignment = Alignment.Center
                                 ) {
                                     Text(
-                                        text = "Selesai",
+                                        text = stringResource(id = R.string.done),
                                         color = Purple,
                                         fontSize = 10.sp,
                                         fontWeight = FontWeight.W600
@@ -198,7 +202,6 @@ fun CardTransaction(
                             }
                         }
                     }
-
                 }
                 Divider()
                 Column(
@@ -215,13 +218,13 @@ fun CardTransaction(
                             shape = RoundedCornerShape(8.dp)
                         ) {
                             Box(modifier = Modifier.size(40.dp)) {
-                                if(transaction.image.isEmpty()) {
+                                if (transaction.image.isEmpty()) {
                                     Image(
                                         modifier = Modifier.fillMaxSize(),
                                         painter = painterResource(id = R.drawable.thumbnail),
                                         contentDescription = "Image"
                                     )
-                                }else{
+                                } else {
                                     AsyncImage(
                                         modifier = Modifier.fillMaxSize(),
                                         model = transaction.image,
@@ -240,7 +243,7 @@ fun CardTransaction(
                                 fontSize = 14.sp,
                                 fontWeight = FontWeight.W500
                             )
-                            val item : List<Int> = transaction.items.map { it.quantity!! }
+                            val item: List<Int> = transaction.items.map { it.quantity!! }
                             Text(
                                 text = "${item.sum()} barang",
                                 fontSize = 10.sp,
@@ -249,9 +252,10 @@ fun CardTransaction(
                         }
                     }
 
-                    Row(modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(top = 10.dp),
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(top = 10.dp),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         Column(
@@ -279,7 +283,11 @@ fun CardTransaction(
                                     .alpha(
                                         if (transaction.rating == "0" && transaction.review == "" ||
                                             transaction.rating == null && transaction.review == null
-                                        ) 1f else 0f
+                                        ) {
+                                            1f
+                                        } else {
+                                            0f
+                                        }
                                     )
                                     .clickable {
                                         val fulfillment = Fulfillment(
@@ -292,19 +300,21 @@ fun CardTransaction(
                                         )
                                         val jsonFulfillment = Uri.encode(Gson().toJson(fulfillment))
                                         onNavigateToStatus(jsonFulfillment)
+                                        transactionViewModel.buttonAnalytics("Review Button")
                                     }
                                     .height(24.dp)
                                     .width(84.dp),
                                 shape = RoundedCornerShape(100.dp),
                             ) {
-                                Box(modifier = Modifier
-                                    .fillMaxSize()
-                                    .background(Purple),
+                                Box(
+                                    modifier = Modifier
+                                        .fillMaxSize()
+                                        .background(Purple),
                                     contentAlignment = Alignment.Center
                                 ) {
                                     Text(
                                         color = Color.White,
-                                        text = "Ulas",
+                                        text = stringResource(id = R.string.review2),
                                         fontSize = 10.sp,
                                         fontWeight = FontWeight.W500
                                     )

@@ -7,14 +7,12 @@ import androidx.compose.runtime.Composable
 @Composable
 fun LoginRoute(
     onNavigateToHome: () -> Unit,
-    onNavigateToBoarding: ()-> Unit,
+    onNavigateToBoarding: () -> Unit,
     onNavigateToRegister: () -> Unit
 ) {
-
     LoginScreen(
         onNavigateToHome = onNavigateToHome,
-        onLoginSubmitted =  {},
-        onRegisterClick = onNavigateToRegister,
-        onNavigateToBoarding = onNavigateToBoarding
+        onNavigateToBoarding = onNavigateToBoarding,
+        onRegisterClick = onNavigateToRegister
     )
 }

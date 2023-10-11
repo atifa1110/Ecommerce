@@ -23,22 +23,21 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.drawBehind
-import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalLifecycleOwner
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.example.core.api.request.AuthRequest
+import com.example.core.api.response.BaseResponse
+import com.example.core.util.Constant
 import com.example.ecommerce.R
-import com.example.ecommerce.api.request.AuthRequest
-import com.example.ecommerce.api.response.BaseResponse
 import com.example.ecommerce.auth.login.DividerButton
 import com.example.ecommerce.auth.login.EmailComponent
 import com.example.ecommerce.auth.login.PasswordComponent
@@ -46,9 +45,8 @@ import com.example.ecommerce.auth.login.TextTermCondition
 import com.example.ecommerce.component.ProgressDialog
 import com.example.ecommerce.component.ToastMessage
 import com.example.ecommerce.ui.theme.Purple
-import com.example.ecommerce.ui.theme.textColor
-import com.example.ecommerce.util.Constant
 
+@OptIn(ExperimentalComposeUiApi::class)
 @ExperimentalMaterial3Api
 @Composable
 fun RegisterScreen(
@@ -57,6 +55,7 @@ fun RegisterScreen(
 ) {
     val context = LocalContext.current
     val lifecycleOwner = LocalLifecycleOwner.current
+    val keyboardController = LocalSoftwareKeyboardController.current
     var isDialog by remember { mutableStateOf(false) }
 
     if (isDialog) ProgressDialog()
@@ -68,9 +67,9 @@ fun RegisterScreen(
     val passwordError = rememberSaveable { mutableStateOf(false) }
 
     val showMessage = ToastMessage()
-    val registerViewModel : RegisterViewModel = hiltViewModel()
+    val registerViewModel: RegisterViewModel = hiltViewModel()
     val fcmToken = registerViewModel.fcmToken.collectAsStateWithLifecycle().value
-    Log.d("fcmToken",fcmToken.toString())
+    Log.d("fcmToken", fcmToken.toString())
 
     registerViewModel.registerResult.observe(lifecycleOwner) {
         when (it) {
@@ -80,14 +79,15 @@ fun RegisterScreen(
 
             is BaseResponse.Success -> {
                 isDialog = false
-                //showMessage.showMsg(context,it.data!!.message)
-                registerViewModel.saveAccessToken(it.data!!.data.accessToken)
+                registerViewModel.saveAccessToken(it.data?.data?.accessToken ?: "")
+                registerViewModel.saveLoginState(true)
+                registerViewModel.registerAnalytics(email.value)
                 onRegisterSubmitted()
             }
 
             is BaseResponse.Error -> {
                 isDialog = false
-                showMessage.showMsg(context,it.msg.toString())
+                showMessage.showMsg(context, it.msg.toString())
             }
         }
     }
@@ -107,26 +107,35 @@ fun RegisterScreen(
             }
         }
     ) {
-        Column(modifier = Modifier
-            .fillMaxSize()
-            .padding(it)
-            .padding(horizontal = 16.dp),
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(it)
+                .padding(horizontal = 16.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Spacer(modifier = Modifier.height(20.dp))
 
-            EmailComponent(input = email,
-                inputError = emailError)
+            EmailComponent(
+                input = email,
+                inputError = emailError
+            )
 
             Spacer(modifier = Modifier.height(16.dp))
 
             PasswordComponent(
                 password = password,
-                passwordError = passwordError)
+                passwordError = passwordError
+            )
 
             Button(
                 onClick = {
-                   registerViewModel.registerUser(Constant.API_KEY, AuthRequest(email.value, password.value,fcmToken!!))
+                    keyboardController?.hide()
+                    registerViewModel.registerUser(
+                        Constant.API_KEY,
+                        AuthRequest(email.value, password.value, fcmToken!!)
+                    )
+                    registerViewModel.buttonAnalytics("Register Button")
                 },
                 modifier = Modifier
                     .fillMaxWidth()
@@ -143,7 +152,10 @@ fun RegisterScreen(
             DividerButton(false)
 
             OutlinedButton(
-                onClick = { onLoginClick() },
+                onClick = {
+                    onLoginClick()
+                    registerViewModel.buttonAnalytics("Login Button")
+                },
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(vertical = 16.dp),
@@ -164,8 +176,7 @@ fun RegisterScreen(
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 @Preview(showBackground = true)
-fun RegisterPreview(){
+fun RegisterPreview() {
     RegisterScreen(onRegisterSubmitted = { /*TODO*/ }) {
-
     }
 }

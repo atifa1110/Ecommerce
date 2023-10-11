@@ -2,21 +2,17 @@ package com.example.ecommerce.main.home
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.ecommerce.datastore.DataStoreRepository
-import com.example.ecommerce.datastore.DataStoreRepositoryImpl
+import com.example.ecommerce.firebase.AnalyticsRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.SharingStarted
-import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 @HiltViewModel
 class HomeViewModel @Inject constructor(
-    private val repository: DataStoreRepositoryImpl
-): ViewModel() {
+    private val repository: com.example.core.datastore.DataStoreRepositoryImpl,
+    private val analyticsRepository: AnalyticsRepository
+) : ViewModel() {
 
     fun saveLoginState(complete: Boolean) {
         viewModelScope.launch(Dispatchers.IO) {
@@ -24,13 +20,21 @@ class HomeViewModel @Inject constructor(
         }
     }
 
-    fun saveAccessToken(token:String){
+    fun saveAccessToken(token: String) {
         viewModelScope.launch(Dispatchers.IO) {
             repository.saveAccessToken(token)
         }
     }
 
-    fun getProfileName(): Flow<String> {
-        return repository.getProfileName()
+    fun saveProfileName(name: String) {
+        viewModelScope.launch(Dispatchers.IO) {
+            repository.saveProfileName(name)
+        }
+    }
+
+    fun buttonClicks(buttonName: String) {
+        viewModelScope.launch(Dispatchers.IO) {
+            analyticsRepository.buttonClick(buttonName)
+        }
     }
 }

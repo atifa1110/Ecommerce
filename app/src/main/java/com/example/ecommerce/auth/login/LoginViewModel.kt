@@ -4,18 +4,18 @@ import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.ecommerce.api.request.AuthRequest
-import com.example.ecommerce.api.response.BaseResponse
-import com.example.ecommerce.api.response.LoginResponse
+import com.example.core.api.request.AuthRequest
+import com.example.core.api.response.BaseResponse
+import com.example.core.api.response.FirebaseResponse
+import com.example.core.api.response.LoginResponse
+import com.example.core.datastore.DataStoreRepository
+import com.example.core.firebase.MessagingRepository
+import com.example.core.util.Constant
 import com.example.ecommerce.api.repository.AuthRepository
-import com.example.ecommerce.api.response.FirebaseResponse
-import com.example.ecommerce.datastore.DataStoreRepository
-import com.example.ecommerce.firebase.FirebaseMessagingRepository
-import com.example.ecommerce.util.Constant
+import com.example.ecommerce.firebase.AnalyticsRepository
 import com.google.firebase.messaging.FirebaseMessaging
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
@@ -23,26 +23,26 @@ import kotlinx.coroutines.tasks.await
 import org.json.JSONObject
 import javax.inject.Inject
 
-
 @HiltViewModel
-class LoginViewModel@Inject constructor(
+class LoginViewModel @Inject constructor(
     private val loginRepository: AuthRepository,
     private val repository: DataStoreRepository,
-    private val firebaseMessagingRepository: FirebaseMessagingRepository
-):ViewModel() {
+    private val messagingRepository: MessagingRepository,
+    private val analyticsRepository: AnalyticsRepository
+) : ViewModel() {
 
     private val _loginResult: MutableLiveData<BaseResponse<LoginResponse>> = MutableLiveData()
     val loginResult: LiveData<BaseResponse<LoginResponse>> get() = _loginResult
 
     fun loginUser(api: String, loginRequest: AuthRequest) {
         _loginResult.value = BaseResponse.Loading()
-        viewModelScope.launch{
+        viewModelScope.launch {
             try {
                 val response = loginRepository.loginUser(api, loginRequest)
                 if (response.code() == 200 && response.isSuccessful) {
                     _loginResult.value = BaseResponse.Success(response.body())
-                } else{
-                    val jsonObj= JSONObject(response.errorBody()!!.string())
+                } else {
+                    val jsonObj = JSONObject(response.errorBody()!!.string())
                     val message = jsonObj.getString("message")
                     _loginResult.value = BaseResponse.Error(message)
                 }
@@ -52,13 +52,25 @@ class LoginViewModel@Inject constructor(
         }
     }
 
+    fun loginAnalytics(email: String) {
+        viewModelScope.launch(Dispatchers.IO) {
+            analyticsRepository.loginAnalytics(email)
+        }
+    }
+
+    fun buttonAnalytics(buttonName: String) {
+        viewModelScope.launch(Dispatchers.IO) {
+            analyticsRepository.buttonClick(buttonName)
+        }
+    }
+
     fun saveLoginState(complete: Boolean) {
         viewModelScope.launch(Dispatchers.IO) {
             repository.saveHasLoginState(complete = complete)
         }
     }
 
-    fun saveAccessToken(token:String){
+    fun saveAccessToken(token: String) {
         viewModelScope.launch(Dispatchers.IO) {
             repository.saveAccessToken(token = token)
         }
@@ -67,25 +79,25 @@ class LoginViewModel@Inject constructor(
     private val _fcmToken = MutableStateFlow<String?>(null)
     val fcmToken: StateFlow<String?> = _fcmToken
 
-    init{
+    init {
         refreshFcmToken()
     }
 
     private val _tokenResult: MutableLiveData<BaseResponse<FirebaseResponse>> = MutableLiveData()
     val tokenResult: LiveData<BaseResponse<FirebaseResponse>> get() = _tokenResult
 
-    fun token(){
+    fun token() {
         viewModelScope.launch {
             try {
-                val response = firebaseMessagingRepository.firebaseToken(Constant.AUTH_TOKEN)
+                val response = messagingRepository.firebaseToken(Constant.AUTH_TOKEN)
                 if (response.code() == 200 && response.isSuccessful) {
                     _tokenResult.value = BaseResponse.Success(response.body())
-                }else{
-                    val jsonObj= JSONObject(response.errorBody()!!.string())
+                } else {
+                    val jsonObj = JSONObject(response.errorBody()!!.string())
                     val message = jsonObj.getString("message")
                     _tokenResult.value = BaseResponse.Error(message)
                 }
-            }catch (error:Exception){
+            } catch (error: Exception) {
                 _tokenResult.value = BaseResponse.Error(error.message.toString())
             }
         }
@@ -103,8 +115,7 @@ class LoginViewModel@Inject constructor(
         }
     }
 
-    fun subscribeFcmTopic() : Boolean{
+    fun subscribeFcmTopic(): Boolean {
         return FirebaseMessaging.getInstance().subscribeToTopic("promo").isSuccessful
     }
-
 }

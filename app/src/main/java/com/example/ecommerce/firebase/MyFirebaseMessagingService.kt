@@ -11,10 +11,10 @@ import android.graphics.BitmapFactory
 import android.os.Build
 import android.util.Log
 import androidx.core.app.NotificationCompat
+import com.example.core.room.notification.Notification
+import com.example.core.room.notification.NotificationRepository
 import com.example.ecommerce.MainActivity
 import com.example.ecommerce.R
-import com.example.ecommerce.room.notification.Notification
-import com.example.ecommerce.room.notification.NotificationRepository
 import com.google.firebase.messaging.FirebaseMessagingService
 import com.google.firebase.messaging.RemoteMessage
 import dagger.hilt.android.AndroidEntryPoint
@@ -24,14 +24,12 @@ import java.net.URL
 import javax.inject.Inject
 
 @AndroidEntryPoint
-class MyFirebaseMessagingService : FirebaseMessagingService(
-) {
+class MyFirebaseMessagingService : FirebaseMessagingService() {
 
     @Inject
-    lateinit var repository : NotificationRepository
+    lateinit var repository: NotificationRepository
 
-
-    //Called when message is received and app is in foreground.
+    // Called when message is received and app is in foreground.
     private val TAG = "FirebaseMessagingService"
 
     override fun onNewToken(token: String) {
@@ -39,9 +37,6 @@ class MyFirebaseMessagingService : FirebaseMessagingService(
     }
 
     override fun onMessageReceived(remoteMessage: RemoteMessage) {
-//        val body = remoteMessage.notification?.body.toString()
-//        val title = remoteMessage.notification?.title.toString()
-//        val image = remoteMessage.notification?.imageUrl.toString()
         val body = remoteMessage.data["body"] ?: ""
         val title = remoteMessage.data["title"] ?: ""
         val image = remoteMessage.data["image"] ?: ""
@@ -49,17 +44,15 @@ class MyFirebaseMessagingService : FirebaseMessagingService(
         val date = remoteMessage.data["date"] ?: ""
         val time = remoteMessage.data["time"] ?: ""
 
-        sendNotification(title,body,image,type,date,time)
-        //Check if message contains a data payload.
+        sendNotification(title, body, image, type, date, time)
+        // Check if message contains a data payload.
         remoteMessage.data.let {
             Log.d(TAG, "Message data payload: " + remoteMessage.data)
-
         }
 
-        //Check if message contains a notification payload.
+        // Check if message contains a notification payload.
         remoteMessage.notification?.let {
             Log.d(TAG, "Message Notification Body: ${it.body}")
-
         }
     }
 
@@ -76,17 +69,37 @@ class MyFirebaseMessagingService : FirebaseMessagingService(
             null
         }
     }
-    private fun sendNotification(title:String,body:String,image:String,type:String,date:String,time:String) {
+
+    private fun sendNotification(
+        title: String,
+        body: String,
+        image: String,
+        type: String,
+        date: String,
+        time: String
+    ) {
         val intent = Intent(this, MainActivity::class.java).apply {
             addFlags(FLAG_ACTIVITY_CLEAR_TOP)
         }
 
         val pendingIntent = PendingIntent.getActivity(
-            this, 0, intent, FLAG_IMMUTABLE
+            this,
+            0,
+            intent,
+            FLAG_IMMUTABLE
         )
 
-        repository.addNotification(Notification(title = title,
-            body = body, image = image, type = type, date = date, time = time, isRead = false))
+        repository.addNotification(
+            Notification(
+                title = title,
+                body = body,
+                image = image,
+                type = type,
+                date = date,
+                time = time,
+                isRead = false
+            )
+        )
 
         val channelId = this.getString(R.string.default_notification_channel_id)
 
@@ -97,7 +110,7 @@ class MyFirebaseMessagingService : FirebaseMessagingService(
             .setAutoCancel(true)
             .setContentIntent(pendingIntent)
 
-        if(image!=null){
+        if (image != null) {
             notificationBuilder.setLargeIcon(getBitmapFromURL(image))
         }
 

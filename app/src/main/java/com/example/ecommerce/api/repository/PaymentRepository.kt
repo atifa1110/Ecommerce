@@ -1,35 +1,28 @@
 package com.example.ecommerce.api.repository
 
-import com.example.ecommerce.api.method.PaymentService
-import com.example.ecommerce.api.model.Rating
-import com.example.ecommerce.api.request.FulfillmentRequest
-import com.example.ecommerce.api.response.FulfillmentResponse
-import com.example.ecommerce.api.response.PaymentResponse
-import com.example.ecommerce.api.response.RatingResponse
-import com.example.ecommerce.api.response.TransactionResponse
+import com.example.core.api.method.PaymentService
+import com.example.core.api.model.Rating
+import com.example.core.api.request.FulfillmentRequest
+import com.example.core.api.response.FulfillmentResponse
+import com.example.core.api.response.RatingResponse
+import com.example.core.api.response.TransactionResponse
 import retrofit2.Response
 import javax.inject.Inject
 
 class PaymentRepository @Inject constructor(
-    private val service: PaymentService,
+    private val service: PaymentService
 ) {
-    suspend fun payment(): Response<PaymentResponse> {
-        return service.payment()
-    }
-
     suspend fun fulfillment(fulfillmentRequest: FulfillmentRequest): Response<FulfillmentResponse> {
         return service.fulfillment(fulfillmentRequest)
     }
 
     suspend fun transaction(): Response<TransactionResponse> {
-       return service.transaction()
+        return service.transaction()
     }
 
     suspend fun rating(
-        rating : Rating
+        rating: Rating
     ): Response<RatingResponse> {
         return service.rating(rating)
     }
-
-
 }

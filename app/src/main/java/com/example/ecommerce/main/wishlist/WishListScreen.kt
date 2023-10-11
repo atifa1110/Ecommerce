@@ -16,7 +16,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
@@ -28,9 +27,6 @@ import androidx.compose.material.icons.filled.DeleteOutline
 import androidx.compose.material.icons.filled.FormatListBulleted
 import androidx.compose.material.icons.filled.GridView
 import androidx.compose.material.icons.filled.Star
-import androidx.compose.material.icons.outlined.Tune
-import androidx.compose.material3.AssistChip
-import androidx.compose.material3.AssistChipDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
@@ -49,7 +45,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
@@ -58,30 +53,30 @@ import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil.compose.AsyncImage
+import com.example.core.room.favorite.Favorite
 import com.example.ecommerce.R
-import com.example.ecommerce.api.model.Product
-import com.example.ecommerce.component.ToastMessage
-import com.example.ecommerce.main.cart.CardCart
 import com.example.ecommerce.main.detail.ErrorPage
-import com.example.ecommerce.main.store.AnimatedGridShimmer
-import com.example.ecommerce.main.store.AnimatedListShimmer
-import com.example.ecommerce.room.favorite.Favorite
+import com.example.ecommerce.main.detail.currency
 import com.example.ecommerce.ui.theme.Purple
 import kotlinx.coroutines.launch
 
 @Composable
 fun WishListScreen() {
-    val wishViewModel : WishViewModel = hiltViewModel()
+    val wishViewModel: WishViewModel = hiltViewModel()
     val scope = rememberCoroutineScope()
     val snackBarHostState = remember { SnackbarHostState() }
     val uiState by wishViewModel.uiState.collectAsStateWithLifecycle()
     val favorite by uiState.favoriteList.collectAsStateWithLifecycle(emptyList())
-    var isClickedGrid by rememberSaveable { mutableStateOf(false)}
+    var isClickedGrid by rememberSaveable { mutableStateOf(false) }
+    val isLoading by remember { mutableStateOf(false) }
 
     uiState.message?.let { message ->
         scope.launch {
             snackBarHostState.showSnackbar(message)
         }
+    }
+
+    uiState.isLoading.let {
     }
 
     Scaffold(
@@ -92,7 +87,8 @@ fun WishListScreen() {
         Column(
             Modifier
                 .padding(it)
-                .padding(16.dp)) {
+                .padding(16.dp)
+        ) {
             if (favorite.isEmpty()) {
                 ErrorPage(
                     title = stringResource(id = R.string.empty),
@@ -103,9 +99,10 @@ fun WishListScreen() {
                 )
             }
 
-            Row(modifier = Modifier
-                .fillMaxWidth()
-                .padding(bottom = 10.dp)
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(bottom = 10.dp)
             ) {
                 Row(
                     modifier = Modifier.weight(1f),
@@ -113,7 +110,7 @@ fun WishListScreen() {
                 ) {
                     Text(
                         modifier = Modifier.fillMaxWidth(),
-                        text = "${favorite.size} Barang",
+                        text = "${favorite.size} " + stringResource(id = R.string.item),
                         fontSize = 14.sp,
                         fontWeight = FontWeight.W400
                     )
@@ -135,8 +132,9 @@ fun WishListScreen() {
                         modifier = Modifier.clickable {
                             isClickedGrid = !isClickedGrid
                         },
-                        imageVector = if (isClickedGrid)
-                            Icons.Default.GridView else Icons.Default.FormatListBulleted,
+                        imageVector = if (isClickedGrid) {
+                            Icons.Default.GridView
+                        } else Icons.Default.FormatListBulleted,
                         contentDescription = "List"
                     )
                 }
@@ -182,25 +180,20 @@ fun WishListScreen() {
 @Composable
 fun CardList(
     favorite: Favorite,
-    onAddToCart : () -> Unit,
-    onDeleteFavorite : (id:String) -> Unit
-){
+    onAddToCart: () -> Unit,
+    onDeleteFavorite: (id: String) -> Unit
+) {
     Column(
-        Modifier
-            .padding(vertical = 5.dp)
-            .clickable {
-
-            }
+        Modifier.padding(vertical = 5.dp)
     ) {
-        Card(modifier = Modifier
-            .fillMaxWidth()
-            .clickable {
-
-            }, shape = RoundedCornerShape(8.dp),
+        Card(
+            modifier = Modifier
+                .fillMaxWidth(),
+            shape = RoundedCornerShape(8.dp),
             elevation = CardDefaults.cardElevation(3.dp)
         ) {
             Box(modifier = Modifier.background(Color.White)) {
-                Column (modifier = Modifier.padding(10.dp)){
+                Column(modifier = Modifier.padding(10.dp)) {
                     Row {
                         Card(
                             modifier = Modifier.size(80.dp),
@@ -210,16 +203,17 @@ fun CardList(
                                 modifier = Modifier.fillMaxSize(),
                                 contentAlignment = Alignment.Center
                             ) {
-                                if(favorite.image!!.isEmpty()){
+                                if (favorite.image!!.isEmpty()) {
                                     Image(
                                         modifier = Modifier.fillMaxSize(),
                                         painter = painterResource(id = R.drawable.thumbnail),
                                         contentDescription = "image"
                                     )
-                                }else{
+                                } else {
                                     AsyncImage(
                                         modifier = Modifier.fillMaxSize(),
-                                        model = favorite.image, contentDescription = "Favorite Image"
+                                        model = favorite.image,
+                                        contentDescription = "Favorite Image"
                                     )
                                 }
                             }
@@ -238,8 +232,11 @@ fun CardList(
                                 lineHeight = 15.sp
                             )
                             Spacer(modifier = Modifier.height(5.dp))
+                            val variantTotal =
+                                favorite.productPrice?.plus(favorite.productVariantPrice ?: 0)
+
                             Text(
-                                text = "Rp${favorite.productPrice}",
+                                text = currency(variantTotal ?: 0),
                                 fontWeight = FontWeight.W600,
                                 fontSize = 14.sp
                             )
@@ -282,17 +279,19 @@ fun CardList(
                     Spacer(modifier = Modifier.height(10.dp))
 
                     Row {
-
-                        Card(modifier = Modifier
-                            .size(32.dp)
-                            .clickable {},
+                        Card(
+                            modifier = Modifier
+                                .size(32.dp)
+                                .clickable {},
                             shape = RoundedCornerShape(8.dp),
                             border = BorderStroke(1.dp, Color.Gray)
                         ) {
-                            Box(modifier = Modifier
-                                .fillMaxSize()
-                                .background(Color.White),
-                                contentAlignment = Alignment.Center) {
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxSize()
+                                    .background(Color.White),
+                                contentAlignment = Alignment.Center
+                            ) {
                                 Icon(
                                     modifier = Modifier.clickable {
                                         onDeleteFavorite(favorite.productId)
@@ -314,7 +313,7 @@ fun CardList(
                         ) {
                             Text(
                                 color = Purple,
-                                text = " + Keranjang",
+                                text = stringResource(id = R.string.cartplus),
                                 fontSize = 12.sp,
                                 fontWeight = FontWeight.W500
                             )
@@ -322,45 +321,49 @@ fun CardList(
                     }
                 }
             }
-
         }
     }
 }
 
-
 @Composable
 fun CardGrid(
     favorite: Favorite,
-    onAddToCart : () -> Unit,
-    onDeleteFavorite : (id:String) -> Unit
-){
+    onAddToCart: () -> Unit,
+    onDeleteFavorite: (id: String) -> Unit
+) {
     Column(Modifier.padding(top = 5.dp, bottom = 5.dp, end = 5.dp)) {
-        Card (modifier = Modifier
-            .width(186.dp)
-            .clickable {},
+        Card(
+            modifier = Modifier
+                .width(186.dp)
+                .clickable {},
             shape = RoundedCornerShape(8.dp),
             elevation = CardDefaults.cardElevation(3.dp)
-        ){
+        ) {
             Column(Modifier.background(Color.White)) {
                 Card(
                     modifier = Modifier.size(186.dp),
                     shape = RoundedCornerShape(
-                        topEnd = 8.dp, topStart = 8.dp,
-                        bottomEnd = 0.dp, bottomStart = 0.dp)
+                        topEnd = 8.dp,
+                        topStart = 8.dp,
+                        bottomEnd = 0.dp,
+                        bottomStart = 0.dp
+                    )
                 ) {
-                    Box(modifier = Modifier.fillMaxSize(),
+                    Box(
+                        modifier = Modifier.fillMaxSize(),
                         contentAlignment = Alignment.Center
                     ) {
-                        if(favorite.image!!.isEmpty()){
+                        if (favorite.image!!.isEmpty()) {
                             Image(
                                 modifier = Modifier.fillMaxSize(),
                                 painter = painterResource(id = R.drawable.thumbnail),
                                 contentDescription = "image"
                             )
-                        }else{
+                        } else {
                             AsyncImage(
                                 modifier = Modifier.fillMaxSize(),
-                                model = favorite.image, contentDescription = "Favorite Image"
+                                model = favorite.image,
+                                contentDescription = "Favorite Image"
                             )
                         }
                     }
@@ -368,15 +371,17 @@ fun CardGrid(
 
                 Column(modifier = Modifier.padding(10.dp)) {
                     Text(
-                        text = favorite.productName!!,
+                        text = favorite.productName ?: "",
                         fontWeight = FontWeight.W400,
                         fontSize = 12.sp,
                         maxLines = 2,
                         lineHeight = 15.sp
                     )
                     Spacer(modifier = Modifier.height(5.dp))
+                    val variantTotal =
+                        favorite.productPrice?.plus(favorite.productVariantPrice ?: 0)
                     Text(
-                        text = favorite.productPrice.toString(),
+                        text = currency(variantTotal ?: 0),
                         fontWeight = FontWeight.W600,
                         fontSize = 14.sp
                     )
@@ -391,7 +396,8 @@ fun CardGrid(
                             contentDescription = "Account"
                         )
                         Spacer(modifier = Modifier.width(5.dp))
-                        Text(text = favorite.store.toString(),
+                        Text(
+                            text = favorite.store.toString(),
                             fontWeight = FontWeight.W400,
                             fontSize = 10.sp
                         )
@@ -417,16 +423,19 @@ fun CardGrid(
                     Spacer(modifier = Modifier.height(10.dp))
 
                     Row {
-                        Card(modifier = Modifier
-                            .size(32.dp)
-                            .clickable {},
+                        Card(
+                            modifier = Modifier
+                                .size(32.dp)
+                                .clickable {},
                             shape = RoundedCornerShape(8.dp),
                             border = BorderStroke(1.dp, Color.Gray)
                         ) {
-                            Box(modifier = Modifier
-                                .fillMaxSize()
-                                .background(Color.White),
-                                contentAlignment = Alignment.Center) {
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxSize()
+                                    .background(Color.White),
+                                contentAlignment = Alignment.Center
+                            ) {
                                 Icon(
                                     modifier = Modifier.clickable {
                                         onDeleteFavorite(favorite.productId)
@@ -455,7 +464,6 @@ fun CardGrid(
                         }
                     }
                 }
-
             }
         }
     }
