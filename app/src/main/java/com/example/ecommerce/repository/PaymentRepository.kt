@@ -1,4 +1,4 @@
-package com.example.ecommerce.api.repository
+package com.example.ecommerce.test
 
 import com.example.core.api.method.PaymentService
 import com.example.core.api.model.Rating

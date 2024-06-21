@@ -1,4 +1,4 @@
-package com.example.ecommerce.api.repository
+package com.example.ecommerce.test
 
 import androidx.paging.Pager
 import androidx.paging.PagingConfig
