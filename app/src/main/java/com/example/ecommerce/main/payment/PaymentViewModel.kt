@@ -7,7 +7,8 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.core.api.response.BaseResponse
 import com.example.core.api.response.PaymentResponse
-import com.example.ecommerce.api.repository.PaymentRepository
+import com.example.ecommerce.R
+import com.example.ecommerce.repository.PaymentRepository
 import com.google.firebase.ktx.Firebase
 import com.google.firebase.remoteconfig.FirebaseRemoteConfig
 import com.google.firebase.remoteconfig.ktx.remoteConfig
@@ -38,7 +39,7 @@ class PaymentViewModel @Inject constructor(
 
     private fun remoteConfig() {
         remoteConfig.setConfigSettingsAsync(configSettings)
-        // remoteConfig.setDefaultsAsync(R.xml.remote_config_defaults)
+        remoteConfig.setDefaultsAsync(R.xml.remote_config_defaults)
 
         _paymentResult.value = BaseResponse.Loading()
         viewModelScope.launch {

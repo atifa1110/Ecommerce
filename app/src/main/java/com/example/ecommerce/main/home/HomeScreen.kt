@@ -1,6 +1,8 @@
 package com.example.ecommerce.main.home
 
+import android.content.res.Configuration
 import androidx.appcompat.app.AppCompatDelegate
+import androidx.compose.foundation.background
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -27,6 +29,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.tooling.preview.Devices
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.core.os.LocaleListCompat
@@ -44,12 +47,36 @@ import com.example.ecommerce.ui.theme.Purple
 fun HomeScreen(
     onLogoutClick: () -> Unit
 ) {
-    val homeViewModel: HomeViewModel = hiltViewModel()
+    //val homeViewModel: HomeViewModel = hiltViewModel()
 
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .verticalScroll(rememberScrollState()),
+    HomeContent(
+        onLogoutClick = { onLogoutClick() },
+        saveAccessToken = {
+            //homeViewModel.saveAccessToken(token = "")
+        },
+        saveLoginState = {
+            //homeViewModel.saveLoginState(complete = false)
+        },
+        saveProfileName = {
+            //homeViewModel.saveProfileName(name = "")
+        },
+        buttonClicks = {
+            //homeViewModel.buttonClicks("Logout")
+        }
+    )
+}
+
+@Composable
+fun HomeContent(
+    onLogoutClick: () -> Unit,
+    saveAccessToken: () -> Unit,
+    saveLoginState: () -> Unit,
+    saveProfileName: () -> Unit,
+    buttonClicks: () -> Unit
+){
+    Column(modifier = Modifier.fillMaxSize()
+        .background(MaterialTheme.colorScheme.background)
+        .verticalScroll(rememberScrollState()),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
     ) {
@@ -70,14 +97,17 @@ fun HomeScreen(
 
         Button(
             onClick = {
-                homeViewModel.saveAccessToken(token = "")
-                homeViewModel.saveLoginState(complete = false)
-                homeViewModel.saveProfileName(name = "")
-                homeViewModel.buttonClicks("Logout")
+                saveAccessToken()
+                saveLoginState()
+                saveProfileName()
+                buttonClicks()
                 onLogoutClick()
             },
             modifier = Modifier.padding(vertical = 16.dp),
-            colors = ButtonDefaults.buttonColors(Purple)
+            colors = ButtonDefaults.buttonColors(
+                containerColor = Purple,
+                contentColor = Color.White
+            )
         ) {
             Text(
                 text = stringResource(id = R.string.logout),
@@ -95,13 +125,14 @@ fun HomeScreen(
         ) {
             Text(
                 text = stringResource(id = R.string.en),
-                style = MaterialTheme.typography.bodyMedium
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.surface
             )
             Switch(
                 modifier = Modifier.padding(horizontal = 10.dp),
                 checked = checkedState.value,
                 onCheckedChange = {
-                    checkedState.value = it
+                    checkedState.value = false
                     if (checkedState.value) {
                         val appEnglish: LocaleListCompat = LocaleListCompat.forLanguageTags("in")
                         AppCompatDelegate.setApplicationLocales(appEnglish)
@@ -119,7 +150,8 @@ fun HomeScreen(
             )
             Text(
                 text = stringResource(id = R.string.id),
-                style = MaterialTheme.typography.bodyMedium
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.surface
             )
         }
 
@@ -133,7 +165,8 @@ fun HomeScreen(
         ) {
             Text(
                 text = stringResource(id = R.string.light),
-                style = MaterialTheme.typography.bodyMedium
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.surface
             )
             Switch(
                 modifier = Modifier.padding(horizontal = 10.dp),
@@ -155,18 +188,24 @@ fun HomeScreen(
             )
             Text(
                 text = stringResource(id = R.string.dark),
-                style = MaterialTheme.typography.bodyMedium
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.surface
             )
         }
     }
 }
 
-@Preview(showBackground = true)
+@Preview("Light Mode", device = Devices.PIXEL_3)
+@Preview("Dark Mode", uiMode = Configuration.UI_MODE_NIGHT_YES)
 @Composable
 fun HomePreview() {
     EcommerceTheme {
-        Surface {
-            HomeScreen {}
-        }
+        HomeContent(
+            onLogoutClick = {},
+            saveAccessToken = {},
+            saveLoginState = {},
+            saveProfileName = {},
+            buttonClicks = {}
+        )
     }
 }

@@ -1,5 +1,6 @@
 package com.example.ecommerce.auth.login
 
+import android.content.res.Configuration
 import android.util.Log
 import android.util.Patterns
 import androidx.compose.foundation.layout.Arrangement
@@ -14,7 +15,6 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.OutlinedTextField
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material.icons.filled.VisibilityOff
@@ -27,8 +27,10 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.getValue
@@ -55,6 +57,7 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.withStyle
+import androidx.compose.ui.tooling.preview.Devices
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -65,9 +68,9 @@ import com.example.core.util.Constant
 import com.example.ecommerce.R
 import com.example.ecommerce.component.ProgressDialog
 import com.example.ecommerce.component.ToastMessage
+import com.example.ecommerce.ui.theme.EcommerceTheme
 import com.example.ecommerce.ui.theme.Purple
 
-@OptIn(ExperimentalComposeUiApi::class, ExperimentalMaterial3Api::class)
 @Composable
 fun LoginScreen(
     onNavigateToHome: () -> Unit,
@@ -77,7 +80,6 @@ fun LoginScreen(
     val loginViewModel: LoginViewModel = hiltViewModel()
     val context = LocalContext.current
     val lifecycleOwner = LocalLifecycleOwner.current
-    val keyboardController = LocalSoftwareKeyboardController.current
 
     var isLoading by remember { mutableStateOf(false) }
 
@@ -117,6 +119,42 @@ fun LoginScreen(
         }
     }
 
+    LoginContent(
+        email = email,
+        emailError = emailError,
+        password = password,
+        passwordError = passwordError,
+        onRegisterClick = {
+            onRegisterClick()
+        },
+        loginUser = {
+            loginViewModel.loginUser(
+                Constant.API_KEY,
+                AuthRequest(email.value, password.value, fcmToken))
+        },
+        loginAnalytics = {
+            loginViewModel.loginAnalytics(email.value)
+        },
+        buttonAnalytics = { button ->
+            loginViewModel.buttonAnalytics(button)
+        }
+    )
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun LoginContent(
+    email : MutableState<String>,
+    emailError : MutableState<Boolean>,
+    password : MutableState<String>,
+    passwordError : MutableState<Boolean>,
+    onRegisterClick: () -> Unit,
+    loginUser: () -> Unit,
+    loginAnalytics: () -> Unit,
+    buttonAnalytics: (button : String) -> Unit,
+){
+    val keyboardController = LocalSoftwareKeyboardController.current
+
     Scaffold(
         topBar = {
             Column {
@@ -124,20 +162,21 @@ fun LoginScreen(
                     title = {
                         Text(
                             stringResource(id = R.string.login),
-                            style = MaterialTheme.typography.titleLarge
+                            style = MaterialTheme.typography.titleLarge,
+                            color = MaterialTheme.colorScheme.surface
                         )
-                    }
+                    },
+                    colors = TopAppBarDefaults.centerAlignedTopAppBarColors(containerColor = MaterialTheme.colorScheme.background)
                 )
                 Divider()
             }
         }
     ) {
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(it)
-                .padding(horizontal = 16.dp)
-                .verticalScroll(rememberScrollState()),
+        Column(modifier = Modifier
+            .fillMaxSize()
+            .padding(it)
+            .padding(horizontal = 16.dp)
+            .verticalScroll(rememberScrollState()),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Spacer(modifier = Modifier.height(20.dp))
@@ -157,22 +196,22 @@ fun LoginScreen(
             Button(
                 onClick = {
                     keyboardController?.hide()
-                    loginViewModel.loginUser(
-                        Constant.API_KEY,
-                        AuthRequest(email.value, password.value, fcmToken)
-                    )
-                    loginViewModel.loginAnalytics(email.value)
-                    loginViewModel.buttonAnalytics("Login Button")
+                    loginUser()
+                    loginAnalytics()
+                    buttonAnalytics("Login")
                 },
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(vertical = 16.dp),
-                colors = ButtonDefaults.buttonColors(Purple),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = Purple,
+                    contentColor = Color.White
+                ),
                 enabled = !emailError.value && !passwordError.value && email.value.isNotEmpty() && password.value.isNotEmpty()
             ) {
                 Text(
                     text = stringResource(id = R.string.login),
-                    fontWeight = FontWeight.W500
+                    fontWeight = FontWeight.W500,
                 )
             }
 
@@ -181,16 +220,16 @@ fun LoginScreen(
             OutlinedButton(
                 onClick = {
                     onRegisterClick()
-                    loginViewModel.buttonAnalytics("Register Button")
+                    buttonAnalytics("Register")
                 },
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(vertical = 16.dp)
+                    .padding(vertical = 16.dp),
             ) {
                 Text(
-                    color = Purple,
                     text = stringResource(id = R.string.register),
-                    style = MaterialTheme.typography.labelLarge
+                    style = MaterialTheme.typography.labelLarge,
+                    color = MaterialTheme.colorScheme.primary,
                 )
             }
 
@@ -279,10 +318,8 @@ fun EmailComponent(
     input: MutableState<String>,
     inputError: MutableState<Boolean>,
 ) {
-    // val localFocusManager = LocalFocusManager.current
     OutlinedTextField(
-        modifier = Modifier
-            .fillMaxWidth(),
+        modifier = Modifier.fillMaxWidth(),
         label = {
             Text(
                 text = stringResource(id = R.string.email),
@@ -300,7 +337,7 @@ fun EmailComponent(
             input.value = it
             inputError.value = !Patterns.EMAIL_ADDRESS.matcher(it).matches() && it.isNotEmpty()
         },
-        isError = inputError.value
+        isError = inputError.value,
     )
 
     if (inputError.value) {
@@ -397,21 +434,35 @@ fun TextFieldError(textError: Int, color: Color) {
 
 @Composable
 fun TextFieldErrorEmail(textError: String, color: Color) {
-    Text(
-        modifier = Modifier
-            .padding(top = 2.dp, start = 16.dp)
-            .fillMaxWidth(),
+    Text(modifier = Modifier
+        .padding(top = 2.dp, start = 16.dp)
+        .fillMaxWidth(),
         text = textError,
         color = color,
         style = MaterialTheme.typography.bodySmall
     )
 }
 
-@ExperimentalMaterial3Api
-@Preview(showBackground = true)
+@Preview("Light Mode", device = Devices.PIXEL_3)
+@Preview("Dark Mode", uiMode = Configuration.UI_MODE_NIGHT_YES)
 @Composable
 fun LoginPreview() {
-    Column(modifier = Modifier.fillMaxSize()) {
-        LoginScreen(onNavigateToHome = { /*TODO*/ }, onNavigateToBoarding = { /*TODO*/ }) {}
+    val email = rememberSaveable { mutableStateOf("atifafiorenza24@gmail.com") }
+    val emailError = rememberSaveable { mutableStateOf(false) }
+
+    val password = rememberSaveable { mutableStateOf("12345678") }
+    val passwordError = rememberSaveable { mutableStateOf(false) }
+
+    EcommerceTheme {
+        LoginContent(
+            email = email,
+            emailError = emailError,
+            password = password,
+            passwordError = passwordError,
+            onRegisterClick = {},
+            loginUser = {},
+            loginAnalytics = {},
+            buttonAnalytics = {}
+        )
     }
 }

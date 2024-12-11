@@ -14,8 +14,8 @@ import com.example.core.api.response.RefreshResponse
 import com.example.core.api.response.SearchResponse
 import com.example.core.datastore.DataStoreRepository
 import com.example.core.util.Constant
-import com.example.ecommerce.api.repository.AuthRepository
-import com.example.ecommerce.api.repository.ProductRepository
+import com.example.ecommerce.repository.AuthRepository
+import com.example.ecommerce.repository.ProductRepository
 import com.example.ecommerce.firebase.AnalyticsRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers

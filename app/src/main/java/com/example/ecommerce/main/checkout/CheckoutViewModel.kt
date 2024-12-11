@@ -9,7 +9,7 @@ import com.example.core.api.request.FulfillmentRequest
 import com.example.core.api.response.BaseResponse
 import com.example.core.api.response.FulfillmentResponse
 import com.example.core.room.cart.Cart
-import com.example.ecommerce.api.repository.PaymentRepository
+import com.example.ecommerce.repository.PaymentRepository
 import com.example.ecommerce.firebase.AnalyticsRepository
 import com.example.ecommerce.room.cart.CartRepository
 import dagger.hilt.android.lifecycle.HiltViewModel

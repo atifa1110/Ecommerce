@@ -1,7 +1,7 @@
 package com.example.core.util
 
 object Constant {
-    const val BASE_URL = "http://172.17.20.151:5000/"
+    const val BASE_URL = "http://192.168.100.13:5000"
     const val API_KEY = "6f8856ed-9189-488f-9011-0ff4b6c08edc"
     const val AUTH_TOKEN = "ya29.a0AfB_byCrk3-WKCoC01HSwfonWy2CCHy8ucNnQnkh6dDeKvbffNxUikDqvOdl6CXurt3XNLJWHx2fl5k_GnPNNyHzNX8MQ9YsaSdvTILIEc03VD35j4sLmNHqN0-HOPVsqcc7UnBctxCR9BfF6iJd91s6zOJkqOq6WajQaCgYKAXYSARMSFQGOcNnCB0LG-_-9TddwRc6gba21Og0171"
     const val AUTHORIZATION =

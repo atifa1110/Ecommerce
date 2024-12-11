@@ -9,7 +9,7 @@ import com.example.core.api.response.FulfillmentResponse
 import com.example.core.api.response.RatingResponse
 import com.example.core.api.response.TransactionResponse
 import com.example.core.room.cart.CartItem
-import com.example.ecommerce.api.repository.PaymentRepository
+import com.example.ecommerce.repository.PaymentRepository
 import junit.framework.TestCase.assertEquals
 import kotlinx.coroutines.runBlocking
 import org.junit.Before

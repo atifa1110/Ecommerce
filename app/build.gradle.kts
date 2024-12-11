@@ -12,7 +12,7 @@ plugins {
 
 android {
     namespace = "com.example.ecommerce"
-    compileSdk = 33
+    compileSdk = 35
 
     defaultConfig {
         applicationId = "com.example.ecommerce"
@@ -136,6 +136,7 @@ dependencies {
     implementation("androidx.test:core-ktx:1.5.0")
     implementation("androidx.test.ext:junit-ktx:1.1.5")
     implementation("com.google.firebase:firebase-crashlytics-ktx:18.4.3")
+    implementation("androidx.core:core-ktx:+")
     testImplementation(project(mapOf("path" to ":core")))
     androidTestImplementation("androidx.test:runner:1.5.2")
     androidTestImplementation("androidx.test.ext:junit:1.1.5")
@@ -225,13 +226,14 @@ dependencies {
     testImplementation("com.google.truth:truth:1.1.3")
 
     //Roboelectric
-    testImplementation("android.arch.core:core-testing:1.1.0")
+    testImplementation("android.arch.core:core-testing:1.1.1")
     androidTestImplementation("android.arch.core:core-testing:1.1.1")
 
     //Windows size
-    implementation("androidx.compose.material3:material3-window-size-class:1.1.2")
+    implementation("androidx.compose.material3:material3-window-size-class:1.2.1")
 
     testImplementation(kotlin("test"))
+
     //Mockito
     testImplementation("junit:junit:4.13.2")
     testImplementation("org.robolectric:robolectric:4.9")

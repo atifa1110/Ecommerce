@@ -9,7 +9,7 @@ import com.example.core.api.response.RegisterResponse
 import com.example.core.datastore.DataStoreRepository
 import com.example.core.firebase.MessagingRepository
 import com.example.core.util.Constant
-import com.example.ecommerce.api.repository.AuthRepository
+import com.example.ecommerce.repository.AuthRepository
 import com.example.ecommerce.auth.register.RegisterViewModel
 import com.example.ecommerce.firebase.AnalyticsRepository
 import com.example.ecommerce.util.MainDispatcherRule

@@ -50,5 +50,5 @@ data class Cart (
 
 @Parcelize
 data class ListCheckout(
-    val listCheckout: List<com.example.core.room.cart.Cart> = emptyList()
+    val listCheckout: List<Cart> = emptyList()
 ) : Parcelable

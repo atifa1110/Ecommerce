@@ -6,7 +6,7 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.example.core.api.response.BaseResponse
 import com.example.core.api.response.ProfileResponse
 import com.example.core.datastore.DataStoreRepository
-import com.example.ecommerce.api.repository.AuthRepository
+import com.example.ecommerce.repository.AuthRepository
 import com.example.ecommerce.auth.profile.ProfileViewModel
 import com.example.ecommerce.firebase.AnalyticsRepository
 import com.example.ecommerce.util.MainDispatcherRule

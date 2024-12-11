@@ -13,6 +13,7 @@ import com.example.core.api.model.FulfillmentType
 import com.example.core.api.model.Item
 import com.example.core.api.model.ProductType
 import com.example.core.room.cart.ListCheckout
+import com.example.ecommerce.NavigationType
 import com.example.ecommerce.auth.profile.ProfileRoute
 import com.example.ecommerce.main.cart.CartScreen
 import com.example.ecommerce.main.checkout.CheckoutScreen
@@ -28,7 +29,7 @@ import com.example.screen.ModularScreen
 fun NavGraphBuilder.mainNavGraph(
     navController: NavHostController,
     isProfile: String,
-    windowSizeClass: WindowSizeClass
+    navigationType: NavigationType
 ) {
     navigation(
         route = Graph.Main.route,
@@ -70,7 +71,7 @@ fun NavGraphBuilder.mainNavGraph(
                 onNavigateToModular = {
                     navController.navigate(Main.Modular.route)
                 },
-                windowSizeClass
+                navigationType = navigationType
             )
         }
 

@@ -1,5 +1,6 @@
 package com.example.ecommerce.boarding
 
+import android.content.res.Configuration
 import androidx.compose.animation.ExperimentalAnimationApi
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -22,6 +23,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.tooling.preview.Devices
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -41,7 +43,7 @@ fun onBoardingScreen(
     onNavigateToRegister: () -> Unit,
     onNavigateToLogin: () -> Unit
 ) {
-    val onBoardingViewModel: OnBoardingViewModel = hiltViewModel()
+    //val onBoardingViewModel: OnBoardingViewModel = hiltViewModel()
     val pages = listOf(OnBoardingPage.First, OnBoardingPage.Second, OnBoardingPage.Third)
     val pagerState = rememberPagerState()
     val scope = rememberCoroutineScope()
@@ -65,7 +67,7 @@ fun onBoardingScreen(
         Button(
             onClick = {
                 onNavigateToRegister()
-                onBoardingViewModel.buttonAnalytics("Join Button")
+                //onBoardingViewModel.buttonAnalytics("Join Button")
             },
             modifier = Modifier
                 .fillMaxWidth()
@@ -93,7 +95,7 @@ fun onBoardingScreen(
                 TextButton(
                     onClick = {
                         onNavigateToLogin()
-                        onBoardingViewModel.buttonAnalytics("Skip Button")
+                       // onBoardingViewModel.buttonAnalytics("Skip Button")
                     },
                     modifier = Modifier
                 ) {
@@ -153,8 +155,9 @@ fun PagerScreen(onBoardingPage: OnBoardingPage) {
 
 @ExperimentalAnimationApi
 @ExperimentalPagerApi
+@Preview("Light Mode", device = Devices.PIXEL_3)
+@Preview("Dark Mode", uiMode = Configuration.UI_MODE_NIGHT_YES)
 @Composable
-@Preview(showBackground = true)
 fun OnBoardingPreview() {
     onBoardingScreen(onNavigateToRegister = { }) {}
 }

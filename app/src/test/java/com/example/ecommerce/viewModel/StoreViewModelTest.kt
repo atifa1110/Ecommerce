@@ -1,6 +1,6 @@
 package com.example.ecommerce.viewModel
 
-import android.arch.core.executor.testing.InstantTaskExecutorRule
+import androidx.arch.core.executor.testing.InstantTaskExecutorRule
 import androidx.lifecycle.MutableLiveData
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.example.core.api.model.RefreshToken
@@ -8,8 +8,8 @@ import com.example.core.api.response.BaseResponse
 import com.example.core.api.response.RefreshResponse
 import com.example.core.api.response.SearchResponse
 import com.example.core.util.Constant
-import com.example.ecommerce.api.repository.AuthRepository
-import com.example.ecommerce.api.repository.ProductRepository
+import com.example.ecommerce.repository.AuthRepository
+import com.example.ecommerce.repository.ProductRepository
 import com.example.ecommerce.firebase.AnalyticsRepository
 import com.example.ecommerce.main.store.StoreViewModel
 import com.example.ecommerce.util.MainDispatcherRule

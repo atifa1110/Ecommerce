@@ -8,7 +8,7 @@ import com.example.core.api.request.AuthRequest
 import com.example.core.api.response.BaseResponse
 import com.example.core.api.response.RegisterResponse
 import com.example.core.firebase.MessagingRepository
-import com.example.ecommerce.api.repository.AuthRepository
+import com.example.ecommerce.repository.AuthRepository
 import com.example.ecommerce.firebase.AnalyticsRepository
 import com.google.firebase.messaging.FirebaseMessaging
 import dagger.hilt.android.lifecycle.HiltViewModel

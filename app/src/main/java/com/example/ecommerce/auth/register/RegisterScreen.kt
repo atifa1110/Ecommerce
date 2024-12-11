@@ -1,5 +1,6 @@
 package com.example.ecommerce.auth.register
 
+import android.content.res.Configuration
 import android.util.Log
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
@@ -16,7 +17,9 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -25,11 +28,13 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.tooling.preview.Devices
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -42,8 +47,10 @@ import com.example.ecommerce.auth.login.DividerButton
 import com.example.ecommerce.auth.login.EmailComponent
 import com.example.ecommerce.auth.login.PasswordComponent
 import com.example.ecommerce.auth.login.TextTermCondition
+import com.example.ecommerce.auth.profile.ProfileScreen
 import com.example.ecommerce.component.ProgressDialog
 import com.example.ecommerce.component.ToastMessage
+import com.example.ecommerce.ui.theme.EcommerceTheme
 import com.example.ecommerce.ui.theme.Purple
 
 @OptIn(ExperimentalComposeUiApi::class)
@@ -55,7 +62,6 @@ fun RegisterScreen(
 ) {
     val context = LocalContext.current
     val lifecycleOwner = LocalLifecycleOwner.current
-    val keyboardController = LocalSoftwareKeyboardController.current
     var isDialog by remember { mutableStateOf(false) }
 
     if (isDialog) ProgressDialog()
@@ -92,6 +98,37 @@ fun RegisterScreen(
         }
     }
 
+    RegisterContent(
+        email = email,
+        emailError = emailError,
+        password = password,
+        passwordError = passwordError,
+        onLoginClick = { onLoginClick() },
+        registerUser = {
+            registerViewModel.registerUser(
+                Constant.API_KEY,
+                AuthRequest(email.value, password.value, fcmToken!!)
+            )
+        },
+        buttonAnalytics = { button ->
+            registerViewModel.buttonAnalytics(button)
+        }
+    )
+
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun RegisterContent(
+    email : MutableState<String>,
+    emailError : MutableState<Boolean>,
+    password : MutableState<String>,
+    passwordError : MutableState<Boolean>,
+    onLoginClick: () -> Unit,
+    registerUser: () -> Unit,
+    buttonAnalytics: (button: String) -> Unit,
+){
+    val keyboardController = LocalSoftwareKeyboardController.current
     Scaffold(
         topBar = {
             Column {
@@ -99,9 +136,11 @@ fun RegisterScreen(
                     title = {
                         Text(
                             stringResource(id = R.string.register),
-                            style = MaterialTheme.typography.titleLarge
+                            style = MaterialTheme.typography.titleLarge,
+                            color = MaterialTheme.colorScheme.surface
                         )
-                    }
+                    },
+                    colors = TopAppBarDefaults.centerAlignedTopAppBarColors(containerColor = MaterialTheme.colorScheme.background)
                 )
                 Divider()
             }
@@ -131,16 +170,16 @@ fun RegisterScreen(
             Button(
                 onClick = {
                     keyboardController?.hide()
-                    registerViewModel.registerUser(
-                        Constant.API_KEY,
-                        AuthRequest(email.value, password.value, fcmToken!!)
-                    )
-                    registerViewModel.buttonAnalytics("Register Button")
+                    registerUser()
+                    buttonAnalytics("Register")
                 },
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(vertical = 16.dp),
-                colors = ButtonDefaults.buttonColors(Purple),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = Purple,
+                    contentColor = Color.White
+                ),
                 enabled = !emailError.value && !passwordError.value && email.value.isNotEmpty() && password.value.isNotEmpty()
             ) {
                 Text(
@@ -154,17 +193,16 @@ fun RegisterScreen(
             OutlinedButton(
                 onClick = {
                     onLoginClick()
-                    registerViewModel.buttonAnalytics("Login Button")
+                    buttonAnalytics("Login")
                 },
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(vertical = 16.dp),
-                enabled = true
             ) {
                 Text(
-                    color = Purple,
                     text = stringResource(id = R.string.login),
-                    fontWeight = FontWeight.W500
+                    fontWeight = FontWeight.W500,
+                    color = MaterialTheme.colorScheme.primary,
                 )
             }
 
@@ -173,10 +211,26 @@ fun RegisterScreen(
     }
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
-@Preview(showBackground = true)
+@Preview("Light Mode", device = Devices.PIXEL_3)
+@Preview("Dark Mode", uiMode = Configuration.UI_MODE_NIGHT_YES)
 fun RegisterPreview() {
-    RegisterScreen(onRegisterSubmitted = { /*TODO*/ }) {
+    val email = rememberSaveable { mutableStateOf("atifafiorenza24@gmail.com") }
+    val emailError = rememberSaveable { mutableStateOf(false) }
+
+    val password = rememberSaveable { mutableStateOf("12345678") }
+    val passwordError = rememberSaveable { mutableStateOf(false) }
+
+    EcommerceTheme {
+        RegisterContent(
+            email = email,
+            emailError = emailError,
+            password = password,
+            passwordError = passwordError,
+            onLoginClick = {},
+            registerUser = {},
+            buttonAnalytics =  {}
+        )
     }
 }
+

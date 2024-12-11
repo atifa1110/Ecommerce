@@ -3,6 +3,7 @@ package com.example.ecommerce.graph
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.material.ExperimentalMaterialApi
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ListAlt
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.ListAlt
@@ -13,7 +14,7 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
-import com.example.ecommerce.main.home.HomeRoute
+import com.example.ecommerce.main.home.HomeScreen
 import com.example.ecommerce.main.store.StoreScreen
 import com.example.ecommerce.main.transaction.TransactionScreen
 import com.example.ecommerce.main.wishlist.WishListScreen
@@ -36,7 +37,7 @@ fun HomeNavigation(
         startDestination = Bottom.Home.route
     ) {
         composable(Bottom.Home.route) {
-            HomeRoute(
+            HomeScreen(
                 onLogoutClick = {
                     onLogoutClick()
                 }
@@ -63,9 +64,15 @@ fun HomeNavigation(
     }
 }
 
-sealed class Bottom(var title: String, var icon: ImageVector, var route: String) {
-    object Home : Bottom("Home", Icons.Default.Home, "home")
-    object Store : Bottom("Store", Icons.Default.Store, "store")
-    object Wishlist : Bottom("Wishlist", Icons.Default.Favorite, "wishlist")
-    object Transaction : Bottom("Transaction", Icons.Default.ListAlt, "transaction")
+sealed class Bottom(
+    var title: String,
+    var selectedIcon: ImageVector,
+    var unselectedIcon : ImageVector,
+    var route: String
+) {
+    object Home : Bottom("Home", Icons.Default.Home, Icons.Filled.Home,"home")
+    object Store : Bottom("Store", Icons.Default.Store, Icons.Filled.Store,"store")
+    object Wishlist : Bottom("Wishlist", Icons.Default.Favorite, Icons.Filled.Favorite,"wishlist")
+    object Transaction : Bottom("Transaction",
+        Icons.AutoMirrored.Default.ListAlt, Icons.AutoMirrored.Filled.ListAlt,"transaction")
 }

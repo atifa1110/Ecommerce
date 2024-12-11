@@ -1,5 +1,6 @@
 package com.example.ecommerce.main.status
 
+import android.content.res.Configuration
 import android.util.Log
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -17,11 +18,11 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.material.IconButton
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Star
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
@@ -35,6 +36,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.getValue
@@ -51,6 +53,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.tooling.preview.Devices
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -59,12 +62,12 @@ import com.example.core.api.model.Fulfillment
 import com.example.core.api.model.Rating
 import com.example.core.api.response.BaseResponse
 import com.example.ecommerce.R
+import com.example.ecommerce.main.data.fulfillment
 import com.example.ecommerce.main.detail.currency
+import com.example.ecommerce.ui.theme.EcommerceTheme
 import com.example.ecommerce.ui.theme.LightPurple
 import com.example.ecommerce.ui.theme.Purple
-import com.example.ecommerce.ui.theme.textColor
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun StatusScreen(
     fulfillment: Fulfillment?,
@@ -88,18 +91,50 @@ fun StatusScreen(
 
             is BaseResponse.Success -> {
                 isLoading = false
-                result = it.data!!.message
+                result = it.data?.message?:""
                 onNavigateToHome()
             }
 
             is BaseResponse.Error -> {
                 isLoading = false
-                // ToastMessage().showMsg(context,it.msg.toString())
             }
 
             else -> {}
         }
     }
+    StatusContent(
+        onNavigateToHome = { onNavigateToHome() },
+        ratingStatus = {
+            statusViewModel.ratingStatus(
+                Rating(
+                    invoiceId = fulfillment?.invoiceId?:"",
+                    rating = ratingState.value,
+                    review = inputReview.value
+                )
+            )
+        },
+        buttonDoneAnalytics = {
+            statusViewModel.buttonAnalytics("Done")
+        },
+        isLoading = isLoading,
+        ratingState = ratingState,
+        inputReview = inputReview,
+        fulfillment = fulfillment
+    )
+
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun StatusContent(
+    onNavigateToHome: () -> Unit,
+    ratingStatus: () -> Unit,
+    buttonDoneAnalytics: () -> Unit,
+    isLoading : Boolean,
+    ratingState: MutableState<Int>,
+    inputReview: MutableState<String>,
+    fulfillment: Fulfillment?
+){
     Scaffold(
         topBar = {
             Column {
@@ -107,16 +142,16 @@ fun StatusScreen(
                     title = {
                         Text(
                             stringResource(id = R.string.status),
-                            fontSize = 22.sp,
-                            color = textColor,
-                            fontWeight = FontWeight.Normal
+                            style = MaterialTheme.typography.titleLarge,
+                            color = MaterialTheme.colorScheme.surface
                         )
                     },
+                    colors = TopAppBarDefaults.centerAlignedTopAppBarColors(containerColor = MaterialTheme.colorScheme.background),
                     navigationIcon = {
                         IconButton(onClick = {
                             onNavigateToHome()
                         }) {
-                            Icon(Icons.Default.ArrowBack, "back button")
+                            Icon(Icons.AutoMirrored.Filled.ArrowBack, "back button")
                         }
                     }
                 )
@@ -138,16 +173,13 @@ fun StatusScreen(
                     Button(
                         modifier = Modifier.fillMaxWidth(),
                         onClick = {
-                            statusViewModel.ratingStatus(
-                                Rating(
-                                    fulfillment!!.invoiceId,
-                                    ratingState.value,
-                                    inputReview.value
-                                )
-                            )
-                            statusViewModel.buttonAnalytics("Done Button")
+                            ratingStatus()
+                            buttonDoneAnalytics()
                         },
-                        colors = ButtonDefaults.buttonColors(Purple)
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = Purple,
+                            contentColor = Color.White
+                        )
                     ) {
                         Text(
                             text = stringResource(id = R.string.done),
@@ -164,10 +196,9 @@ fun StatusScreen(
                 .padding(it)
         ) {
             if (isLoading) {
-                Column(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .background(Color.White),
+                Column(modifier = Modifier
+                    .background(MaterialTheme.colorScheme.background)
+                    .fillMaxSize(),
                     horizontalAlignment = Alignment.CenterHorizontally,
                     verticalArrangement = Arrangement.Center,
                 ) {
@@ -180,12 +211,13 @@ fun StatusScreen(
                     Card(
                         modifier = Modifier.padding(top = 30.dp),
                         shape = RoundedCornerShape(8.dp),
-                        elevation = CardDefaults.cardElevation(3.dp)
+                        elevation = CardDefaults.cardElevation(3.dp),
+                        colors = CardDefaults.cardColors(
+                            containerColor = MaterialTheme.colorScheme.primaryContainer
+                        )
                     ) {
-                        Column(
-                            modifier = Modifier
-                                .background(Color.White)
-                                .padding(top = 40.dp, start = 16.dp, end = 16.dp, bottom = 16.dp)
+                        Column(modifier = Modifier
+                            .padding(top = 40.dp, start = 16.dp, end = 16.dp, bottom = 16.dp)
                         ) {
                             Column(
                                 modifier = Modifier.fillMaxWidth(),
@@ -193,7 +225,7 @@ fun StatusScreen(
                             ) {
                                 Text(
                                     text = stringResource(id = R.string.payment_success),
-                                    color = Purple,
+                                    color = MaterialTheme.colorScheme.primary,
                                     fontSize = 20.sp,
                                     fontWeight = FontWeight.W600
                                 )
@@ -270,7 +302,7 @@ fun StatusScreen(
                         horizontalArrangement = Arrangement.End
                     ) {
                         Text(
-                            text = fulfillment!!.invoiceId,
+                            text = fulfillment?.invoiceId?:"",
                             fontSize = 12.sp,
                             fontWeight = FontWeight.W600
                         )
@@ -289,7 +321,7 @@ fun StatusScreen(
                         modifier = Modifier.weight(1f),
                         horizontalArrangement = Arrangement.End
                     ) {
-                        Text(text = "Berhasil", fontSize = 12.sp, fontWeight = FontWeight.W600)
+                        Text(text = stringResource(R.string.Success), fontSize = 12.sp, fontWeight = FontWeight.W600)
                     }
                 }
 
@@ -306,7 +338,7 @@ fun StatusScreen(
                         horizontalArrangement = Arrangement.End
                     ) {
                         Text(
-                            text = fulfillment!!.date,
+                            text = fulfillment?.date?:"",
                             fontSize = 12.sp,
                             fontWeight = FontWeight.W600
                         )
@@ -326,7 +358,7 @@ fun StatusScreen(
                         horizontalArrangement = Arrangement.End
                     ) {
                         Text(
-                            text = fulfillment!!.time,
+                            text = fulfillment?.time?:"",
                             fontSize = 12.sp,
                             fontWeight = FontWeight.W600
                         )
@@ -346,7 +378,7 @@ fun StatusScreen(
                         horizontalArrangement = Arrangement.End
                     ) {
                         Text(
-                            text = fulfillment!!.payment,
+                            text = fulfillment?.payment?:"",
                             fontSize = 12.sp,
                             fontWeight = FontWeight.W600
                         )
@@ -420,7 +452,7 @@ fun TextField(
             input.value = it
         },
         textStyle = MaterialTheme.typography.bodyMedium,
-        keyboardOptions = KeyboardOptions.Default.copy(
+        keyboardOptions = KeyboardOptions(
             imeAction = imeAction,
             keyboardType = KeyboardType.Text
         ),
@@ -432,8 +464,22 @@ fun TextField(
     )
 }
 
+
+@Preview("Light Mode", device = Devices.PIXEL_3)
+@Preview("Dark Mode", uiMode = Configuration.UI_MODE_NIGHT_YES)
 @Composable
-@Preview(showBackground = true)
 fun StatusScreenPreview() {
-    StatusScreen(null, {})
+    val ratingState = remember { mutableStateOf(0) }
+    val inputReview = remember { mutableStateOf("") }
+    EcommerceTheme {
+        StatusContent(
+            onNavigateToHome = {},
+            ratingStatus = {},
+            buttonDoneAnalytics = {},
+            isLoading = false,
+            ratingState = ratingState,
+            inputReview = inputReview,
+            fulfillment = fulfillment
+        )
+    }
 }

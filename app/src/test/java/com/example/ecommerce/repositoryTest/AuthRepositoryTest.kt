@@ -8,7 +8,7 @@ import com.example.core.api.response.ProfileResponse
 import com.example.core.api.response.RefreshResponse
 import com.example.core.api.response.RegisterResponse
 import com.example.core.util.Constant
-import com.example.ecommerce.api.repository.AuthRepository
+import com.example.ecommerce.repository.AuthRepository
 import junit.framework.TestCase.assertEquals
 import kotlinx.coroutines.runBlocking
 import okhttp3.MultipartBody

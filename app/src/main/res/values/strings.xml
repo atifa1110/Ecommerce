@@ -98,4 +98,19 @@
     <string name="purchased_items">Purchased items</string>
     <string name="item">Items</string>
     <string name="cartplus">+ Cart</string>
+    <string name="Success">Berhasil</string>
+
+    <string name="bca_virtual_account">BCA Virtual Account</string>
+    <string name="bni_virtual_account">BNI Virtual Account</string>
+    <string name="bri_virtual_account">BRI Virtual Account</string>
+    <string name="mandiri_virtual_account">Mandiri Virtual Account</string>
+    <string name="bank_bca">Bank BCA</string>
+    <string name="bank_bni">Bank BNI</string>
+    <string name="bank_bri">Bank BRI</string>
+    <string name="bank_mandiri_virtual_account">Bank Mandiri Virtual Account</string>
+    <string name="gopay">Gopay</string>
+    <string name="ovo">OVO</string>
+    <string name="instant_payment">Pembayaran Instan</string>
+    <string name="transfer_virtual_account">Transfer Virtual Account</string>
+    <string name="transfer_bank">Transfer Bank</string>
 </resources>

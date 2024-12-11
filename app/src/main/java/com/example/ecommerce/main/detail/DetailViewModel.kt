@@ -9,7 +9,7 @@ import com.example.core.api.model.ProductVariant
 import com.example.core.api.response.BaseResponse
 import com.example.core.api.response.DetailResponse
 import com.example.core.room.cart.Cart
-import com.example.ecommerce.api.repository.ProductRepository
+import com.example.ecommerce.repository.ProductRepository
 import com.example.ecommerce.firebase.AnalyticsRepository
 import com.example.ecommerce.room.cart.CartRepository
 import com.example.ecommerce.room.favorite.FavoriteRepository

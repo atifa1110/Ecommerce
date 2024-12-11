@@ -13,8 +13,7 @@ class HeaderInterceptor @Inject constructor(
 ) : Interceptor{
 
     override fun intercept(chain: Interceptor.Chain): Response {
-        var newRequest =
-            chain.request().newBuilder().addHeader("Authorization", getAccessToken()).build()
+        var newRequest = chain.request().newBuilder().addHeader("Authorization", getAccessToken()).build()
         if (newRequest.headers("API_KEY").isNotEmpty()) {
             newRequest = chain.request().newBuilder().addHeader("Authorization", "").build()
         }

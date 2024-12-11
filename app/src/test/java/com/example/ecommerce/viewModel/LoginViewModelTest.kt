@@ -1,15 +1,16 @@
 package com.example.ecommerce.viewModel
 
-import android.arch.core.executor.testing.InstantTaskExecutorRule
+import androidx.arch.core.executor.testing.InstantTaskExecutorRule
 import androidx.lifecycle.MutableLiveData
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.example.core.api.request.AuthRequest
 import com.example.core.api.response.BaseResponse
 import com.example.core.api.response.FirebaseResponse
 import com.example.core.api.response.LoginResponse
+import com.example.core.datastore.DataStoreRepository
 import com.example.core.firebase.MessagingRepository
 import com.example.core.util.Constant
-import com.example.ecommerce.api.repository.AuthRepository
+import com.example.ecommerce.repository.AuthRepository
 import com.example.ecommerce.auth.login.LoginViewModel
 import com.example.ecommerce.firebase.AnalyticsRepository
 import com.example.ecommerce.util.MainDispatcherRule
@@ -36,7 +37,7 @@ class LoginViewModelTest {
     val mainDispatcherRule = MainDispatcherRule()
 
     private lateinit var loginRepository: AuthRepository
-    private lateinit var repository: com.example.core.datastore.DataStoreRepository
+    private lateinit var repository: DataStoreRepository
     private lateinit var messagingRepository: MessagingRepository
     private lateinit var analyticsRepository: AnalyticsRepository
     private lateinit var loginViewModel: LoginViewModel

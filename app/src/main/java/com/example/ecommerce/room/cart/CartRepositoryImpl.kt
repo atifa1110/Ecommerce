@@ -3,6 +3,7 @@ package com.example.ecommerce.room.cart
 import android.util.Log
 import com.example.core.api.model.ProductDetail
 import com.example.core.api.model.ProductVariant
+import com.example.core.room.cart.Cart
 import com.example.core.room.cart.toEntity
 import com.example.core.room.favorite.Favorite
 import com.example.core.room.favorite.toEntityCart
@@ -40,7 +41,7 @@ class CartRepositoryImpl(
     override suspend fun addFavoriteToCart(favorite: Favorite) {
         CoroutineScope(Dispatchers.IO).launch {
             val cart = localDataSource.findById(favorite.productId)
-            if (cart == null) {
+            if (cart.productId.isEmpty()) {
                 localDataSource.addToCart(favorite.toEntityCart())
             } else {
                 localDataSource.updateQuantity(favorite.productId, favorite.quantity)
@@ -57,11 +58,11 @@ class CartRepositoryImpl(
         }
     }
 
-    override fun getAllSelected(): Flow<List<com.example.core.room.cart.Cart>> {
+    override fun getAllSelected(): Flow<List<Cart>> {
         return localDataSource.getSelected()
     }
 
-    override fun getAllCarts(): Flow<List<com.example.core.room.cart.Cart>> =
+    override fun getAllCarts(): Flow<List<Cart>> =
         localDataSource.getAllCart()
 
     override suspend fun deleteById(id: String) {

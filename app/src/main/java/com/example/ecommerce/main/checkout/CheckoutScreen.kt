@@ -1,5 +1,6 @@
 package com.example.ecommerce.main.checkout
 
+import android.content.res.Configuration
 import android.net.Uri
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
@@ -19,11 +20,11 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.IconButton
+import androidx.compose.material3.IconButton
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.AddCard
-import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.ArrowForwardIos
 import androidx.compose.material.icons.filled.Remove
 import androidx.compose.material3.Button
@@ -40,6 +41,7 @@ import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.getValue
@@ -54,6 +56,8 @@ import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.tooling.preview.Devices
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -66,12 +70,14 @@ import com.example.core.room.cart.Cart
 import com.example.core.room.cart.CartItem
 import com.example.core.room.cart.ListCheckout
 import com.example.ecommerce.R
+import com.example.ecommerce.main.data.itemPayment
+import com.example.ecommerce.main.data.mockCarts
 import com.example.ecommerce.main.detail.currency
+import com.example.ecommerce.ui.theme.EcommerceTheme
 import com.example.ecommerce.ui.theme.Purple
 import com.google.gson.Gson
 import kotlinx.coroutines.launch
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun CheckoutScreen(
     onNavigateBack: () -> Unit,
@@ -123,24 +129,254 @@ fun CheckoutScreen(
         }
     }
 
-    Scaffold(
-        snackbarHost = {
-            SnackbarHost(hostState = snackBarHostState)
+//    Scaffold(
+//        snackbarHost = {
+//            SnackbarHost(hostState = snackBarHostState)
+//        },
+//        topBar = {
+//            Column {
+//                TopAppBar(
+//                    title = {
+//                        Text(
+//                            stringResource(id = R.string.checkout),
+//                            style = MaterialTheme.typography.titleLarge,
+//                            color = MaterialTheme.colorScheme.surface
+//                        )
+//                    },
+//                    colors = TopAppBarDefaults.centerAlignedTopAppBarColors(containerColor = MaterialTheme.colorScheme.background),
+//                    navigationIcon = {
+//                        IconButton(onClick = {
+//                            onNavigateBack()
+//                        }) {
+//                            Icon(Icons.Default.ArrowBack, "back button")
+//                        }
+//                    }
+//                )
+//                Divider()
+//            }
+//        },
+//        bottomBar = {
+//            Divider()
+//            Row(
+//                modifier = Modifier.padding(16.dp),
+//                verticalAlignment = Alignment.CenterVertically
+//            ) {
+//                Column(
+//                    modifier = Modifier
+//                        .fillMaxWidth()
+//                        .weight(1f),
+//                    horizontalAlignment = Alignment.Start
+//                ) {
+//                    Text(
+//                        text = stringResource(id = R.string.total),
+//                        fontSize = 12.sp,
+//                        fontWeight = FontWeight.W400
+//                    )
+//
+//                    Text(
+//                        text = currency(total.value),
+//                        fontSize = 16.sp,
+//                        fontWeight = FontWeight.W600
+//                    )
+//                }
+//                Column(modifier = Modifier.fillMaxWidth()
+//                        .weight(1f),
+//                    horizontalAlignment = Alignment.End
+//                ) {
+//                    Button(
+//                        modifier = Modifier,
+//                        onClick = {
+//                            checkoutViewModel.fulfillment(
+//                                FulfillmentRequest(
+//                                    paymentItem!!.label,
+//                                    cartItem
+//                                )
+//                            )
+//                            checkoutViewModel.buttonAnalytics("Pay Button")
+//                        },
+//                        colors = ButtonDefaults.buttonColors(Purple),
+//                        enabled = paymentItem != null
+//                    ) {
+//                        Text(
+//                            text = stringResource(id = R.string.pay),
+//                            fontWeight = FontWeight.W500
+//                        )
+//                    }
+//                }
+//            }
+//        }
+//    ) {
+//        Column(
+//            modifier = Modifier
+//                .fillMaxSize()
+//                .padding(it)
+//        ) {
+//            if (isLoading) {
+//                Column(
+//                    modifier = Modifier
+//                        .fillMaxSize()
+//                        .background(Color.White),
+//                    horizontalAlignment = Alignment.CenterHorizontally,
+//                    verticalArrangement = Arrangement.Center,
+//                ) {
+//                    CircularProgressIndicator(color = Purple)
+//                }
+//            }
+//
+//            Column(modifier = Modifier.padding(16.dp)) {
+//                Text(
+//                    text = stringResource(id = R.string.purchased_items),
+//                    fontSize = 16.sp,
+//                    fontWeight = FontWeight.W500
+//                )
+//
+//                Spacer(modifier = Modifier.height(10.dp))
+//
+//                LazyColumn(
+//                    modifier = Modifier
+//                        .fillMaxWidth()
+//                ) {
+//                    items(checkoutItem) { item ->
+//                        CardCheckout(
+//                            cart = item,
+//                            addQuantity = { it ->
+//                                checkoutViewModel.addQuantity(item, it)
+//                            },
+//                            total,
+//                            item.quantity ?: 1,
+//                            checkoutItem
+//                        )
+//                    }
+//                }
+//            }
+//
+//            Divider(thickness = 4.dp)
+//
+//            Column(modifier = Modifier.padding(16.dp)) {
+//                Text(
+//                    text = stringResource(id = R.string.payment),
+//                    fontSize = 16.sp,
+//                    fontWeight = FontWeight.W500
+//                )
+//
+//                Spacer(modifier = Modifier.height(10.dp))
+//
+//                Card(
+//                    modifier = Modifier
+//                        .fillMaxWidth()
+//                        .clickable {
+//                            choosePayment()
+//                            checkoutViewModel.addPaymentInfo(paymentItem?.label ?: "")
+//                        },
+//                    shape = RoundedCornerShape(8.dp),
+//                    elevation = CardDefaults.cardElevation(3.dp)
+//                ) {
+//                    Column(
+//                        modifier = Modifier
+//                            .fillMaxWidth()
+//                            .background(Color.White)
+//                    ) {
+//                        Row(
+//                            modifier = Modifier
+//                                .fillMaxWidth()
+//                                .padding(16.dp)
+//                        ) {
+//                            Row(
+//                                modifier = Modifier.weight(1f),
+//                                horizontalArrangement = Arrangement.Start,
+//                                verticalAlignment = Alignment.CenterVertically
+//                            ) {
+//                                if (paymentItem == null) {
+//                                    Icon(
+//                                        imageVector = Icons.Default.AddCard,
+//                                        contentDescription = "Card"
+//                                    )
+//                                } else {
+//                                    AsyncImage(
+//                                        modifier = Modifier.size(48.dp, 32.dp),
+//                                        model = paymentItem.image,
+//                                        contentDescription = "Payment Image"
+//                                    )
+//                                }
+//
+//                                Spacer(modifier = Modifier.width(10.dp))
+//                                Text(
+//                                    text = if (paymentItem == null) stringResource(id = R.string.choose_payment) else paymentItem.label!!,
+//                                    fontSize = 14.sp,
+//                                    fontWeight = FontWeight.W500
+//                                )
+//                            }
+//                            Row(
+//                                horizontalArrangement = Arrangement.End
+//                            ) {
+//                                Icon(
+//                                    imageVector = Icons.Default.ArrowForwardIos,
+//                                    contentDescription = "Arrow"
+//                                )
+//                            }
+//                        }
+//                    }
+//                }
+//            }
+//        }
+//    }
+
+    CheckoutContent(
+        snackbarHost = { SnackbarHost(hostState = snackBarHostState) },
+        onNavigateBack = { onNavigateBack() },
+        paymentItem = paymentItem,
+        total = total,
+        fulfillment = {
+            checkoutViewModel.fulfillment(
+                FulfillmentRequest(paymentItem!!.label,cartItem)
+            )
         },
+        onButtonPayAnalytics = { checkoutViewModel.buttonAnalytics("Pay Button") },
+        isLoading = isLoading,
+        checkoutItem = checkoutItem,
+        addQuantity = { item, it ->
+            checkoutViewModel.addQuantity(item, it)
+        },
+        choosePayment = { choosePayment() },
+        addPaymentInfo = {
+            checkoutViewModel.addPaymentInfo(it)
+        }
+    )
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun CheckoutContent(
+    snackbarHost: @Composable () -> Unit,
+    onNavigateBack: () -> Unit,
+    paymentItem: Item?,
+    total: MutableState<Int>,
+    fulfillment : () -> Unit,
+    onButtonPayAnalytics : () -> Unit,
+    isLoading : Boolean,
+    checkoutItem: List<Cart>,
+    addQuantity: (item: Cart, quantity: Int) -> Unit,
+    choosePayment: () -> Unit,
+    addPaymentInfo: (label : String) -> Unit
+){
+    Scaffold(
+        snackbarHost = snackbarHost,
         topBar = {
             Column {
                 TopAppBar(
                     title = {
                         Text(
                             stringResource(id = R.string.checkout),
-                            style = MaterialTheme.typography.titleLarge
+                            style = MaterialTheme.typography.titleLarge,
+                            color = MaterialTheme.colorScheme.surface
                         )
                     },
+                    colors = TopAppBarDefaults.centerAlignedTopAppBarColors(containerColor = MaterialTheme.colorScheme.background),
                     navigationIcon = {
                         IconButton(onClick = {
                             onNavigateBack()
                         }) {
-                            Icon(Icons.Default.ArrowBack, "back button")
+                            Icon(Icons.AutoMirrored.Filled.ArrowBack, "back button")
                         }
                     }
                 )
@@ -180,15 +416,17 @@ fun CheckoutScreen(
                     Button(
                         modifier = Modifier,
                         onClick = {
-                            checkoutViewModel.fulfillment(
-                                FulfillmentRequest(
-                                    paymentItem!!.label,
-                                    cartItem
-                                )
-                            )
-                            checkoutViewModel.buttonAnalytics("Pay Button")
+                            // checkoutViewModel.fulfillment(
+                            // FulfillmentRequest(paymentItem!!.label,cartItem)
+                            // )
+                            // checkoutViewModel.buttonAnalytics("Pay Button")
+                            fulfillment()
+                            onButtonPayAnalytics()
                         },
-                        colors = ButtonDefaults.buttonColors(Purple),
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = Purple,
+                            contentColor = Color.White
+                        ),
                         enabled = paymentItem != null
                     ) {
                         Text(
@@ -226,16 +464,15 @@ fun CheckoutScreen(
 
                 Spacer(modifier = Modifier.height(10.dp))
 
-                LazyColumn(
-                    modifier = Modifier
+                LazyColumn(modifier = Modifier
                         .fillMaxWidth()
-                        .background(Color.White)
                 ) {
                     items(checkoutItem) { item ->
                         CardCheckout(
                             cart = item,
                             addQuantity = { it ->
-                                checkoutViewModel.addQuantity(item, it)
+                                //checkoutViewModel.addQuantity(item, it)
+                                addQuantity(item,it)
                             },
                             total,
                             item.quantity ?: 1,
@@ -256,25 +493,28 @@ fun CheckoutScreen(
 
                 Spacer(modifier = Modifier.height(10.dp))
 
-                Card(
-                    modifier = Modifier
+                Card(modifier = Modifier
                         .fillMaxWidth()
                         .clickable {
                             choosePayment()
-                            checkoutViewModel.addPaymentInfo(paymentItem?.label ?: "")
+                            //checkoutViewModel.addPaymentInfo(paymentItem?.label ?: "")
+                            addPaymentInfo(paymentItem?.label ?: "")
                         },
                     shape = RoundedCornerShape(8.dp),
-                    elevation = CardDefaults.cardElevation(3.dp)
+                    elevation = CardDefaults.cardElevation(3.dp),
+                    colors = CardDefaults.cardColors(
+                        containerColor = MaterialTheme.colorScheme.primaryContainer,
+                        contentColor = MaterialTheme.colorScheme.surface
+                    )
                 ) {
                     Column(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .background(Color.White)
                     ) {
-                        Row(
-                            modifier = Modifier
+                        Row(modifier = Modifier
                                 .fillMaxWidth()
-                                .padding(16.dp)
+                                .padding(16.dp),
+                            verticalAlignment = Alignment.CenterVertically
                         ) {
                             Row(
                                 modifier = Modifier.weight(1f),
@@ -296,7 +536,7 @@ fun CheckoutScreen(
 
                                 Spacer(modifier = Modifier.width(10.dp))
                                 Text(
-                                    text = if (paymentItem == null) stringResource(id = R.string.choose_payment) else paymentItem.label!!,
+                                    text = if (paymentItem == null) stringResource(id = R.string.choose_payment) else paymentItem.label?:"",
                                     fontSize = 14.sp,
                                     fontWeight = FontWeight.W500
                                 )
@@ -327,10 +567,15 @@ fun CardCheckout(
 ) {
     var count by remember { mutableStateOf(quantity) }
 
-    Row(modifier = Modifier.padding(vertical = 8.dp)) {
+    Row(modifier = Modifier.padding(vertical = 8.dp)
+        .background(MaterialTheme.colorScheme.background)) {
         Card(
             modifier = Modifier.size(80.dp),
-            shape = RoundedCornerShape(8.dp)
+            shape = RoundedCornerShape(8.dp),
+            colors = CardDefaults.cardColors(
+                containerColor = MaterialTheme.colorScheme.background,
+                contentColor = MaterialTheme.colorScheme.surface
+            )
         ) {
             Box(
                 modifier = Modifier.fillMaxSize(),
@@ -356,19 +601,21 @@ fun CardCheckout(
 
         Column(modifier = Modifier.fillMaxWidth()) {
             Text(
-                text = cart.productName!!,
+                text = cart.productName?:"",
                 maxLines = 1,
                 fontSize = 14.sp,
-                fontWeight = FontWeight.W500
+                fontWeight = FontWeight.W500,
+                color = MaterialTheme.colorScheme.surface
             )
             Text(
-                text = cart.productVariantName!!,
+                text = cart.productVariantName?:"",
                 fontSize = 10.sp,
-                fontWeight = FontWeight.W400
+                fontWeight = FontWeight.W400,
+                color = MaterialTheme.colorScheme.surface
             )
             Text(
                 text = if (cart.stock!! > 9) "Stok ${cart.stock}" else "Sisa ${cart.stock}",
-                color = if (cart.stock!! > 9) Color.Black else Color.Red,
+                color = if (cart.stock!! > 9) MaterialTheme.colorScheme.surface else Color.Red,
                 fontSize = 10.sp,
                 fontWeight = FontWeight.W400
             )
@@ -386,29 +633,27 @@ fun CardCheckout(
                     Text(
                         text = currency(variantTotal ?: 0),
                         fontSize = 14.sp,
-                        fontWeight = FontWeight.W500
+                        fontWeight = FontWeight.W500,
+                        color = MaterialTheme.colorScheme.surface
                     )
                 }
 
-                Row(
-                    modifier = Modifier
-                        .background(Color.White)
-                        .fillMaxWidth()
-                        .weight(1f),
+                Row(modifier = Modifier
+                    .fillMaxWidth()
+                    .weight(1f),
                     horizontalArrangement = Arrangement.End
                 ) {
-                    Card(
-                        modifier = Modifier
-                            .height(20.dp)
-                            .width(72.dp)
-                            .background(Color.White),
+                    Card(modifier = Modifier
+                        .height(20.dp)
+                        .width(72.dp),
                         shape = RoundedCornerShape(10.dp),
-                        border = BorderStroke(1.dp, Color.Gray)
+                        border = BorderStroke(1.dp, Color.Gray),
+                        colors = CardDefaults.cardColors(
+                            containerColor = MaterialTheme.colorScheme.background,
+                        )
                     ) {
-                        Row(
-                            modifier = Modifier
-                                .fillMaxSize()
-                                .background(Color.White),
+                        Row(modifier = Modifier
+                                .fillMaxSize(),
                             verticalAlignment = Alignment.CenterVertically,
                             horizontalArrangement = Arrangement.Center
                         ) {
@@ -468,5 +713,41 @@ fun CardCheckout(
                 }
             }
         }
+    }
+}
+
+@Preview("Light Mode", device = Devices.PIXEL_3)
+@Preview("Dark Mode", uiMode = Configuration.UI_MODE_NIGHT_YES)
+@Composable
+fun CardCheckoutPreview(){
+    val total = remember { mutableStateOf(1000000) }
+
+    EcommerceTheme {
+        CardCheckout(cart = mockCarts[0], addQuantity = {},
+            totalPrice = total, quantity = 2, checkoutItem = mockCarts)
+    }
+}
+
+@Preview("Light Mode", device = Devices.PIXEL_3)
+@Preview("Dark Mode", uiMode = Configuration.UI_MODE_NIGHT_YES)
+@Composable
+fun CheckOutContentPreview(){
+
+    val total = remember { mutableStateOf(12000000) }
+
+    EcommerceTheme {
+        CheckoutContent(
+            snackbarHost = { },
+            onNavigateBack = { },
+            paymentItem = itemPayment,
+            total = total,
+            fulfillment = { },
+            onButtonPayAnalytics = { },
+            isLoading = false,
+            checkoutItem = mockCarts,
+            addQuantity = { _, _ -> } ,
+            choosePayment = {},
+            addPaymentInfo = {}
+        )
     }
 }

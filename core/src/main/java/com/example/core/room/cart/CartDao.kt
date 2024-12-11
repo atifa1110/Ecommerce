@@ -9,19 +9,19 @@ import kotlinx.coroutines.flow.Flow
 @Dao
 interface CartDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
-    suspend fun addToCart(cart: com.example.core.room.cart.Cart)
+    suspend fun addToCart(cart: Cart)
 
     @Query("SELECT * FROM cart WHERE productId = :id")
-    fun findById(id: String): com.example.core.room.cart.Cart
+    fun findById(id: String): Cart
 
     @Query("SELECT * FROM cart Where selected = 1")
-    fun getSelected(): Flow<List<com.example.core.room.cart.Cart>>
+    fun getSelected(): Flow<List<Cart>>
 
     @Query("SELECT SUM((productPrice+productVariantPrice) * quantity) FROM cart WHERE selected = 1")
     suspend fun getTotal(): Int
 
     @Query("SELECT * FROM cart")
-    fun getAllCart(): Flow<List<com.example.core.room.cart.Cart>>
+    fun getAllCart(): Flow<List<Cart>>
 
     @Query("DELETE FROM cart WHERE productId = :id")
     suspend fun deleteById(id: String)

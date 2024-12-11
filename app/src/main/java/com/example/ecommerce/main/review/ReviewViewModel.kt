@@ -6,7 +6,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.core.api.response.BaseResponse
 import com.example.core.api.response.ReviewResponse
-import com.example.ecommerce.api.repository.ProductRepository
+import com.example.ecommerce.repository.ProductRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.launch
 import org.json.JSONObject

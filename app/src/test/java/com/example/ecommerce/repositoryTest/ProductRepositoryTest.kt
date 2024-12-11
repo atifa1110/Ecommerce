@@ -6,7 +6,7 @@ import com.example.core.api.model.ProductVariant
 import com.example.core.api.response.DetailResponse
 import com.example.core.api.response.ReviewResponse
 import com.example.core.api.response.SearchResponse
-import com.example.ecommerce.api.repository.ProductRepository
+import com.example.ecommerce.repository.ProductRepository
 import junit.framework.TestCase.assertEquals
 import kotlinx.coroutines.runBlocking
 import org.junit.Before

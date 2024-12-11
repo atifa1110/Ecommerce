@@ -1,5 +1,6 @@
 package com.example.ecommerce.main.payment
 
+import android.content.res.Configuration
 import android.util.Log
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -14,19 +15,22 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.material.IconButton
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.ArrowForwardIos
 import androidx.compose.material.icons.filled.AddCard
-import androidx.compose.material.icons.filled.ArrowBack
-import androidx.compose.material.icons.filled.ArrowForwardIos
 import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.Divider
+import androidx.compose.material.Divider
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -39,6 +43,8 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.tooling.preview.Devices
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -48,10 +54,10 @@ import com.example.core.api.model.Payment
 import com.example.core.api.response.BaseResponse
 import com.example.ecommerce.R
 import com.example.ecommerce.component.ToastMessage
+import com.example.ecommerce.main.data.mockPayments
+import com.example.ecommerce.ui.theme.EcommerceTheme
 import com.example.ecommerce.ui.theme.Purple
-import com.example.ecommerce.ui.theme.textColor
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun PaymentScreen(
     onNavigateBack: () -> Unit,
@@ -73,7 +79,6 @@ fun PaymentScreen(
             is BaseResponse.Success -> {
                 isLoading = false
                 result = it.data?.data ?: emptyList()
-                // ToastMessage().showMsg(context,it.data.toString())
             }
 
             is BaseResponse.Error -> {
@@ -85,6 +90,25 @@ fun PaymentScreen(
         }
     }
 
+    PaymentContent(
+        onNavigateBack = { onNavigateBack() },
+        onItemClick = { item->
+            onItemClick(item)
+        },
+        isLoading = isLoading ,
+        result = result
+    )
+
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun PaymentContent(
+    onNavigateBack: () -> Unit,
+    onItemClick: (payment: Item) -> Unit,
+    isLoading : Boolean,
+    result: List<Payment>
+){
     Scaffold(
         topBar = {
             Column {
@@ -92,16 +116,16 @@ fun PaymentScreen(
                     title = {
                         Text(
                             stringResource(id = R.string.choose_payment),
-                            fontSize = 22.sp,
-                            color = textColor,
-                            fontWeight = FontWeight.Normal
+                            style = MaterialTheme.typography.titleLarge,
+                            color = MaterialTheme.colorScheme.surface
                         )
                     },
+                    colors = TopAppBarDefaults.centerAlignedTopAppBarColors(containerColor = MaterialTheme.colorScheme.background),
                     navigationIcon = {
-                        IconButton(onClick = {
-                            onNavigateBack()
-                        }) {
-                            Icon(Icons.Default.ArrowBack, "back button")
+                        IconButton(onClick = { onNavigateBack() }
+                        ) {
+                            Icon(imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                                contentDescription = "Arrow Back")
                         }
                     }
                 )
@@ -109,16 +133,12 @@ fun PaymentScreen(
             }
         }
     ) {
-        Column(
-            modifier = Modifier
-                .padding(it)
-                .background(Color.White)
+        Column(modifier = Modifier.padding(it)
         ) {
             if (isLoading) {
                 Column(
                     modifier = Modifier
-                        .fillMaxSize()
-                        .background(Color.White),
+                        .fillMaxSize(),
                     horizontalAlignment = Alignment.CenterHorizontally,
                     verticalArrangement = Arrangement.Center,
                 ) {
@@ -140,10 +160,9 @@ fun PaymentScreen(
 @Composable
 fun PaymentComposable(payment: Payment, onItemClick: (payment: Item) -> Unit) {
     Column(modifier = Modifier) {
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(start = 16.dp, top = 16.dp)
+        Column(modifier = Modifier
+            .fillMaxWidth()
+            .padding(start = 16.dp, top = 16.dp)
         ) {
             Text(
                 text = payment.title,
@@ -172,7 +191,7 @@ fun CardPayment(item: Item, onItemClick: (payment: Item) -> Unit) {
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .background(if (item.status == false) Color.LightGray else Color.White)
+            .background(if (item.status == false) Color.LightGray else MaterialTheme.colorScheme.background)
     ) {
         Card(
             modifier = if (item.status == true) {
@@ -185,12 +204,15 @@ fun CardPayment(item: Item, onItemClick: (payment: Item) -> Unit) {
             } else
                 Modifier
                     .fillMaxWidth()
-                    .padding(start = 16.dp)
+                    .padding(start = 16.dp),
+            colors = CardDefaults.cardColors(
+                containerColor = if(item.status == false) Color.LightGray else MaterialTheme.colorScheme.background,
+                contentColor = MaterialTheme.colorScheme.surface
+            )
         ) {
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .background(if (item.status == false) Color.LightGray else Color.White)
             ) {
                 Row(
                     modifier = Modifier
@@ -230,7 +252,7 @@ fun CardPayment(item: Item, onItemClick: (payment: Item) -> Unit) {
                         horizontalArrangement = Arrangement.End
                     ) {
                         Icon(
-                            imageVector = Icons.Default.ArrowForwardIos,
+                            imageVector = Icons.AutoMirrored.Filled.ArrowForwardIos,
                             contentDescription = "Arrow"
                         )
                     }
@@ -238,5 +260,20 @@ fun CardPayment(item: Item, onItemClick: (payment: Item) -> Unit) {
             }
         }
         Divider(modifier = Modifier.padding(start = 16.dp))
+    }
+}
+
+
+@Preview("Light Mode", device = Devices.PIXEL_3)
+@Preview("Dark Mode", uiMode = Configuration.UI_MODE_NIGHT_YES)
+@Composable
+fun PaymentPreview(){
+    EcommerceTheme {
+       PaymentContent(
+           onNavigateBack = {}, 
+           onItemClick = {}, 
+           isLoading = false, 
+           result = mockPayments
+       )
     }
 }

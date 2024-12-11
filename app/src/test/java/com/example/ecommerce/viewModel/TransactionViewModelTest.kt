@@ -7,7 +7,7 @@ import com.example.core.api.model.Transaction
 import com.example.core.api.response.BaseResponse
 import com.example.core.api.response.TransactionResponse
 import com.example.core.room.cart.CartItem
-import com.example.ecommerce.api.repository.PaymentRepository
+import com.example.ecommerce.repository.PaymentRepository
 import com.example.ecommerce.firebase.AnalyticsRepository
 import com.example.ecommerce.main.transaction.TransactionViewModel
 import com.example.ecommerce.util.MainDispatcherRule

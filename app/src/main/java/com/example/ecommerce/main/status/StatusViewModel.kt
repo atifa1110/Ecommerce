@@ -7,7 +7,7 @@ import androidx.lifecycle.viewModelScope
 import com.example.core.api.model.Rating
 import com.example.core.api.response.BaseResponse
 import com.example.core.api.response.RatingResponse
-import com.example.ecommerce.api.repository.PaymentRepository
+import com.example.ecommerce.repository.PaymentRepository
 import com.example.ecommerce.firebase.AnalyticsRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers

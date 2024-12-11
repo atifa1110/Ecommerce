@@ -1,5 +1,6 @@
 package com.example.ecommerce.main.store
 
+import android.content.res.Configuration
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.slideInVertically
@@ -37,7 +38,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
-import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
@@ -45,14 +45,17 @@ import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
+import androidx.compose.ui.platform.SoftwareKeyboardController
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.tooling.preview.Devices
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.example.core.api.response.BaseResponse
+import com.example.ecommerce.ui.theme.EcommerceTheme
 
-@OptIn(ExperimentalComposeUiApi::class)
 @Composable
 fun SearchScreen(
     onCloseDialog: () -> Unit = {},
@@ -110,16 +113,43 @@ fun SearchScreen(
         focusRequester.requestFocus()
     }
 
+    SearchContent(
+        visible = visible,
+        focusRequester = focusRequester,
+        keyboardController = keyboardController,
+        searchProductList = {
+            storeViewModel.searchProductList(it)
+        },
+        searchText = searchText,
+        onCloseDialog = { onCloseDialog() },
+        setSearchText = { item ->
+            storeViewModel.setSearchText(item)
+        },
+        filteredResults = filteredResults
+    )
+}
+
+@Composable
+fun SearchContent(
+    visible : Boolean,
+    focusRequester: FocusRequester,
+    keyboardController: SoftwareKeyboardController?,
+    searchProductList: (text: String) -> Unit,
+    searchText: MutableState<String>,
+    onCloseDialog: () -> Unit,
+    setSearchText:(text : String) -> Unit,
+    filteredResults : List<String>
+){
+
     AnimatedVisibility(
         visible = visible,
         enter = slideInVertically(animationSpec = tween(durationMillis = 1000)),
         exit = slideOutVertically(animationSpec = tween(durationMillis = 1000))
     ) {
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .background(Color.White)
-                .padding(start = 2.dp)
+        Column(modifier = Modifier
+            .fillMaxSize()
+            .background(MaterialTheme.colorScheme.background)
+            .padding(start = 2.dp)
         ) {
             CustomSearchBar(
                 modifier = Modifier
@@ -130,20 +160,26 @@ fun SearchScreen(
                             keyboardController?.show()
                         }
                     },
-                storeViewModel,
+                //storeViewModel,
                 hint = "Search",
                 onSearch = {
-                    storeViewModel.searchProductList(it)
+                    //storeViewModel.searchProductList(it)
+                    searchProductList(it)
                 },
-                searchText,
-                onCloseDialog
+                searchText = searchText,
+                onCloseDialog = onCloseDialog,
+                setSearchText = {
+                    //storeViewModel.setSearchText(it)
+                    setSearchText(it)
+                }
             )
 
             filteredResults.forEach { item ->
                 ListItem(
                     modifier = Modifier.clickable {
                         searchText.value = item
-                        storeViewModel.setSearchText(item)
+                        //storeViewModel.setSearchText(item)
+                        setSearchText(item)
                         onCloseDialog()
                     },
                     headlineContent = {
@@ -177,20 +213,19 @@ fun SearchScreen(
 @Composable
 fun CustomSearchBar(
     modifier: Modifier = Modifier,
-    storeViewModel: StoreViewModel,
     hint: String = "Search",
     onSearch: (String) -> Unit,
     searchText: MutableState<String>,
-    onCloseDialog: () -> Unit
+    onCloseDialog: () -> Unit,
+    setSearchText:(text : String) -> Unit
 ) {
-    Box(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(
-                top = 16.dp,
-                start = 16.dp,
-                end = 16.dp
-            )
+    Box(modifier = Modifier
+        .fillMaxWidth()
+        .padding(
+            top = 16.dp,
+            start = 16.dp,
+            end = 16.dp
+        )
     ) {
         OutlinedTextField(
             modifier = modifier,
@@ -206,7 +241,8 @@ fun CustomSearchBar(
             ),
             keyboardActions = KeyboardActions(
                 onSearch = {
-                    storeViewModel.setSearchText(searchText.value)
+                    //storeViewModel.setSearchText(searchText.value)
+                    setSearchText(searchText.value)
                     onCloseDialog()
                 }
             ),
@@ -228,7 +264,7 @@ fun CustomSearchBar(
                     modifier = Modifier.clickable {
                         if (searchText.value.isNotEmpty()) {
                             searchText.value = ""
-                            storeViewModel.setSearchText("")
+                            setSearchText("")
                         } else {
                             onCloseDialog()
                         }
@@ -237,6 +273,29 @@ fun CustomSearchBar(
                     contentDescription = "close"
                 )
             }
+        )
+    }
+}
+
+@Preview("Light Mode", device = Devices.PIXEL_3)
+@Preview("Dark Mode", uiMode = Configuration.UI_MODE_NIGHT_YES)
+@Composable
+fun SearchScreenPreview(){
+    val searchText = remember { mutableStateOf("Lenovo") }
+    val focusRequester = remember { FocusRequester() }
+    val keyboardController = LocalSoftwareKeyboardController.current
+    val filteredResults = listOf("Lenovo 1","Lenovo 2", "Lenovo 3")
+
+    EcommerceTheme {
+        SearchContent(
+            visible = true,
+            focusRequester = focusRequester,
+            keyboardController = keyboardController,
+            searchProductList = {} ,
+            searchText = searchText,
+            onCloseDialog = { /*TODO*/ },
+            setSearchText = { },
+            filteredResults = filteredResults
         )
     }
 }

@@ -1,5 +1,6 @@
 package com.example.ecommerce.main.wishlist
 
+import android.content.res.Configuration
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -30,6 +31,7 @@ import androidx.compose.material.icons.filled.Star
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
@@ -45,9 +47,12 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.tooling.preview.Devices
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -55,8 +60,10 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil.compose.AsyncImage
 import com.example.core.room.favorite.Favorite
 import com.example.ecommerce.R
+import com.example.ecommerce.main.data.mockFavorites
 import com.example.ecommerce.main.detail.ErrorPage
 import com.example.ecommerce.main.detail.currency
+import com.example.ecommerce.ui.theme.EcommerceTheme
 import com.example.ecommerce.ui.theme.Purple
 import kotlinx.coroutines.launch
 
@@ -67,8 +74,10 @@ fun WishListScreen() {
     val snackBarHostState = remember { SnackbarHostState() }
     val uiState by wishViewModel.uiState.collectAsStateWithLifecycle()
     val favorite by uiState.favoriteList.collectAsStateWithLifecycle(emptyList())
-    var isClickedGrid by rememberSaveable { mutableStateOf(false) }
+    val isClickedGrid by rememberSaveable { mutableStateOf(false) }
     val isLoading by remember { mutableStateOf(false) }
+
+    val isFavorite = favorite.isEmpty()
 
     uiState.message?.let { message ->
         scope.launch {
@@ -76,20 +85,139 @@ fun WishListScreen() {
         }
     }
 
-    uiState.isLoading.let {
-    }
+    uiState.isLoading.let {}
 
-    Scaffold(
+//    Scaffold(
+//        snackbarHost = {
+//            SnackbarHost(hostState = snackBarHostState)
+//        },
+//    ) {
+//        Column(
+//            Modifier
+//                .padding(it)
+//                .padding(16.dp)
+//        ) {
+//            if (favorite.isEmpty()) {
+//                ErrorPage(
+//                    title = stringResource(id = R.string.empty),
+//                    message = stringResource(id = R.string.resource),
+//                    button = R.string.refresh,
+//                    onButtonClick = {},
+//                    alpha = 0F
+//                )
+//            }
+//
+//            Row(
+//                modifier = Modifier
+//                    .fillMaxWidth()
+//                    .padding(bottom = 10.dp)
+//            ) {
+//                Row(
+//                    modifier = Modifier.weight(1f),
+//                    horizontalArrangement = Arrangement.Start
+//                ) {
+//                    Text(
+//                        modifier = Modifier.fillMaxWidth(),
+//                        text = "${favorite.size} " + stringResource(id = R.string.item),
+//                        fontSize = 14.sp,
+//                        fontWeight = FontWeight.W400
+//                    )
+//                }
+//
+//                Row(
+//                    modifier = Modifier.weight(1f),
+//                    verticalAlignment = Alignment.CenterVertically,
+//                    horizontalArrangement = Arrangement.End
+//                ) {
+//                    Spacer(
+//                        modifier = Modifier
+//                            .height(24.dp)
+//                            .width(1.dp)
+//                            .background(Color.Gray)
+//                    )
+//                    Spacer(modifier = Modifier.width(10.dp))
+//                    Icon(
+//                        modifier = Modifier.clickable {
+//                            isClickedGrid = !isClickedGrid
+//                        },
+//                        imageVector = if (isClickedGrid) {
+//                            Icons.Default.GridView
+//                        } else Icons.Default.FormatListBulleted,
+//                        contentDescription = "List"
+//                    )
+//                }
+//            }
+//
+//            if (isClickedGrid) {
+//                LazyVerticalGrid(GridCells.Fixed(2)) {
+//                    items(favorite) { item ->
+//                        CardGrid(
+//                            favorite = item,
+//                            onDeleteFavorite = {
+//                                wishViewModel.deleteFavoriteById(it)
+//                            },
+//                            onAddToCart = {
+//                                wishViewModel.addFavoriteToCart(item)
+//                            }
+//                        )
+//                    }
+//                }
+//            } else {
+//                LazyColumn(modifier = Modifier.fillMaxSize()
+//                ) {
+//                    items(favorite) { item ->
+//                        CardList(
+//                            favorite = item,
+//                            onDeleteFavorite = { it ->
+//                                wishViewModel.deleteFavoriteById(it)
+//                            },
+//                            onAddToCart = {
+//                                wishViewModel.addFavoriteToCart(item)
+//                            }
+//                        )
+//                    }
+//                }
+//            }
+//        }
+//    }
+
+    WishListContent(
         snackbarHost = {
             SnackbarHost(hostState = snackBarHostState)
         },
+        isFavorite = isFavorite,
+        isClickedGrid = isClickedGrid,
+        favorite = favorite,
+        onAddToCart = { fav ->
+            wishViewModel.addFavoriteToCart(fav)
+        },
+        onDeleteFavorite = { id->
+            wishViewModel.deleteFavoriteById(id)
+        }
+    )
+}
+
+
+@Composable
+fun WishListContent(
+    snackbarHost: @Composable () -> Unit,
+    isFavorite : Boolean,
+    isClickedGrid : Boolean,
+    favorite : List<Favorite>,
+    onAddToCart: (favorite : Favorite) -> Unit,
+    onDeleteFavorite: (id: String) -> Unit
+){
+    var isClickedGrid by rememberSaveable { mutableStateOf(isClickedGrid) }
+
+    Scaffold(
+        snackbarHost = snackbarHost,
     ) {
         Column(
             Modifier
                 .padding(it)
                 .padding(16.dp)
         ) {
-            if (favorite.isEmpty()) {
+            if(isFavorite){
                 ErrorPage(
                     title = stringResource(id = R.string.empty),
                     message = stringResource(id = R.string.resource),
@@ -99,10 +227,9 @@ fun WishListScreen() {
                 )
             }
 
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(bottom = 10.dp)
+            Row(modifier = Modifier
+                .fillMaxWidth()
+                .padding(bottom = 10.dp)
             ) {
                 Row(
                     modifier = Modifier.weight(1f),
@@ -146,28 +273,30 @@ fun WishListScreen() {
                         CardGrid(
                             favorite = item,
                             onDeleteFavorite = {
-                                wishViewModel.deleteFavoriteById(it)
+                               //wishViewModel.deleteFavoriteById(it)
+                               onDeleteFavorite(it)
                             },
                             onAddToCart = {
-                                wishViewModel.addFavoriteToCart(item)
+                               // wishViewModel.addFavoriteToCart(item)
+                                onAddToCart(item)
                             }
                         )
                     }
                 }
             } else {
-                LazyColumn(
-                    modifier = Modifier
+                LazyColumn(modifier = Modifier
                         .fillMaxSize()
-                        .background(Color.White)
                 ) {
                     items(favorite) { item ->
                         CardList(
                             favorite = item,
-                            onDeleteFavorite = {
-                                wishViewModel.deleteFavoriteById(it)
+                            onDeleteFavorite = { it ->
+                               // wishViewModel.deleteFavoriteById(it)
+                                onDeleteFavorite(it)
                             },
                             onAddToCart = {
-                                wishViewModel.addFavoriteToCart(item)
+                               // wishViewModel.addFavoriteToCart(item)
+                                onAddToCart(item)
                             }
                         )
                     }
@@ -190,9 +319,13 @@ fun CardList(
             modifier = Modifier
                 .fillMaxWidth(),
             shape = RoundedCornerShape(8.dp),
-            elevation = CardDefaults.cardElevation(3.dp)
+            elevation = CardDefaults.cardElevation(3.dp),
+            colors = CardDefaults.cardColors(
+                containerColor = MaterialTheme.colorScheme.primaryContainer,
+                contentColor = MaterialTheme.colorScheme.surface
+            )
         ) {
-            Box(modifier = Modifier.background(Color.White)) {
+            Box {
                 Column(modifier = Modifier.padding(10.dp)) {
                     Row {
                         Card(
@@ -220,8 +353,7 @@ fun CardList(
                         }
                         Spacer(modifier = Modifier.width(8.dp))
 
-                        Column(
-                            modifier = Modifier
+                        Column(modifier = Modifier
                                 .fillMaxWidth()
                                 .padding(start = 10.dp)
                         ) {
@@ -284,19 +416,19 @@ fun CardList(
                                 .size(32.dp)
                                 .clickable {},
                             shape = RoundedCornerShape(8.dp),
-                            border = BorderStroke(1.dp, Color.Gray)
+                            border = BorderStroke(1.dp, Color.Gray),
+                            colors = CardDefaults.cardColors(
+                                containerColor = MaterialTheme.colorScheme.primaryContainer
+                            ),
                         ) {
-                            Box(
-                                modifier = Modifier
-                                    .fillMaxSize()
-                                    .background(Color.White),
+                            Box(modifier = Modifier.fillMaxSize(),
                                 contentAlignment = Alignment.Center
                             ) {
                                 Icon(
                                     modifier = Modifier.clickable {
                                         onDeleteFavorite(favorite.productId)
                                     },
-                                    tint = Purple,
+                                    tint = MaterialTheme.colorScheme.primary,
                                     imageVector = Icons.Default.DeleteOutline,
                                     contentDescription = "Delete Favorite"
                                 )
@@ -312,10 +444,10 @@ fun CardList(
                             onClick = { onAddToCart() },
                         ) {
                             Text(
-                                color = Purple,
                                 text = stringResource(id = R.string.cartplus),
                                 fontSize = 12.sp,
-                                fontWeight = FontWeight.W500
+                                fontWeight = FontWeight.W500,
+                                color = MaterialTheme.colorScheme.primary,
                             )
                         }
                     }
@@ -332,16 +464,16 @@ fun CardGrid(
     onDeleteFavorite: (id: String) -> Unit
 ) {
     Column(Modifier.padding(top = 5.dp, bottom = 5.dp, end = 5.dp)) {
-        Card(
-            modifier = Modifier
-                .width(186.dp)
-                .clickable {},
+        Card(modifier = Modifier.width(186.dp),
             shape = RoundedCornerShape(8.dp),
-            elevation = CardDefaults.cardElevation(3.dp)
+            elevation = CardDefaults.cardElevation(3.dp),
+            colors = CardDefaults.cardColors(
+                containerColor = MaterialTheme.colorScheme.primaryContainer,
+                contentColor = MaterialTheme.colorScheme.surface
+            )
         ) {
-            Column(Modifier.background(Color.White)) {
-                Card(
-                    modifier = Modifier.size(186.dp),
+            Column {
+                Card(modifier = Modifier.size(186.dp),
                     shape = RoundedCornerShape(
                         topEnd = 8.dp,
                         topStart = 8.dp,
@@ -349,21 +481,22 @@ fun CardGrid(
                         bottomStart = 0.dp
                     )
                 ) {
-                    Box(
-                        modifier = Modifier.fillMaxSize(),
+                    Box(modifier = Modifier.fillMaxSize(),
                         contentAlignment = Alignment.Center
                     ) {
                         if (favorite.image!!.isEmpty()) {
                             Image(
                                 modifier = Modifier.fillMaxSize(),
                                 painter = painterResource(id = R.drawable.thumbnail),
-                                contentDescription = "image"
+                                contentDescription = "image",
+                                contentScale = ContentScale.FillBounds
                             )
                         } else {
                             AsyncImage(
                                 modifier = Modifier.fillMaxSize(),
                                 model = favorite.image,
-                                contentDescription = "Favorite Image"
+                                contentDescription = "Favorite Image",
+                                contentScale = ContentScale.FillBounds
                             )
                         }
                     }
@@ -428,19 +561,20 @@ fun CardGrid(
                                 .size(32.dp)
                                 .clickable {},
                             shape = RoundedCornerShape(8.dp),
-                            border = BorderStroke(1.dp, Color.Gray)
+                            border = BorderStroke(1.dp, Color.Gray),
+                            colors = CardDefaults.cardColors(
+                                containerColor = MaterialTheme.colorScheme.primaryContainer,
+                            )
                         ) {
-                            Box(
-                                modifier = Modifier
-                                    .fillMaxSize()
-                                    .background(Color.White),
+                            Box(modifier = Modifier
+                                    .fillMaxSize(),
                                 contentAlignment = Alignment.Center
                             ) {
                                 Icon(
                                     modifier = Modifier.clickable {
                                         onDeleteFavorite(favorite.productId)
                                     },
-                                    tint = Purple,
+                                    tint = MaterialTheme.colorScheme.primary,
                                     imageVector = Icons.Default.DeleteOutline,
                                     contentDescription = "Delete Favorite"
                                 )
@@ -456,15 +590,62 @@ fun CardGrid(
                             onClick = { onAddToCart() },
                         ) {
                             Text(
-                                color = Purple,
-                                text = " + Keranjang",
+                                text = stringResource(R.string.cartplus),
                                 fontSize = 10.sp,
-                                fontWeight = FontWeight.W500
+                                fontWeight = FontWeight.W500,
+                                color = MaterialTheme.colorScheme.primary,
                             )
                         }
                     }
                 }
             }
         }
+    }
+}
+
+
+@Composable
+@Preview("Light Mode", device = Devices.PIXEL_3)
+fun CardPreview(){
+    EcommerceTheme {
+        Column {
+            CardList(favorite = mockFavorites[2],
+                onAddToCart = {}, onDeleteFavorite = {})
+
+            CardGrid(favorite = mockFavorites[2],
+                onAddToCart = {}, onDeleteFavorite = {})
+        }
+    }
+}
+
+@Composable
+@Preview("Light Mode", device = Devices.PIXEL_3)
+@Preview("Dark Mode", uiMode = Configuration.UI_MODE_NIGHT_YES)
+fun WishListGridPreview(){
+    EcommerceTheme {
+        WishListContent(
+            snackbarHost = { /*TODO*/ },
+            isFavorite = false,
+            isClickedGrid = true,
+            favorite = mockFavorites,
+            onAddToCart = {},
+            onDeleteFavorite = {}
+        )
+    }
+}
+
+@Composable
+@Preview("Light Mode", device = Devices.PIXEL_3)
+@Preview("Dark Mode", uiMode = Configuration.UI_MODE_NIGHT_YES)
+fun WishListListPreview(){
+    EcommerceTheme {
+        WishListContent(
+            snackbarHost = { /*TODO*/ },
+            isFavorite = false,
+            isClickedGrid = false,
+            favorite = mockFavorites,
+            onAddToCart = {},
+            onDeleteFavorite = {}
+        )
     }
 }

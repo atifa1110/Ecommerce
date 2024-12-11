@@ -1,4 +1,4 @@
-package com.example.ecommerce.test
+package com.example.ecommerce.repository
 
 import com.example.core.api.method.ApiService
 import com.example.core.api.model.RefreshToken

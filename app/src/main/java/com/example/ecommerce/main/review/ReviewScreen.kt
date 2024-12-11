@@ -1,5 +1,6 @@
 package com.example.ecommerce.main.review
 
+import android.content.res.Configuration
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -14,18 +15,19 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.material.IconButton
-import androidx.compose.material.Surface
+import androidx.compose.material3.IconButton
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Divider
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
@@ -40,6 +42,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.tooling.preview.Devices
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -48,11 +51,11 @@ import coil.compose.AsyncImage
 import com.example.core.api.response.BaseResponse
 import com.example.core.api.response.ReviewResponse
 import com.example.ecommerce.R
+import com.example.ecommerce.main.data.mockReviews
 import com.example.ecommerce.main.detail.ErrorPage
+import com.example.ecommerce.ui.theme.EcommerceTheme
 import com.example.ecommerce.ui.theme.PurplePink
-import com.example.ecommerce.ui.theme.textColor
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ReviewScreen(
     id: String,
@@ -81,7 +84,7 @@ fun ReviewScreen(
                 isLoading = false
                 isError = false
                 isSuccess = true
-                result = it.data!!.data!!
+                result = it.data?.data?: emptyList()
             }
 
             is BaseResponse.Error -> {
@@ -94,6 +97,26 @@ fun ReviewScreen(
         }
     }
 
+    ReviewContent(
+        isLoading = isLoading,
+        isError = isError,
+        isSuccess = isSuccess,
+        result = result,
+        onNavigateBack = { onNavigateBack() }
+    )
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun ReviewContent(
+    isLoading : Boolean,
+    isError : Boolean,
+    isSuccess : Boolean,
+    result : List<ReviewResponse.Review>,
+    onNavigateBack: () -> Unit
+){
+    var isLoading by remember { mutableStateOf(isLoading) }
+
     Scaffold(
         topBar = {
             Column {
@@ -101,14 +124,14 @@ fun ReviewScreen(
                     title = {
                         Text(
                             stringResource(id = R.string.review_buyer),
-                            fontSize = 22.sp,
-                            color = textColor,
-                            fontWeight = FontWeight.Normal
+                            style = MaterialTheme.typography.titleLarge,
+                            color = MaterialTheme.colorScheme.surface
                         )
                     },
+                    colors = TopAppBarDefaults.centerAlignedTopAppBarColors(containerColor = MaterialTheme.colorScheme.background),
                     navigationIcon = {
                         IconButton(onClick = { onNavigateBack() }) {
-                            Icon(Icons.Default.ArrowBack, "back button")
+                            Icon(Icons.AutoMirrored.Filled.ArrowBack, "back button")
                         }
                     }
                 )
@@ -158,26 +181,28 @@ fun ReviewScreen(
 
 @Composable
 fun CardReview(review: ReviewResponse.Review) {
-    Column(
-        Modifier
+    Column(Modifier
             .fillMaxWidth()
             .padding(16.dp)
+            .background(MaterialTheme.colorScheme.background)
     ) {
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.Start,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Column(
-                modifier = Modifier
-                    .size(36.dp)
-                    .clip(CircleShape)
-                    .background(PurplePink),
+            Column(modifier = Modifier
+                .size(36.dp)
+                .clip(CircleShape)
+                .background(PurplePink),
                 verticalArrangement = Arrangement.Center,
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                if (review.userImage!!.isEmpty()) {
-                    Text(text = "A", fontSize = 16.sp, fontWeight = FontWeight.W500)
+                if (review.userImage?.isEmpty() == true) {
+                    Text(text = "A",
+                        fontSize = 16.sp,
+                        fontWeight = FontWeight.W500
+                    )
                 } else {
                     AsyncImage(
                         modifier = Modifier.size(36.dp),
@@ -190,7 +215,11 @@ fun CardReview(review: ReviewResponse.Review) {
             Spacer(modifier = Modifier.width(10.dp))
 
             Column {
-                Text(text = review.userName!!, fontSize = 12.sp, fontWeight = FontWeight.W600)
+                Text(text = review.userName?:"",
+                    fontSize = 12.sp,
+                    fontWeight = FontWeight.W600,
+                    color = MaterialTheme.colorScheme.surface
+                )
 
                 val ratingState = remember { mutableStateOf(review.userRating) }
 
@@ -202,7 +231,11 @@ fun CardReview(review: ReviewResponse.Review) {
         }
 
         Spacer(modifier = Modifier.height(10.dp))
-        Text(text = review.userReview!!, fontSize = 12.sp, fontWeight = FontWeight.W400)
+        Text(text = review.userReview?:"",
+            fontSize = 12.sp,
+            fontWeight = FontWeight.W400,
+            color = MaterialTheme.colorScheme.surface
+        )
         Spacer(modifier = Modifier.height(10.dp))
     }
 
@@ -232,10 +265,28 @@ fun RatingBar(
     }
 }
 
+@Preview("Light Mode", device = Devices.PIXEL_3)
+@Preview("Dark Mode", uiMode = Configuration.UI_MODE_NIGHT_YES)
 @Composable
-@Preview(showBackground = true)
-fun CardPreview() {
-    Surface {
-        CardReview(ReviewResponse.Review())
+fun CardReviewPreview() {
+    EcommerceTheme {
+        CardReview(review = mockReviews[0])
     }
 }
+
+@Preview("Light Mode", device = Devices.PIXEL_3)
+@Preview("Dark Mode", uiMode = Configuration.UI_MODE_NIGHT_YES)
+@Composable
+fun ReviewContentPreview() {
+    EcommerceTheme {
+        ReviewContent(
+            isLoading = false,
+            isError = false,
+            isSuccess = true,
+            result = mockReviews,
+            onNavigateBack = {}
+        )
+    }
+}
+
+

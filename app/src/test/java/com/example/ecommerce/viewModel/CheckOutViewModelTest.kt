@@ -1,7 +1,7 @@
 package com.example.ecommerce.viewModel
 
-import android.arch.core.executor.testing.InstantTaskExecutorRule
-import com.example.ecommerce.api.repository.PaymentRepository
+import androidx.arch.core.executor.testing.InstantTaskExecutorRule
+import com.example.ecommerce.repository.PaymentRepository
 import com.example.ecommerce.firebase.AnalyticsRepository
 import com.example.ecommerce.main.checkout.CheckoutViewModel
 import com.example.ecommerce.room.cart.CartRepository

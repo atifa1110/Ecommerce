@@ -1,5 +1,6 @@
 package com.example.ecommerce.main.transaction
 
+import android.content.res.Configuration
 import android.net.Uri
 import android.util.Log
 import androidx.compose.foundation.Image
@@ -19,13 +20,15 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.Card
 import androidx.compose.material.Divider
-import androidx.compose.material.Icon
-import androidx.compose.material.Text
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.ShoppingBag
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -39,6 +42,9 @@ import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.tooling.preview.Devices
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -46,9 +52,12 @@ import coil.compose.AsyncImage
 import com.example.core.api.model.Fulfillment
 import com.example.core.api.model.Transaction
 import com.example.core.api.response.BaseResponse
+import com.example.core.room.cart.CartItem
 import com.example.ecommerce.R
+import com.example.ecommerce.main.data.mockTransactions
 import com.example.ecommerce.main.detail.ErrorPage
 import com.example.ecommerce.main.detail.currency
+import com.example.ecommerce.ui.theme.EcommerceTheme
 import com.example.ecommerce.ui.theme.LightPurple
 import com.example.ecommerce.ui.theme.Purple
 import com.google.gson.Gson
@@ -85,7 +94,28 @@ fun TransactionScreen(
         }
     }
 
-    Column(modifier = Modifier.fillMaxSize()) {
+    TransactionContent(isError = isError,
+        isLoading = isLoading,
+        listTransaction = listTransaction,
+        onNavigateToStatus = {
+            onNavigateToStatus(it)
+        },
+        onButtonAnalytics = {
+            transactionViewModel.buttonAnalytics("Review Button")
+        }
+    )
+}
+
+@Composable
+fun TransactionContent(
+    isError : Boolean,
+    isLoading : Boolean,
+    listTransaction: List<Transaction>,
+    onNavigateToStatus: (transaction: String) -> Unit,
+    onButtonAnalytics: () -> Unit,
+){
+    Column(modifier = Modifier.fillMaxSize()
+        .background(MaterialTheme.colorScheme.background)) {
         if (isLoading) {
             Column(
                 modifier = Modifier
@@ -114,9 +144,9 @@ fun TransactionScreen(
         ) {
             items(listTransaction) { item ->
                 CardTransaction(
-                    item,
-                    onNavigateToStatus,
-                    transactionViewModel
+                    transaction = item,
+                    onNavigateToStatus = onNavigateToStatus,
+                    onButtonAnalytics = onButtonAnalytics
                 )
             }
         }
@@ -127,13 +157,19 @@ fun TransactionScreen(
 fun CardTransaction(
     transaction: Transaction,
     onNavigateToStatus: (transaction: String) -> Unit,
-    transactionViewModel: TransactionViewModel
+    onButtonAnalytics: () -> Unit,
+    //transactionViewModel: TransactionViewModel
 ) {
     Log.d("TransactionData", transaction.toString())
     Column(Modifier.padding(top = 8.dp, start = 16.dp, end = 16.dp)) {
         Card(
             modifier = Modifier.fillMaxWidth(),
-            shape = RoundedCornerShape(8.dp)
+            shape = RoundedCornerShape(8.dp),
+            colors = CardDefaults.cardColors(
+                containerColor = MaterialTheme.colorScheme.primaryContainer,
+                contentColor = MaterialTheme.colorScheme.surface
+            ),
+            elevation = CardDefaults.cardElevation(3.dp),
         ) {
             Column(modifier = Modifier.fillMaxWidth()) {
                 // Column Belanja
@@ -180,14 +216,12 @@ fun CardTransaction(
                             modifier = Modifier.weight(1f),
                             horizontalAlignment = Alignment.End
                         ) {
-                            Card(
-                                modifier = Modifier
-                                    .height(18.dp)
+                            Card(modifier = Modifier
+                                    .height(20.dp)
                                     .width(46.dp),
                                 shape = RoundedCornerShape(4.dp)
                             ) {
-                                Box(
-                                    modifier = Modifier
+                                Box(modifier = Modifier
                                         .fillMaxSize()
                                         .background(LightPurple),
                                     contentAlignment = Alignment.Center
@@ -196,7 +230,8 @@ fun CardTransaction(
                                         text = stringResource(id = R.string.done),
                                         color = Purple,
                                         fontSize = 10.sp,
-                                        fontWeight = FontWeight.W600
+                                        fontWeight = FontWeight.W600,
+                                        textAlign = TextAlign.Center
                                     )
                                 }
                             }
@@ -300,7 +335,8 @@ fun CardTransaction(
                                         )
                                         val jsonFulfillment = Uri.encode(Gson().toJson(fulfillment))
                                         onNavigateToStatus(jsonFulfillment)
-                                        transactionViewModel.buttonAnalytics("Review Button")
+                                        onButtonAnalytics()
+                                        //transactionViewModel.buttonAnalytics("Review Button")
                                     }
                                     .height(24.dp)
                                     .width(84.dp),
@@ -325,5 +361,22 @@ fun CardTransaction(
                 }
             }
         }
+    }
+}
+
+
+@Preview("Light Mode", device = Devices.PIXEL_3)
+@Preview("Dark Mode", uiMode = Configuration.UI_MODE_NIGHT_YES)
+@Composable
+fun TransactionScreenPreview(){
+
+    EcommerceTheme {
+        TransactionContent(
+            isError = false,
+            isLoading = false,
+            listTransaction = mockTransactions,
+            onNavigateToStatus = {},
+            onButtonAnalytics = {}
+        )
     }
 }

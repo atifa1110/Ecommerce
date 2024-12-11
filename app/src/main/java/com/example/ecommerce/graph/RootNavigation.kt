@@ -8,6 +8,7 @@ import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.navigation
+import com.example.ecommerce.NavigationType
 import com.example.ecommerce.auth.login.LoginRoute
 import com.example.ecommerce.auth.register.RegisterRoute
 import com.example.ecommerce.boarding.onBoardingRoute
@@ -17,7 +18,7 @@ import com.example.ecommerce.main.main.MainViewModel
 @Composable
 fun RootNavigationGraph(
     navController: NavHostController,
-    windowSizeClass: WindowSizeClass
+    navigationType: NavigationType
 ) {
     val mainViewModel: MainViewModel = hiltViewModel()
     val isLogin = mainViewModel.getLoginState()
@@ -89,7 +90,8 @@ fun RootNavigationGraph(
             }
         }
 
-        mainNavGraph(navController = navController, isProfile = isProfile, windowSizeClass)
+        mainNavGraph(navController = navController,
+            isProfile = isProfile, navigationType = navigationType)
     }
 }
 

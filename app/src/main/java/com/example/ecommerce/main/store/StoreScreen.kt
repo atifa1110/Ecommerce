@@ -1,6 +1,6 @@
 package com.example.ecommerce.main.store
 
-import android.annotation.SuppressLint
+import android.content.res.Configuration
 import android.util.Log
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.RepeatMode
@@ -36,8 +36,8 @@ import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.ExperimentalMaterialApi
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.FormatListBulleted
 import androidx.compose.material.icons.filled.AccountCircle
-import androidx.compose.material.icons.filled.FormatListBulleted
 import androidx.compose.material.icons.filled.GridView
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Star
@@ -58,8 +58,10 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
+import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.MutableState
@@ -77,6 +79,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalLifecycleOwner
@@ -85,6 +88,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.tooling.preview.Devices
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -92,16 +96,23 @@ import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.paging.LoadState
+import androidx.paging.Pager
+import androidx.paging.PagingConfig
+import androidx.paging.PagingSource
+import androidx.paging.PagingState
 import androidx.paging.compose.LazyPagingItems
 import androidx.paging.compose.collectAsLazyPagingItems
 import androidx.paging.compose.itemKey
 import coil.compose.AsyncImage
 import com.example.core.api.model.Product
+import com.example.core.api.model.ProductFilter
 import com.example.core.api.response.BaseResponse
 import com.example.ecommerce.R
 import com.example.ecommerce.component.ToastMessage
+import com.example.ecommerce.main.data.mockProducts
 import com.example.ecommerce.main.detail.currency
 import com.example.ecommerce.ui.theme.CardBorder
+import com.example.ecommerce.ui.theme.EcommerceTheme
 import com.example.ecommerce.ui.theme.Purple
 import kotlinx.coroutines.launch
 import retrofit2.HttpException
@@ -116,13 +127,13 @@ fun StoreScreen(
 ) {
     val context = LocalContext.current
     val lifecycleOwner = LocalLifecycleOwner.current
-    var storeViewModel: StoreViewModel = hiltViewModel()
+    val storeViewModel: StoreViewModel = hiltViewModel()
     var search by rememberSaveable { mutableStateOf("") }
     var showDialog by remember { mutableStateOf(false) }
     val products = storeViewModel.getProductsFilter.collectAsLazyPagingItems()
-    var isClickedGrid by rememberSaveable { mutableStateOf(false) }
+    val isClickedGrid by rememberSaveable { mutableStateOf(false) }
 
-    var searchData = storeViewModel.searchData.collectAsState()
+    val searchData = storeViewModel.searchData.collectAsState()
     storeViewModel.searchQuery(searchData.value)
 
     storeViewModel.tokenResult.observe(lifecycleOwner) {
@@ -139,165 +150,383 @@ fun StoreScreen(
         }
     }
 
-    SearchDialog(
-        openDialog = showDialog,
-        onCloseDialog = {
-            showDialog = false
+//    SearchDialog(
+//        openDialog = showDialog,
+//        onCloseDialog = {
+//            showDialog = false
+//        },
+//        searchData.value
+//    )
+//
+//    Column(
+//        modifier = Modifier.fillMaxSize().padding(horizontal = 16.dp)
+//    ) {
+//        OutlinedTextField(
+//            modifier = Modifier
+//                .fillMaxWidth()
+//                .padding(top = 16.dp)
+//                .clickable { showDialog = true },
+//            placeholder = {
+//                Text(
+//                    text = stringResource(id = R.string.search),
+//                    style = MaterialTheme.typography.bodyMedium,
+//                )
+//            },
+//            singleLine = true,
+//            maxLines = 1,
+//            value = searchData.value,
+//            onValueChange = {
+//                search = it
+//            },
+//            leadingIcon = {
+//                Icon(
+//                    imageVector = Icons.Default.Search,
+//                    contentDescription = "Search"
+//                )
+//            },
+//            enabled = false
+//        )
+//
+//        when (val state = products.loadState.refresh) {
+//            is LoadState.Error -> {
+//                var error = state.error
+//                if (error is HttpException) {
+//                    when (error.code()) {
+//                        404 -> {
+//                            ErrorPage(
+//                                title = stringResource(id = R.string.empty),
+//                                message = stringResource(id = R.string.resource),
+//                                button = R.string.refresh,
+//                                onButtonClick = {
+//                                    products.refresh()
+//                                    storeViewModel.resetQuery()
+//                                    storeViewModel.buttonAnalytics("Refresh")
+//                                },
+//                                1f
+//                            )
+//                        }
+//
+//                        500 -> {
+//                            ErrorPage(
+//                                title = error.code().toString(),
+//                                message = stringResource(id = R.string.internal),
+//                                button = R.string.refresh,
+//                                onButtonClick = {
+//                                    products.refresh()
+//                                    storeViewModel.resetQuery()
+//                                    storeViewModel.buttonAnalytics("Refresh")
+//                                },
+//                                1f
+//                            )
+//                        }
+//
+//                        401 -> {
+//                            ErrorPage(
+//                                title = stringResource(id = R.string.connection),
+//                                message = stringResource(id = R.string.connection_unavailable),
+//                                button = R.string.refresh,
+//                                onButtonClick = {
+//                                    // products.refresh()
+//                                    // storeViewModel.resetQuery()
+//                                    storeViewModel.buttonAnalytics("Refresh")
+//                                    storeViewModel.refreshToken()
+//                                },
+//                                alpha = 1f
+//                            )
+//                        }
+//                    }
+//                } else if (error is SocketTimeoutException) {
+//                    ErrorPage(
+//                        title = stringResource(id = R.string.connection),
+//                        message = stringResource(id = R.string.connection_unavailable),
+//                        button = R.string.refresh,
+//                        onButtonClick = {
+//                            storeViewModel.refreshToken()
+//                            storeViewModel.buttonAnalytics("Refresh")
+//                        },
+//                        alpha = 1f
+//                    )
+//                }
+//            }
+//
+//            is LoadState.Loading -> {
+//                if (isClickedGrid) {
+//                    AnimatedFilter()
+//                    LazyVerticalGrid(GridCells.Fixed(2)) {
+//                        repeat(10) {
+//                            item { AnimatedGridShimmer() }
+//                        }
+//                    }
+//                } else {
+//                    AnimatedFilter()
+//                    repeat(7) {
+//                        AnimatedListShimmer()
+//                    }
+//                }
+//            }
+//
+//            else -> {
+//                StoreListContent(
+//                    products = products,
+//                    //storeViewModel = storeViewModel,
+//                    filter = storeViewModel.filter.value,
+//                    onDetailClick = onDetailClick,
+//                    onItemAnalytics = { productId ->
+//                        storeViewModel.selectItemProducts(productId)
+//                    },
+//                    onButtonResetAnalytics = {
+//                        storeViewModel.buttonAnalytics("Reset Button")
+//                    },
+//                    setSearchText = {
+//                        storeViewModel.setSearchText("")
+//                    },
+//                    setQuery = { brand,low, high, sort ->
+//                        storeViewModel.setQuery(brand, low, high, sort)
+//                    },
+//                    filterAnalytics = { dataFilter ->
+//                        storeViewModel.filterAnalytics(dataFilter)
+//                    }
+//                )
+//                storeViewModel.viewListAnalytics(products)
+//            }
+//        }
+//    }
+
+    StoreContent(
+        searchData = searchData.value,
+        products = products,
+        resetQuery = { storeViewModel.resetQuery() },
+        onButtonRefreshAnalytics = { storeViewModel.buttonAnalytics("Refresh") },
+        refreshToken = { storeViewModel.refreshToken() },
+        isClickedGrid = isClickedGrid,
+        filter = storeViewModel.filter.value,
+        onDetailClick = onDetailClick,
+        onItemAnalytics = { productId ->
+            storeViewModel.selectItemProducts(productId)
         },
-        searchData.value
+        onButtonResetAnalytics = {
+            storeViewModel.buttonAnalytics("Reset")
+        },
+        setSearchText = {
+            storeViewModel.setSearchText("")
+        },
+        setQuery = { brand,low, high, sort ->
+            storeViewModel.setQuery(brand, low, high, sort)
+        },
+        filterAnalytics = { dataFilter ->
+            storeViewModel.filterAnalytics(dataFilter)
+        },
+         viewListAnalytics = {
+             storeViewModel.viewListAnalytics(products)
+         }
     )
-
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(horizontal = 16.dp)
-    ) {
-        OutlinedTextField(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(top = 16.dp)
-                .clickable { showDialog = true },
-            placeholder = {
-                Text(
-                    text = stringResource(id = R.string.search),
-                    style = MaterialTheme.typography.bodyMedium,
-                )
-            },
-            singleLine = true,
-            maxLines = 1,
-            value = searchData.value,
-            onValueChange = {
-                search = it
-            },
-            leadingIcon = {
-                Icon(
-                    imageVector = Icons.Default.Search,
-                    contentDescription = "Search"
-                )
-            },
-            enabled = false
-        )
-
-        when (val state = products.loadState.refresh) {
-            is LoadState.Error -> {
-                var error = state.error
-                if (error is HttpException) {
-                    when (error.code()) {
-                        404 -> {
-                            ErrorPage(
-                                title = stringResource(id = R.string.empty),
-                                message = stringResource(id = R.string.resource),
-                                button = R.string.refresh,
-                                onButtonClick = {
-                                    products.refresh()
-                                    storeViewModel.resetQuery()
-                                    storeViewModel.buttonAnalytics("Refresh")
-                                },
-                                1f
-                            )
-                        }
-
-                        500 -> {
-                            ErrorPage(
-                                title = error.code().toString(),
-                                message = stringResource(id = R.string.internal),
-                                button = R.string.refresh,
-                                onButtonClick = {
-                                    products.refresh()
-                                    storeViewModel.resetQuery()
-                                    storeViewModel.buttonAnalytics("Refresh")
-                                },
-                                1f
-                            )
-                        }
-
-                        401 -> {
-                            ErrorPage(
-                                title = stringResource(id = R.string.connection),
-                                message = stringResource(id = R.string.connection_unavailable),
-                                button = R.string.refresh,
-                                onButtonClick = {
-                                    // products.refresh()
-                                    // storeViewModel.resetQuery()
-                                    storeViewModel.buttonAnalytics("Refresh")
-                                    storeViewModel.refreshToken()
-                                },
-                                alpha = 1f
-                            )
-                        }
-                    }
-                } else if (error is SocketTimeoutException) {
-                    ErrorPage(
-                        title = stringResource(id = R.string.connection),
-                        message = stringResource(id = R.string.connection_unavailable),
-                        button = R.string.refresh,
-                        onButtonClick = {
-                            storeViewModel.refreshToken()
-                            storeViewModel.buttonAnalytics("Refresh")
-                        },
-                        alpha = 1f
-                    )
-                }
-            }
-
-            is LoadState.Loading -> {
-                if (isClickedGrid) {
-                    AnimatedFilter()
-                    LazyVerticalGrid(GridCells.Fixed(2)) {
-                        repeat(10) {
-                            item { AnimatedGridShimmer() }
-                        }
-                    }
-                } else {
-                    AnimatedFilter()
-                    repeat(7) {
-                        AnimatedListShimmer()
-                    }
-                }
-            }
-
-            else -> {
-                StoreContent(
-                    products = products,
-                    storeViewModel = storeViewModel,
-                    onDetailClick = onDetailClick,
-                    onItemAnalytics = { productId ->
-                        storeViewModel.selectItemProducts(productId)
-                    }
-                )
-                storeViewModel.viewListAnalytics(products)
-            }
-        }
-    }
 }
 
-@SuppressLint("StateFlowValueCalledInComposition")
 @ExperimentalMaterialApi
 @ExperimentalMaterial3Api
 @ExperimentalLayoutApi
 @Composable
 fun StoreContent(
+    searchData: String,
     products: LazyPagingItems<Product>,
-    storeViewModel: StoreViewModel,
+    resetQuery: () -> Unit,
+    onButtonRefreshAnalytics: () -> Unit,
+    refreshToken: () -> Unit,
+    isClickedGrid : Boolean,
+    filter : ProductFilter,
     onDetailClick: (id: String) -> Unit,
-    onItemAnalytics: (id: String) -> Unit
+    onItemAnalytics: (id: String) -> Unit,
+    onButtonResetAnalytics: () -> Unit,
+    setSearchText: () -> Unit,
+    setQuery: (brand:String?, low:Int?, high: Int?, sort: String?) -> Unit,
+    filterAnalytics: (dataFilter: List<String>) -> Unit,
+    viewListAnalytics: () -> Unit
+){
+    var search by rememberSaveable { mutableStateOf("") }
+    var showDialog by remember { mutableStateOf(false) }
+    var isClickedGrid by rememberSaveable { mutableStateOf(isClickedGrid) }
+
+    SearchDialog(
+        openDialog = showDialog,
+        onCloseDialog = {
+            showDialog = false
+        },
+        searchData
+    )
+
+    Column (modifier = Modifier
+        .fillMaxSize()
+        .background(MaterialTheme.colorScheme.background)){
+        Column (modifier = Modifier.padding(horizontal = 16.dp)){
+            OutlinedTextField(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(top = 16.dp)
+                    .clickable { showDialog = true },
+                colors = OutlinedTextFieldDefaults.colors(
+                    disabledBorderColor = MaterialTheme.colorScheme.outline
+                ),
+                placeholder = {
+                    Text(
+                        text = stringResource(id = R.string.search),
+                        style = MaterialTheme.typography.bodyMedium,
+                    )
+                },
+                singleLine = true,
+                maxLines = 1,
+                value = searchData,
+                onValueChange = {
+                    search = it
+                },
+                leadingIcon = {
+                    Icon(
+                        imageVector = Icons.Default.Search,
+                        contentDescription = "Search"
+                    )
+                },
+                enabled = false
+            )
+
+            when (val state = products.loadState.refresh) {
+                is LoadState.Error -> {
+                    val error = state.error
+                    if (error is HttpException) {
+                        when (error.code()) {
+                            404 -> {
+                                ErrorPage(
+                                    title = stringResource(id = R.string.empty),
+                                    message = stringResource(id = R.string.resource),
+                                    button = R.string.refresh,
+                                    onButtonClick = {
+                                        products.refresh()
+//                                    storeViewModel.resetQuery()
+//                                    storeViewModel.buttonAnalytics("Refresh")
+                                        resetQuery()
+                                        onButtonRefreshAnalytics()
+                                    },
+                                    1f
+                                )
+                            }
+
+                            500 -> {
+                                ErrorPage(
+                                    title = error.code().toString(),
+                                    message = stringResource(id = R.string.internal),
+                                    button = R.string.refresh,
+                                    onButtonClick = {
+                                        products.refresh()
+                                        //storeViewModel.resetQuery()
+                                        //storeViewModel.buttonAnalytics("Refresh")
+                                        resetQuery()
+                                        onButtonRefreshAnalytics()
+                                    },
+                                    1f
+                                )
+                            }
+
+                            401 -> {
+                                ErrorPage(
+                                    title = stringResource(id = R.string.connection),
+                                    message = stringResource(id = R.string.connection_unavailable),
+                                    button = R.string.refresh,
+                                    onButtonClick = {
+                                        //storeViewModel.buttonAnalytics("Refresh")
+                                        //storeViewModel.refreshToken()
+                                        onButtonRefreshAnalytics()
+                                        refreshToken()
+                                    },
+                                    alpha = 1f
+                                )
+                            }
+                        }
+                    } else if (error is SocketTimeoutException) {
+                        ErrorPage(
+                            title = stringResource(id = R.string.connection),
+                            message = stringResource(id = R.string.connection_unavailable),
+                            button = R.string.refresh,
+                            onButtonClick = {
+//                            storeViewModel.refreshToken()
+//                            storeViewModel.buttonAnalytics("Refresh")
+                                refreshToken()
+                                onButtonRefreshAnalytics()
+                            },
+                            alpha = 1f
+                        )
+                    }
+                }
+
+                is LoadState.Loading -> {
+                    if (isClickedGrid) {
+                        AnimatedFilter()
+                        LazyVerticalGrid(GridCells.Fixed(2)) {
+                            repeat(10) {
+                                item { AnimatedGridShimmer() }
+                            }
+                        }
+                    } else {
+                        AnimatedFilter()
+                        repeat(7) {
+                            AnimatedListShimmer()
+                        }
+                    }
+                }
+
+                else -> {
+                    StoreListContent(
+                        products = products,
+                        //storeViewModel = storeViewModel,
+                        filter = filter,
+                        onDetailClick = onDetailClick,
+                        onItemAnalytics = { productId ->
+                            onItemAnalytics(productId)
+                        },
+                        onButtonResetAnalytics = { onButtonResetAnalytics() },
+                        setSearchText = { setSearchText() },
+                        setQuery = { brand, low, high, sort ->
+                            setQuery(brand, low, high, sort)
+                        },
+                        filterAnalytics = { dataFilter ->
+                            filterAnalytics(dataFilter)
+                        }
+                    )
+                    viewListAnalytics()
+                }
+            }
+        }
+    }
+}
+
+@ExperimentalMaterialApi
+@ExperimentalMaterial3Api
+@ExperimentalLayoutApi
+@Composable
+fun StoreListContent(
+    products: LazyPagingItems<Product>,
+    filter : ProductFilter,
+    onDetailClick: (id: String) -> Unit,
+    onItemAnalytics: (id: String) -> Unit,
+    
+    onButtonResetAnalytics: () -> Unit,
+    setSearchText: () -> Unit,
+    setQuery: (brand:String?, low:Int?, high: Int?, sort: String?) -> Unit,
+    filterAnalytics: (dataFilter: List<String>) -> Unit
 ) {
     var isClickedGrid by rememberSaveable { mutableStateOf(false) }
     val scope = rememberCoroutineScope()
     var showBottomSheet by remember { mutableStateOf(false) }
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
 
-    val filter = storeViewModel.filter.value
+    //val filter = storeViewModel.filter.value
     val selectedCategory = filter.brand ?: ""
     val selectedList = filter.sort ?: ""
     val lowest = if (filter.lowest == null) "" else "${filter.lowest}"
     val highest = if (filter.highest == null) "" else "${filter.highest}"
     val dataFilter: List<String> = listOf(selectedCategory, lowest, highest, selectedList)
 
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(top = 8.dp),
+
+    Row(modifier = Modifier
+        .fillMaxWidth()
+        .padding(top = 8.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
         val itemsCategory = listOf("Apple", "Asus", "Dell", "Lenovo")
@@ -360,20 +589,21 @@ fun StoreContent(
                 },
                 imageVector = if (isClickedGrid) {
                     Icons.Default.GridView
-                } else Icons.Default.FormatListBulleted,
-                contentDescription = "List"
+                } else Icons.AutoMirrored.Filled.FormatListBulleted,
+                contentDescription = "List",
+                tint = MaterialTheme.colorScheme.surface
             )
         }
 
         if (showBottomSheet) {
             ModalBottomSheet(
                 onDismissRequest = { showBottomSheet = false },
-                sheetState = sheetState
+                sheetState = sheetState,
+                containerColor = MaterialTheme.colorScheme.background
             ) {
-                Column(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(start = 16.dp, end = 16.dp, bottom = 24.dp)
+                Column(modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(start = 16.dp, end = 16.dp, bottom = 24.dp)
                 ) {
                     Row(
                         Modifier.fillMaxWidth(),
@@ -398,8 +628,10 @@ fun StoreContent(
                                 selectedItemList = ""
                                 lowestPrice.value = ""
                                 highestPrice.value = ""
-                                storeViewModel.buttonAnalytics("Reset Button")
-                                storeViewModel.setSearchText("")
+                                //storeViewModel.buttonAnalytics("Reset Button")
+                                //storeViewModel.setSearchText("")
+                                onButtonResetAnalytics()
+                                setSearchText()
                             }) {
                                 Text(
                                     text = stringResource(id = R.string.reset),
@@ -473,8 +705,10 @@ fun StoreContent(
                                 if (lowestPrice.value.isEmpty()) null else lowestPrice.value.toInt()
                             val high =
                                 if (highestPrice.value.isEmpty()) null else highestPrice.value.toInt()
-                            storeViewModel.setQuery(brand, low, high, sort)
-                            storeViewModel.filterAnalytics(dataFilter)
+                            //storeViewModel.setQuery(brand, low, high, sort)
+                            //storeViewModel.filterAnalytics(dataFilter)
+                            setQuery(brand, low, high, sort)
+                            filterAnalytics(dataFilter)
                             scope.launch {
                                 sheetState.hide()
                             }.invokeOnCompletion {
@@ -486,7 +720,10 @@ fun StoreContent(
                         modifier = Modifier
                             .fillMaxWidth()
                             .padding(vertical = 16.dp),
-                        colors = ButtonDefaults.buttonColors(Purple)
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = Purple,
+                            contentColor = Color.White
+                        )
                     ) {
                         Text(
                             text = stringResource(id = R.string.tampilkan),
@@ -658,9 +895,13 @@ fun CardList(
                     onClickAnalytics(product?.productId ?: "")
                 },
             shape = RoundedCornerShape(8.dp),
-            elevation = CardDefaults.cardElevation(3.dp)
+            elevation = CardDefaults.cardElevation(3.dp),
+            colors = CardDefaults.cardColors(
+                containerColor = MaterialTheme.colorScheme.primaryContainer,
+                contentColor = MaterialTheme.colorScheme.surface
+            )
         ) {
-            Box(modifier = Modifier.background(MaterialTheme.colorScheme.surface)) {
+            Box {
                 Row(
                     modifier = Modifier.padding(10.dp)
                 ) {
@@ -668,14 +909,15 @@ fun CardList(
                         modifier = Modifier.size(80.dp),
                         shape = RoundedCornerShape(5.dp)
                     ) {
-                        Box(
-                            modifier = Modifier.fillMaxSize(),
+                        Box(modifier = Modifier.fillMaxSize(),
                             contentAlignment = Alignment.Center
                         ) {
                             if (product!!.image.isEmpty()) {
                                 Image(
+                                    modifier = Modifier.fillMaxSize(),
                                     painter = painterResource(id = R.drawable.thumbnail),
-                                    contentDescription = "image"
+                                    contentDescription = "image",
+                                    contentScale = ContentScale.FillBounds
                                 )
                             } else {
                                 AsyncImage(
@@ -745,7 +987,6 @@ fun CardList(
 }
 
 @Composable
-@Preview(showBackground = true)
 fun AnimatedFilter() {
     val shimmerColors = listOf(
         Color.LightGray.copy(alpha = 0.6f),
@@ -849,15 +1090,14 @@ fun AnimatedListShimmer() {
 @Composable
 fun ShimmerCardList(brush: Brush) {
     Column(Modifier.padding(vertical = 5.dp)) {
-        Card(
-            modifier = Modifier
-                .fillMaxWidth()
-                .clickable {
-                },
+        Card(modifier = Modifier.fillMaxWidth(),
             shape = RoundedCornerShape(8.dp),
-            border = BorderStroke(2.dp, CardBorder)
+            border = BorderStroke(2.dp, CardBorder),
+            colors = CardDefaults.cardColors(
+                containerColor = MaterialTheme.colorScheme.primaryContainer,
+            )
         ) {
-            Box(modifier = Modifier.background(Color.White)) {
+            Box {
                 Row(
                     modifier = Modifier.padding(10.dp)
                 ) {
@@ -920,7 +1160,11 @@ fun CardGrid(product: Product?, onClickCard: () -> Unit) {
                     onClickCard()
                 },
             shape = RoundedCornerShape(8.dp),
-            elevation = CardDefaults.cardElevation(3.dp)
+            elevation = CardDefaults.cardElevation(3.dp),
+            colors = CardDefaults.cardColors(
+                containerColor = MaterialTheme.colorScheme.primaryContainer,
+                contentColor = MaterialTheme.colorScheme.surface
+            )
         ) {
             Column {
                 Card(
@@ -938,8 +1182,10 @@ fun CardGrid(product: Product?, onClickCard: () -> Unit) {
                     ) {
                         if (product!!.image.isEmpty()) {
                             Image(
+                                modifier = Modifier.fillMaxSize(),
                                 painter = painterResource(id = R.drawable.thumbnail),
-                                contentDescription = "image"
+                                contentDescription = "image",
+                                contentScale = ContentScale.FillBounds
                             )
                         } else {
                             AsyncImage(
@@ -1039,14 +1285,16 @@ fun AnimatedGridShimmer() {
 @Composable
 fun ShimmerGridList(brush: Brush) {
     Column(Modifier.padding(top = 5.dp, bottom = 5.dp, end = 5.dp)) {
-        Card(
-            modifier = Modifier
-                .width(186.dp)
-                .clickable {},
+        Card(modifier = Modifier
+            .width(186.dp)
+            .clickable {},
             shape = RoundedCornerShape(8.dp),
-            border = BorderStroke(2.dp, CardBorder)
+            border = BorderStroke(2.dp, CardBorder),
+            colors = CardDefaults.cardColors(
+                containerColor = MaterialTheme.colorScheme.primaryContainer,
+            )
         ) {
-            Column(Modifier.background(Color.White)) {
+            Column {
                 Spacer(
                     modifier = Modifier
                         .size(186.dp)
@@ -1129,11 +1377,6 @@ fun TextFieldPrice(
 }
 
 @Composable
-@Preview(showBackground = true)
-fun StoreScreenPreview() {
-}
-
-@Composable
 fun SearchDialog(
     openDialog: Boolean,
     onCloseDialog: () -> Unit,
@@ -1146,5 +1389,84 @@ fun SearchDialog(
         ) {
             SearchScreen(onCloseDialog, searchData)
         }
+    }
+}
+
+
+//@Preview("Light Mode", device = Devices.PIXEL_3)
+//@Preview("Dark Mode", uiMode = Configuration.UI_MODE_NIGHT_YES)
+@Composable
+fun CardListPreview() {
+    val product = Product("1","Lenovo",1000000,"","Lenovo","LenovoStore",2,4.0f)
+    EcommerceTheme {
+        CardList(product = product, onClickCard = {  }, onClickAnalytics = {})
+    }
+}
+
+//@Preview("Light Mode", device = Devices.PIXEL_3)
+//@Preview("Dark Mode", uiMode = Configuration.UI_MODE_NIGHT_YES)
+@Composable
+fun CardGridPreview() {
+    val product = Product("1","Lenovo",1000000,"","Lenovo","LenovoStore",2,4.0f)
+    EcommerceTheme {
+        CardGrid(product = product, onClickCard = {  })
+    }
+}
+
+//@Preview("Light Mode", device = Devices.PIXEL_3)
+//@Preview("Dark Mode", uiMode = Configuration.UI_MODE_NIGHT_YES)
+@Composable
+fun ShimmerListPreview(){
+    EcommerceTheme {
+        Column {
+            AnimatedListShimmer()
+            AnimatedGridShimmer()
+        }
+    }
+}
+
+@OptIn(ExperimentalMaterialApi::class, ExperimentalMaterial3Api::class,
+    ExperimentalLayoutApi::class
+)
+@Preview("Light Mode", device = Devices.PIXEL_3)
+@Preview("Dark Mode", uiMode = Configuration.UI_MODE_NIGHT_YES)
+@Composable
+fun StoreContentPreview(){
+    //Mocked Pager flow
+    val pager = Pager(PagingConfig(pageSize = 8)) {
+        object : PagingSource<Int, Product>() {
+            override suspend fun load(params: LoadParams<Int>): LoadResult<Int, Product> {
+                return LoadResult.Page(
+                    data = mockProducts,
+                    prevKey = null,
+                    nextKey = null
+                )
+            }
+
+            override fun getRefreshKey(state: PagingState<Int, Product>): Int? = null
+        }
+    }
+
+    // Collect the paging data as LazyPagingItems
+    val productItems = pager.flow.collectAsLazyPagingItems()
+    val productFilter = ProductFilter("","Lenovo")
+
+    EcommerceTheme {
+        StoreContent(
+            searchData = " ",
+            products = productItems,
+            resetQuery = { /*TODO*/ },
+            onButtonRefreshAnalytics = { /*TODO*/ },
+            refreshToken = { /*TODO*/ },
+            isClickedGrid = false,
+            filter = productFilter,
+            onDetailClick = {},
+            onItemAnalytics = {},
+            onButtonResetAnalytics = { /*TODO*/ },
+            setSearchText = { /*TODO*/ },
+            setQuery = { _, _, _, _ ->  },
+            filterAnalytics = {},
+            viewListAnalytics = {}
+        )
     }
 }
